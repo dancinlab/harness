@@ -19,6 +19,12 @@
       "tool": "harness convergence status"
     },
     {
+      "id": "in-progress-board",
+      "patterns": ["진행중", "지금 뭐", "작업 현황", "in progress", "pod 관리", "돌고 있는", "ING.md"],
+      "tool": "harness ing",
+      "hint": "진행중 작업·실행중 POD 는 ING.md 단일 보드로: `harness ing add <작업>` · `harness ing pod add <id> <provider> <gpu> <목적> [cost]` · `harness ing` (보기). 완료분은 CHANGELOG, 최종설계는 ARCHITECTURE 로."
+    },
+    {
       "id": "folder-guides",
       "patterns": ["폴더 구조", "폴더별", "서브폴더", "디렉토리 설명", "folder guide", "module doc", "코드 탐색", "구조 파악"],
       "tool": "harness folders scan",

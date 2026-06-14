@@ -12,7 +12,7 @@ import { readJsonOr } from "../lib/json.ts";
 import { execShell } from "../lib/exec.ts";
 import { isL0 } from "../lib/lockdown.ts";
 import { config, repoPath } from "../lib/config.ts";
-import { routeError } from "./errors.ts";
+import { routeError, classify } from "./errors.ts";
 import { docViolations } from "./docs.ts";
 
 interface Violation {
@@ -120,10 +120,20 @@ export async function runLint(args: string[]): Promise<number> {
     ok("lint: ok");
     return 0;
   }
-  loudFail(`lint: ${violations.length} violation(s)`);
+  // exit 1 only on BLOCK-severity violations; warn-severity (e.g. L0-LOCKDOWN) is
+  // reported but does not fail the gate — so editing an L0 file deliberately
+  // doesn't hard-block a commit (it's a "handle deliberately" signal, not a veto).
+  let blocking = 0;
   for (const v of violations) {
-    info(`  [${v.rule}] ${v.file} — ${v.msg}`);
+    const sev = classify("lint_rule", v.rule);
+    info(`  [${sev}] [${v.rule}] ${v.file} — ${v.msg}`);
     routeError({ source: "lint", kind: "lint_rule", code: v.rule, file: v.file, line: 0, msg: v.msg });
+    if (sev === "block") blocking++;
   }
-  return 1;
+  if (blocking > 0) {
+    loudFail(`lint: ${blocking} blocking / ${violations.length} total violation(s)`);
+    return 1;
+  }
+  ok(`lint: ${violations.length} warning(s), 0 blocking`);
+  return 0;
 }

@@ -14,6 +14,18 @@ import { runConvergence } from "../modules/convergence.ts";
 import { runSync } from "../modules/sync.ts";
 import { runInit } from "../modules/init.ts";
 import { runUninstall } from "../modules/uninstall.ts";
+import { runUpdate } from "../modules/update.ts";
+import { runFleet } from "../modules/fleet.ts";
+import { runPrCycle } from "../modules/pr-cycle.ts";
+import { runPod, runDemi, runDojo } from "../modules/runbooks.ts";
+import { runPool } from "../modules/pool.ts";
+import { runIng } from "../modules/ing.ts";
+import { runUpstream } from "../modules/upstream.ts";
+import { runVerdict } from "../modules/verdict.ts";
+import { runAtlas } from "../modules/atlas.ts";
+import { runEnd } from "../modules/end.ts";
+import { runSecret } from "../modules/secret.ts";
+import { runLsp } from "../modules/lsp.ts";
 import { runFolders } from "../modules/folders.ts";
 import { runPrefs } from "../modules/prefs.ts";
 import { runEasy } from "../modules/easy.ts";
@@ -30,6 +42,7 @@ setup:
   init [--force] [--hooks] [--dry-run] [--hardcore]   scaffold config + .harness rules + gitignore + wrapper
                                          (--hardcore = strict profile: block-everything + branch protection + pre-push verify)
   uninstall [--dry-run] [--keep-logs]   remove harness-injected files (config/.harness/hooks/wrapper); keeps user content
+  update [--hooks]         bump .harness-engine submodule to latest (adopt new engine features) + optional hook refresh
 
 hook delegates (wire these into your agent's settings.json):
   pre bash                 PreToolUse(Bash)  — enforcement match → block/warn
@@ -43,6 +56,16 @@ hook delegates (wire these into your agent's settings.json):
   sbs [auto[:<axis>]|manual] [<task>]   step-by-step plan-first runbook (mode via recommend resolve-mode)
   abg [labels]             all-bg-go — fan out prior-turn branches as parallel background Agents (runbook)
   afg [labels]             all-fg-go — run prior-turn branches sequentially in-session (runbook)
+  fleet [name:goal,…|go|stop|status]   perpetual multi-lane orchestrator (runbook + roster)
+  pr-cycle [gh flags]      push branch → open PR → self-merge (squash·admin·delete-branch)
+  pod                      GPU cloud pod dispatch runbook (preflight→fire→poll→harvest→down · cost-gated)
+  dojo [<slug>] [--lang]   cloud training-job scaffolder (runbook + exports/dojo/<slug>/ emit)
+  demi                     design-architecture program runbook (7-verb spine)
+  pool {list|add|rm|on|status}   host roster + remote exec (~/.harness/pool.json, global)
+  secret <verb> [args]     passthrough to the secret CLI (Keychain creds · get/set/rotate/list/init/backup/sync)
+                           ⚠ \`get\` exposes the value in context — prefer inline \`\$(secret get <k>)\` for tool args
+  lsp {wire|status|rebuild <file>}   editor LSP wiring (.lsp.json; hexa-lang \`hexa lsp\` for .hexa by default)
+                           + background rebuild of prebuilt hexa LSP binaries when their grammar source is edited
 
 gates & ledgers:
   lint [all|fast|verbose]  staged-L0 + freshness + convergence checks
@@ -57,6 +80,11 @@ reports:
   docs [status|check|scratch [name]]   single-doc discipline (architecture SSOT + log + scratch + quickref)
   folders [scan|scaffold <dir>]   per-subfolder CLAUDE.md coverage + scaffolding
   handoff [reason]             session snapshot → .harness/handoff/
+  end                          session-closure safety check (uncommitted·unpushed·stash·PRs·branches·worktrees)
+  ing [show|add|done|next|pod ...]   in-progress board → ING.md (작업 · POD running · next)
+  verdict {record <id> <cmd>|list|show <id>}   verification evidence ledger → .verdicts/ (PASS/FAIL)
+  atlas {add <id> <claim>|link <id> <vid>|list}   claim registry → ATLAS.md (verified via PASS verdict)
+  upstream {list|fix <name|repo>}   in-session upstream (hexa-lang…) fix runbook (no inbox-only defer)
   convergence {status|recompute|by-category}   optional incident tracker
   sync {run|diff}              run configured shared-file sync script
 
@@ -76,6 +104,21 @@ async function main(): Promise<number> {
       return runInit(rest);
     case "uninstall":
       return runUninstall(rest);
+    case "update":
+      return runUpdate(rest);
+    case "fleet":
+      return runFleet(rest);
+    case "pr-cycle":
+      return runPrCycle(rest);
+    case "pod":
+      return runPod(rest);
+    case "dojo":
+      return runDojo(rest);
+    case "demi":
+    case "demiurge":
+      return runDemi(rest);
+    case "pool":
+      return runPool(rest);
     case "pre":
       return runPre(rest);
     case "post":
@@ -120,6 +163,20 @@ async function main(): Promise<number> {
       return runDocs(rest);
     case "handoff":
       return runHandoff(rest);
+    case "end":
+      return runEnd(rest);
+    case "secret":
+      return runSecret(rest);
+    case "lsp":
+      return runLsp(rest);
+    case "ing":
+      return runIng(rest);
+    case "verdict":
+      return runVerdict(rest);
+    case "atlas":
+      return runAtlas(rest);
+    case "upstream":
+      return runUpstream(rest);
     case "convergence":
       return runConvergence(rest);
     case "sync":

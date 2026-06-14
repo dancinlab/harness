@@ -48,6 +48,9 @@ export interface HarnessConfig {
   convergence?: { issuesFile: string };
   // optional shared-file sync: a shell script the repo runs to fan files out
   sync?: { script: string };
+  // upstream dependencies to fix IN-SESSION (not defer to an inbox memo) when a
+  // downstream task surfaces an upstream bug/improvement. `harness upstream`.
+  upstreams: { name: string; repo: string; branch?: string }[];
   // markdown guides whose relative links `gc` checks for drift
   guides: string[];
   // nudge per-subfolder CLAUDE.md authoring: `folders` command + post-edit hint
@@ -69,6 +72,18 @@ export interface HarnessConfig {
     scratchDir: string; // 임시 산출물 보관 (tmp 휘발 금지)
     scatterPatterns: string[]; // 흩어진 문서로 간주하는 .md 작명 패턴
     allow: string[]; // SSOT/허용 문서 (scatter·quickref 검사 제외)
+    // optional: limit scatter/quickref enforcement to these top-level dirs
+    // ("" = repo-root files). Undefined = whole repo. CLAUDE-MD check is unaffected.
+    // Use for research repos with a large legit doc corpus.
+    scopeDirs?: string[];
+  };
+  // LSP wiring for the agent's editor. `wire` writes a Claude-Code `.lsp.json`
+  // (canonical filename) mapping file extensions → a language server. `rebuild`
+  // (default true) auto-recompiles a prebuilt hexa-native LSP binary in the
+  // background when its grammar source is edited (sidecar lsp-rebuild parity).
+  lsp: {
+    servers: { lang: string; extensions: string[]; command: string; args: string[] }[];
+    rebuild: boolean;
   };
   ledger: { staleSec: number };
 }
@@ -85,6 +100,7 @@ const DEFAULTS: HarnessConfig = {
   severityMapFile: ".harness/severity-map.json",
   verify: { checks: [] },
   lint: { freshnessFiles: [] },
+  upstreams: [{ name: "hexa-lang", repo: "dancinlab/hexa-lang" }],
   guides: ["CLAUDE.md", "AGENTS.md", "README.md"],
   folderGuides: {
     enabled: true,
@@ -110,7 +126,26 @@ const DEFAULTS: HarnessConfig = {
       "(REPORT|SUMMARY|NOTES|TODO|AUDIT|STATUS|ANALYSIS)\\.md$",
       "\\d{6,8}[-_].*\\.md$",
     ],
-    allow: ["README.md", "CHANGELOG.md", "ARCHITECTURE.md", "CLAUDE.md", "AGENTS.md", "LICENSE", "CONTRIBUTING.md", "SECURITY.md"],
+    allow: ["README.md", "CHANGELOG.md", "ARCHITECTURE.md", "ING.md", "ATLAS.md", "CLAIMS.md", "CLAUDE.md", "AGENTS.md", "LICENSE", "CONTRIBUTING.md", "SECURITY.md"],
+  },
+  lsp: {
+    // hexa-lang LSP (sidecar hexa-lsp parity): cd into the FIRST candidate dir
+    // that actually contains self/lsp.hexa, then `exec hexa lsp`. A `-f` presence
+    // guard (not bare `cd … 2>/dev/null`) avoids booting from the wrong cwd.
+    servers: [
+      {
+        lang: "hexa",
+        extensions: [".hexa"],
+        command: "sh",
+        args: [
+          "-c",
+          'for d in "$HEXA_LANG" "$HOME/.hx/packages/hexa" "$HOME/.hx/packages/hexa-lang" "$HOME/.hx/src"; do [ -n "$d" ] && [ -f "$d/self/lsp.hexa" ] && cd "$d" && break; done; exec hexa lsp',
+        ],
+      },
+      // kosmos-lsp (sidecar parity): prebuilt `kosmos-lsp` on PATH for `.kosmos`.
+      { lang: "kosmos", extensions: [".kosmos"], command: "kosmos-lsp", args: [] },
+    ],
+    rebuild: true,
   },
   ledger: { staleSec: 3600 },
 };

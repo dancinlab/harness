@@ -19,6 +19,7 @@ import { runFleet } from "../modules/fleet.ts";
 import { runPrCycle } from "../modules/pr-cycle.ts";
 import { runPod, runDemi, runDojo } from "../modules/runbooks.ts";
 import { runPool } from "../modules/pool.ts";
+import { runIng } from "../modules/ing.ts";
 import { runFolders } from "../modules/folders.ts";
 import { runPrefs } from "../modules/prefs.ts";
 import { runEasy } from "../modules/easy.ts";
@@ -69,6 +70,7 @@ reports:
   docs [status|check|scratch [name]]   single-doc discipline (architecture SSOT + log + scratch + quickref)
   folders [scan|scaffold <dir>]   per-subfolder CLAUDE.md coverage + scaffolding
   handoff [reason]             session snapshot → .harness/handoff/
+  ing [show|add|done|next|pod ...]   in-progress board → ING.md (작업 · POD running · next)
   convergence {status|recompute|by-category}   optional incident tracker
   sync {run|diff}              run configured shared-file sync script
 
@@ -147,6 +149,8 @@ async function main(): Promise<number> {
       return runDocs(rest);
     case "handoff":
       return runHandoff(rest);
+    case "ing":
+      return runIng(rest);
     case "convergence":
       return runConvergence(rest);
     case "sync":

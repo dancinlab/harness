@@ -162,6 +162,10 @@ bash .harness-engine/bin/harness verify list
 - [docs/install.md](docs/install.md) — repo 통합 상세 (submodule / vendor / 멀티 repo)
 - [docs/extending.md](docs/extending.md) — 규칙 추가, 도메인 모듈 확장 패턴
 
+## self-hosted
+
+이 repo 자체가 하네스를 쓴다(dogfooding) — `harness.config.json`(profile:default) + `.claude/settings.json` self hooks + pre-commit `bin/harness lint`. 코어(`.ts`) 변경 시 CHANGELOG 동시 갱신이 강제되고, 번들 enforcement(root-cause·secret·force-push)가 자기 코드에도 적용된다. hardcore 자기모순(main 보호·no-verify 차단)만 빼서 개발 흐름은 막지 않는다.
+
 ## 라이선스
 
 MIT

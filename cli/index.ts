@@ -16,6 +16,8 @@ import { runInit } from "../modules/init.ts";
 import { runFolders } from "../modules/folders.ts";
 import { runPrefs } from "../modules/prefs.ts";
 import { runEasy } from "../modules/easy.ts";
+import { runRecommend } from "../modules/recommend.ts";
+import { runSbs } from "../modules/sbs.ts";
 
 const HELP = `dancinlab/harness — project-agnostic AI coding harness
 
@@ -33,6 +35,8 @@ hook delegates (wire these into your agent's settings.json):
   prompt <text>            UserPromptSubmit  — keyword triggers + prompt hints
   prefs {show|code|docs|response <lang>|inject}   language prefs (3 axes) + UserPromptSubmit inject
   easy {show|inject}       inject the "easy" friendly-response style (lang from prefs.response)
+  recommend {inject|show|get-default|set-default <m>|clear-default|resolve-mode <a>}   4-axis rubric + default mode
+  sbs [auto[:<axis>]|manual] [<task>]   step-by-step plan-first runbook (mode via recommend resolve-mode)
 
 gates & ledgers:
   lint [all|fast|verbose]  staged-L0 + freshness + convergence checks
@@ -76,6 +80,11 @@ async function main(): Promise<number> {
       return runPrefs(rest);
     case "easy":
       return runEasy(rest);
+    case "recommend":
+      return runRecommend(rest);
+    case "sbs":
+    case "step-by-step":
+      return runSbs(rest);
     case "lint":
       return runLint(rest);
     case "verify":

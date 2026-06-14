@@ -40,9 +40,11 @@ function hookSnippet(engineRel: string): string {
           { hooks: [{ type: "command", command: `bash ${bin} prompt "$CLAUDE_USER_PROMPT"` }] },
           { hooks: [{ type: "command", command: `bash ${bin} prefs inject` }] },
           { hooks: [{ type: "command", command: `bash ${bin} easy inject` }] },
+          { hooks: [{ type: "command", command: `bash ${bin} recommend inject` }] },
         ],
         SessionStart: [
           { hooks: [{ type: "command", command: `bash ${bin} easy inject` }] },
+          { hooks: [{ type: "command", command: `bash ${bin} recommend inject` }] },
         ],
       },
     },

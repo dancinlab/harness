@@ -73,6 +73,32 @@ harness easy inject     # SessionStart/UserPromptSubmit hook — 7요소 패턴 
 - NL 트리거: 프롬프트에 `설명`/`쉽게` 포함 시 활성 배너(`🎓 easy 모드 활성 …`) prepend.
 - opt-out 없음(always-on) — sidecar 와 동일.
 
+## recommend — 4축 추천 + 기본모드 (sidecar recommend-axes 패리티)
+
+모든 추천을 4축(완성도·단순·안전·표준) 박스로 강제하고, 기본 결정모드를 repo 단위로 둔다. `config/recommend.tape`(룰 SSOT, sidecar 원본 복사)를 매 턴 주입.
+
+```bash
+harness recommend show              # 룰 본문(+활성 default 디렉티브)
+harness recommend set-default complete   # present|auto|complete|simple|safe|std
+harness recommend get-default
+harness recommend clear-default
+harness recommend inject            # SessionStart/UserPromptSubmit hook (init --hooks 자동)
+harness recommend resolve-mode <args>    # sbs 용 결정적 모드 리졸버
+```
+
+- default 저장: `.harness/recommend-default` (한 토큰, 커밋=팀 공유). sidecar 는 `~/.sidecar` 전역, harness 는 repo 단위.
+- LOCKED precedence: 명시 `auto:<axis>`/`<weights>`/`manual` > bare `auto`/no-token 의 상속 FIXED 축 > 4축 1:1:1:1 > MANUAL.
+
+## sbs — plan-first 순차 런북 (sidecar /step-by-step 패리티)
+
+```bash
+harness sbs                    # 현재 맥락 작업, 모드는 recommend default 상속
+harness sbs auto:safe "리팩터" # 명시 모드 + task
+harness sbs manual "기능 추가"
+```
+
+`harness sbs` 는 ① `recommend resolve-mode` 로 모드를 결정해 `mode:`/`resolved:` 두 줄 출력 → ② `templates/sbs.md` 런북(파싱→채팅 disambiguation→합의화면→plan.md→백그라운드 handoff→auto-QA→halt→closure) 출력. 에이전트는 이 런북을 따른다. sidecar `sidecar sync`/`hexa easy`/플러그인 캐시 의존은 harness 등가물(`harness sync`/`harness easy`/엔진)로 일반화.
+
 ## 규칙 추가 (이 브랜치에서 한 건씩)
 
 hardcore 규칙은 **이 브랜치의 `config/enforcement.hardcore.json` / `config/severity-map.hardcore.json` 에만** 추가한다(main 의 default 규칙은 건드리지 않음). 새 규칙은 `pre_bash` / `pre_write` / `prompt_hints` 에 append.

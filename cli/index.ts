@@ -14,6 +14,9 @@ import { runConvergence } from "../modules/convergence.ts";
 import { runSync } from "../modules/sync.ts";
 import { runInit } from "../modules/init.ts";
 import { runUninstall } from "../modules/uninstall.ts";
+import { runUpdate } from "../modules/update.ts";
+import { runFleet } from "../modules/fleet.ts";
+import { runPrCycle } from "../modules/pr-cycle.ts";
 import { runFolders } from "../modules/folders.ts";
 import { runPrefs } from "../modules/prefs.ts";
 import { runEasy } from "../modules/easy.ts";
@@ -30,6 +33,7 @@ setup:
   init [--force] [--hooks] [--dry-run] [--hardcore]   scaffold config + .harness rules + gitignore + wrapper
                                          (--hardcore = strict profile: block-everything + branch protection + pre-push verify)
   uninstall [--dry-run] [--keep-logs]   remove harness-injected files (config/.harness/hooks/wrapper); keeps user content
+  update [--hooks]         bump .harness-engine submodule to latest (adopt new engine features) + optional hook refresh
 
 hook delegates (wire these into your agent's settings.json):
   pre bash                 PreToolUse(Bash)  — enforcement match → block/warn
@@ -43,6 +47,8 @@ hook delegates (wire these into your agent's settings.json):
   sbs [auto[:<axis>]|manual] [<task>]   step-by-step plan-first runbook (mode via recommend resolve-mode)
   abg [labels]             all-bg-go — fan out prior-turn branches as parallel background Agents (runbook)
   afg [labels]             all-fg-go — run prior-turn branches sequentially in-session (runbook)
+  fleet [name:goal,…|go|stop|status]   perpetual multi-lane orchestrator (runbook + roster)
+  pr-cycle [gh flags]      push branch → open PR → self-merge (squash·admin·delete-branch)
 
 gates & ledgers:
   lint [all|fast|verbose]  staged-L0 + freshness + convergence checks
@@ -76,6 +82,12 @@ async function main(): Promise<number> {
       return runInit(rest);
     case "uninstall":
       return runUninstall(rest);
+    case "update":
+      return runUpdate(rest);
+    case "fleet":
+      return runFleet(rest);
+    case "pr-cycle":
+      return runPrCycle(rest);
     case "pre":
       return runPre(rest);
     case "post":

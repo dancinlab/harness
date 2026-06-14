@@ -13,6 +13,7 @@ import { execShell } from "../lib/exec.ts";
 import { isL0 } from "../lib/lockdown.ts";
 import { config, repoPath } from "../lib/config.ts";
 import { routeError } from "./errors.ts";
+import { docViolations } from "./docs.ts";
 
 interface Violation {
   rule: string;
@@ -78,6 +79,19 @@ export async function runLint(args: string[]): Promise<number> {
     }
   }
 
+  // 2b. protected branches: no direct commit on main/master (hardcore)
+  if (cfg.lint.protectedBranches?.length && staged.length > 0) {
+    // symbolic-ref reports the (even unborn) branch name; abbrev-ref returns "HEAD" before the first commit
+    const branch = (await execShell("git symbolic-ref --short -q HEAD || git rev-parse --abbrev-ref HEAD", { cwd: repoPath(".") })).stdout.trim();
+    if (cfg.lint.protectedBranches.includes(branch)) {
+      violations.push({
+        rule: "PROTECTED-BRANCH",
+        file: branch,
+        msg: `direct commit to protected branch '${branch}' — use a feature branch + PR`,
+      });
+    }
+  }
+
   // 3. convergence: a matching commit must touch requiredFile
   if (cfg.lint.convergence) {
     const { commitPattern, requiredFile } = cfg.lint.convergence;
@@ -92,6 +106,12 @@ export async function runLint(args: string[]): Promise<number> {
         });
       }
     }
+  }
+
+  // 4b. single-doc discipline (staged .md scatter + quickref) — active only when
+  // the architecture SSOT file exists (opt-in by presence).
+  for (const d of docViolations(staged)) {
+    violations.push({ rule: d.rule, file: d.file, msg: d.msg });
   }
 
   appendJsonl(LOGS.lint, { kind: "lint", mode: args[0] ?? "all", violations: violations.length, items: violations });

@@ -102,6 +102,8 @@ bash .harness-engine/bin/harness init --hooks
 생성 후 `harness.config.json` 의 `verify.checks` · `lockdown.files` 만 repo 에 맞게 채우면 된다.
 
 > 수동 설정도 가능: `.harness/*.json` 을 두지 않으면 번들 기본 규칙(`config/*.json`)이 자동 적용된다.
+>
+> 제거: `harness uninstall` (주입물만 제거, 사용자 콘텐츠 보존 · `--dry-run` 미리보기). 상세 [docs/install.md](docs/install.md#제거-uninstall).
 
 ### 3. 동작 확인
 
@@ -159,6 +161,10 @@ bash .harness-engine/bin/harness verify list
 - [docs/architecture.md](docs/architecture.md) — 하네스를 "어떻게 구성하는가" 전수 설계 (운영 중인 하네스 전수조사에서 일반화)
 - [docs/install.md](docs/install.md) — repo 통합 상세 (submodule / vendor / 멀티 repo)
 - [docs/extending.md](docs/extending.md) — 규칙 추가, 도메인 모듈 확장 패턴
+
+## self-hosted
+
+이 repo 자체가 하네스를 쓴다(dogfooding) — `harness.config.json`(profile:default) + `.claude/settings.json` self hooks + pre-commit `bin/harness lint`. 코어(`.ts`) 변경 시 CHANGELOG 동시 갱신이 강제되고, 번들 enforcement(root-cause·secret·force-push)가 자기 코드에도 적용된다. hardcore 자기모순(main 보호·no-verify 차단)만 빼서 개발 흐름은 막지 않는다.
 
 ## 라이선스
 

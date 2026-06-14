@@ -1,4 +1,5 @@
 import { spawn, type SpawnOptions } from "node:child_process";
+import { readFileSync } from "node:fs";
 
 export interface ExecResult {
   code: number;
@@ -79,4 +80,15 @@ export async function pmap<T, R>(
 
 export function tail(text: string, n: number): string {
   return text.split("\n").filter(Boolean).slice(-n).join("\n");
+}
+
+// Read this process's stdin to EOF (for hook payloads piped by the agent
+// runtime). Returns "" on a TTY / no input rather than blocking.
+export function readStdin(): string {
+  if (process.stdin.isTTY) return "";
+  try {
+    return readFileSync(0, "utf8");
+  } catch {
+    return "";
+  }
 }

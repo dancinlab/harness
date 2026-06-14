@@ -13,14 +13,23 @@ import { runGc } from "../modules/gc.ts";
 import { runConvergence } from "../modules/convergence.ts";
 import { runSync } from "../modules/sync.ts";
 import { runInit } from "../modules/init.ts";
+import { runUninstall } from "../modules/uninstall.ts";
 import { runFolders } from "../modules/folders.ts";
+import { runPrefs } from "../modules/prefs.ts";
+import { runEasy } from "../modules/easy.ts";
+import { runRecommend } from "../modules/recommend.ts";
+import { runSbs } from "../modules/sbs.ts";
+import { runFanout } from "../modules/fanout.ts";
+import { runDocs } from "../modules/docs.ts";
 
 const HELP = `dancinlab/harness — project-agnostic AI coding harness
 
 usage: harness <cmd> [args]
 
 setup:
-  init [--force] [--hooks] [--dry-run]   scaffold config + .harness rules + gitignore + wrapper
+  init [--force] [--hooks] [--dry-run] [--hardcore]   scaffold config + .harness rules + gitignore + wrapper
+                                         (--hardcore = strict profile: block-everything + branch protection + pre-push verify)
+  uninstall [--dry-run] [--keep-logs]   remove harness-injected files (config/.harness/hooks/wrapper); keeps user content
 
 hook delegates (wire these into your agent's settings.json):
   pre bash                 PreToolUse(Bash)  — enforcement match → block/warn
@@ -28,6 +37,12 @@ hook delegates (wire these into your agent's settings.json):
   post bash <exit> [cmd]   PostToolUse(Bash) — record + route non-zero exits
   post edit <file>         PostToolUse(Write/Edit) — flag L0 edits
   prompt <text>            UserPromptSubmit  — keyword triggers + prompt hints
+  prefs {show|code|docs|response <lang>|inject}   language prefs (3 axes) + UserPromptSubmit inject
+  easy {show|inject}       inject the "easy" friendly-response style (lang from prefs.response)
+  recommend {inject|show|get-default|set-default <m>|clear-default|resolve-mode <a>}   4-axis rubric + default mode
+  sbs [auto[:<axis>]|manual] [<task>]   step-by-step plan-first runbook (mode via recommend resolve-mode)
+  abg [labels]             all-bg-go — fan out prior-turn branches as parallel background Agents (runbook)
+  afg [labels]             all-fg-go — run prior-turn branches sequentially in-session (runbook)
 
 gates & ledgers:
   lint [all|fast|verbose]  staged-L0 + freshness + convergence checks
@@ -39,6 +54,7 @@ gates & ledgers:
 reports:
   audit [full|summary|json]    6-axis self-scorecard
   gc [scan|drift]              broken markdown links in guides
+  docs [status|check|scratch [name]]   single-doc discipline (architecture SSOT + log + scratch + quickref)
   folders [scan|scaffold <dir>]   per-subfolder CLAUDE.md coverage + scaffolding
   handoff [reason]             session snapshot → .harness/handoff/
   convergence {status|recompute|by-category}   optional incident tracker
@@ -58,6 +74,8 @@ async function main(): Promise<number> {
     case "init":
     case "install":
       return runInit(rest);
+    case "uninstall":
+      return runUninstall(rest);
     case "pre":
       return runPre(rest);
     case "post":
@@ -67,6 +85,21 @@ async function main(): Promise<number> {
       return 1;
     case "prompt":
       return runPromptScan(rest);
+    case "prefs":
+      return runPrefs(rest);
+    case "easy":
+      return runEasy(rest);
+    case "recommend":
+      return runRecommend(rest);
+    case "sbs":
+    case "step-by-step":
+      return runSbs(rest);
+    case "abg":
+    case "all-bg-go":
+      return runFanout("abg", rest);
+    case "afg":
+    case "all-fg-go":
+      return runFanout("afg", rest);
     case "lint":
       return runLint(rest);
     case "verify":
@@ -83,6 +116,8 @@ async function main(): Promise<number> {
       return runGc(rest);
     case "folders":
       return runFolders(rest);
+    case "docs":
+      return runDocs(rest);
     case "handoff":
       return runHandoff(rest);
     case "convergence":

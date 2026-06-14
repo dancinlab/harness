@@ -15,6 +15,7 @@ interface Flags {
   force: boolean;
   hooks: boolean;
   dryRun: boolean;
+  hardcore: boolean;
 }
 
 function enginePath(): string {
@@ -37,6 +38,13 @@ function hookSnippet(engineRel: string): string {
         ],
         UserPromptSubmit: [
           { hooks: [{ type: "command", command: `bash ${bin} prompt "$CLAUDE_USER_PROMPT"` }] },
+          { hooks: [{ type: "command", command: `bash ${bin} prefs inject` }] },
+          { hooks: [{ type: "command", command: `bash ${bin} easy inject` }] },
+          { hooks: [{ type: "command", command: `bash ${bin} recommend inject` }] },
+        ],
+        SessionStart: [
+          { hooks: [{ type: "command", command: `bash ${bin} easy inject` }] },
+          { hooks: [{ type: "command", command: `bash ${bin} recommend inject` }] },
         ],
       },
     },
@@ -131,26 +139,29 @@ function changelogTrigger(exts: string[]): string {
   return `\\.(${set.join("|")})$`;
 }
 
-function starterConfig(project: string, stack: Stack): string {
+function starterConfig(project: string, stack: Stack, hardcore: boolean): string {
+  const lint: Record<string, unknown> = {
+    freshnessFiles: [],
+    changelog: {
+      file: "CHANGELOG.md",
+      triggerPattern: changelogTrigger(stack.exts),
+      ignore: ["(^|/)(tests?|__tests__|spec)/", "\\.(test|spec)\\.[a-z]+$", "(^|/)\\.harness(-engine)?/"],
+    },
+  };
+  if (hardcore) lint.protectedBranches = ["main", "master"];
   return JSON.stringify(
     {
       project,
+      profile: hardcore ? "hardcore" : "default",
       stack: stack.ids,
       lockdown: { files: [], fromMarkdown: "CLAUDE.md", onEditReminder: "L0 file edited — update CHANGELOG + issue tracker in the same change." },
       enforcementFile: ".harness/enforcement.json",
       keywordsFile: ".harness/keywords.json",
       severityMapFile: ".harness/severity-map.json",
       verify: { checks: stack.checks },
-      lint: {
-        freshnessFiles: [],
-        changelog: {
-          file: "CHANGELOG.md",
-          triggerPattern: changelogTrigger(stack.exts),
-          ignore: ["(^|/)(tests?|__tests__|spec)/", "\\.(test|spec)\\.[a-z]+$", "(^|/)\\.harness(-engine)?/"],
-        },
-      },
+      lint,
       guides: ["CLAUDE.md", "AGENTS.md", "README.md"],
-      ledger: { staleSec: 3600 },
+      ledger: { staleSec: hardcore ? 1800 : 3600 },
     },
     null,
     2
@@ -164,6 +175,7 @@ export async function runInit(args: string[]): Promise<number> {
     force: args.includes("--force"),
     hooks: args.includes("--hooks"),
     dryRun: args.includes("--dry-run"),
+    hardcore: args.includes("--hardcore"),
   };
   const actions: Action[] = [];
   const engineRel = enginePath();
@@ -184,12 +196,15 @@ export async function runInit(args: string[]): Promise<number> {
   };
 
   // 1. harness.config.json
-  write(resolve(REPO_ROOT, "harness.config.json"), starterConfig(basename(REPO_ROOT), stack), "harness.config.json");
+  write(resolve(REPO_ROOT, "harness.config.json"), starterConfig(basename(REPO_ROOT), stack, flags.hardcore), "harness.config.json");
 
-  // 2. .harness/*.json (copy bundled defaults so the repo can customize)
+  // 2. .harness/*.json (copy bundled defaults; hardcore profile uses *.hardcore.json sources)
+  const ruleSrc: Record<string, string> = flags.hardcore
+    ? { "enforcement.json": "enforcement.hardcore.json", "keywords.json": "keywords.json", "severity-map.json": "severity-map.hardcore.json" }
+    : { "enforcement.json": "enforcement.json", "keywords.json": "keywords.json", "severity-map.json": "severity-map.json" };
   for (const name of ["enforcement.json", "keywords.json", "severity-map.json"]) {
     const dst = resolve(REPO_ROOT, ".harness", name);
-    const src = resolve(HARNESS_CONFIG_DIR, name);
+    const src = resolve(HARNESS_CONFIG_DIR, ruleSrc[name]);
     if (existsSync(dst) && !flags.force) {
       actions.push({ path: `.harness/${name}`, how: "skip" });
       continue;
@@ -201,6 +216,48 @@ export async function runInit(args: string[]): Promise<number> {
     mkdirSync(dirname(dst), { recursive: true });
     copyFileSync(src, dst);
     actions.push({ path: `.harness/${name}`, how: "copy" });
+  }
+
+  // 2c. .harness/prefs.json (language prefs — defaults: code english / docs/response korean for hardcore)
+  {
+    const dst = resolve(REPO_ROOT, ".harness", "prefs.json");
+    const content = JSON.stringify(
+      flags.hardcore ? { code: "english", docs: "korean", response: "korean" } : { code: "english", docs: "english", response: "korean" },
+      null,
+      2
+    ) + "\n";
+    write(dst, content, ".harness/prefs.json");
+  }
+
+  // 2d. hardcore single-doc discipline scaffolds (create-if-absent):
+  //   ARCHITECTURE.md (update-in-place SSOT) · CHANGELOG.md (append) ·
+  //   CLAUDE.md (project blurb + tree) · scripts/scratch/ (tmp 대체).
+  if (flags.hardcore) {
+    const proj = basename(REPO_ROOT);
+    write(
+      resolve(REPO_ROOT, "ARCHITECTURE.md"),
+      `# ${proj} — 아키텍처 (SSOT · 업데이트형)\n\n` +
+        `> 최종 아키텍처 단일 SSOT. 변경 시 이 파일을 **갱신(덮어쓰기)** 한다(추가형 아님). 이력/결정은 CHANGELOG.md.\n\n` +
+        `## 개요\n(한 줄 설명)\n\n## 구성요소\n(컴포넌트별 역할)\n\n## 데이터 흐름\n(입력 → 처리 → 출력)\n`,
+      "ARCHITECTURE.md"
+    );
+    write(
+      resolve(REPO_ROOT, "CHANGELOG.md"),
+      `# CHANGELOG\n\n> 추가형(append-only) 이력. 최종 상태는 ARCHITECTURE.md.\n\n## (unreleased)\n- \n`,
+      "CHANGELOG.md"
+    );
+    write(
+      resolve(REPO_ROOT, "CLAUDE.md"),
+      `# ${proj}\n\n${proj} — (한 줄 프로젝트 설명을 여기에).\n\n## 구조\n\n\`\`\`\n${proj}/\n├─ src/         — 소스 코드\n├─ scripts/     — 빌드/운영 스크립트 (scratch/ = 임시 산출물 보관)\n├─ ARCHITECTURE.md — 최종 아키텍처 SSOT (업데이트형)\n└─ CHANGELOG.md  — 이력 (추가형)\n\`\`\`\n`,
+      "CLAUDE.md"
+    );
+    const scratch = resolve(REPO_ROOT, "scripts", "scratch");
+    if (!flags.dryRun) {
+      mkdirSync(scratch, { recursive: true });
+      const keep = resolve(scratch, ".gitkeep");
+      if (!existsSync(keep)) writeFileSync(keep, "");
+    }
+    actions.push({ path: "scripts/scratch/", how: flags.dryRun ? "would" : "create" });
   }
 
   // 3. .gitignore — ensure log/handoff dirs are ignored
@@ -251,6 +308,22 @@ export async function runInit(args: string[]): Promise<number> {
     }
   }
 
+  // 5b. hardcore: pre-push hook → full verify + error-queue drain
+  if (flags.hardcore && existsSync(gitDir) && statSync(gitDir).isDirectory()) {
+    const prePush = resolve(gitDir, "hooks", "pre-push");
+    const body =
+      `#!/usr/bin/env bash\n# installed by 'harness init --hardcore' — block pushes that fail verify / have open errors\nROOT="$(git rev-parse --show-toplevel)"\nbash "$ROOT/scripts/harness" verify || exit 1\nbash "$ROOT/scripts/harness" errors drain_check 1 || exit 1\n`;
+    if (existsSync(prePush) && !flags.force) {
+      actions.push({ path: ".git/hooks/pre-push", how: "skip" });
+    } else if (flags.dryRun) {
+      actions.push({ path: ".git/hooks/pre-push", how: "would" });
+    } else {
+      mkdirSync(dirname(prePush), { recursive: true });
+      writeFileSync(prePush, body, { mode: 0o755 });
+      actions.push({ path: ".git/hooks/pre-push", how: "create" });
+    }
+  }
+
   // 6. agent hooks
   if (flags.hooks) {
     const settingsPath = resolve(REPO_ROOT, ".claude", "settings.json");
@@ -267,7 +340,7 @@ export async function runInit(args: string[]): Promise<number> {
   }
 
   // report
-  info(`harness init ${flags.dryRun ? "(dry-run) " : ""}— repo: ${REPO_ROOT}`);
+  info(`harness init ${flags.hardcore ? "🥋 HARDCORE " : ""}${flags.dryRun ? "(dry-run) " : ""}— repo: ${REPO_ROOT}`);
   info(`  detected stack: ${stack.ids.length ? stack.ids.join(", ") : "none (generic — fill verify.checks manually)"}`);
   for (const a of actions) {
     const mark = a.how === "skip" ? "·" : a.how === "would" ? "?" : "✓";

@@ -15,6 +15,7 @@ interface Flags {
   force: boolean;
   hooks: boolean;
   dryRun: boolean;
+  hardcore: boolean;
 }
 
 function enginePath(): string {
@@ -131,26 +132,29 @@ function changelogTrigger(exts: string[]): string {
   return `\\.(${set.join("|")})$`;
 }
 
-function starterConfig(project: string, stack: Stack): string {
+function starterConfig(project: string, stack: Stack, hardcore: boolean): string {
+  const lint: Record<string, unknown> = {
+    freshnessFiles: [],
+    changelog: {
+      file: "CHANGELOG.md",
+      triggerPattern: changelogTrigger(stack.exts),
+      ignore: ["(^|/)(tests?|__tests__|spec)/", "\\.(test|spec)\\.[a-z]+$", "(^|/)\\.harness(-engine)?/"],
+    },
+  };
+  if (hardcore) lint.protectedBranches = ["main", "master"];
   return JSON.stringify(
     {
       project,
+      profile: hardcore ? "hardcore" : "default",
       stack: stack.ids,
       lockdown: { files: [], fromMarkdown: "CLAUDE.md", onEditReminder: "L0 file edited — update CHANGELOG + issue tracker in the same change." },
       enforcementFile: ".harness/enforcement.json",
       keywordsFile: ".harness/keywords.json",
       severityMapFile: ".harness/severity-map.json",
       verify: { checks: stack.checks },
-      lint: {
-        freshnessFiles: [],
-        changelog: {
-          file: "CHANGELOG.md",
-          triggerPattern: changelogTrigger(stack.exts),
-          ignore: ["(^|/)(tests?|__tests__|spec)/", "\\.(test|spec)\\.[a-z]+$", "(^|/)\\.harness(-engine)?/"],
-        },
-      },
+      lint,
       guides: ["CLAUDE.md", "AGENTS.md", "README.md"],
-      ledger: { staleSec: 3600 },
+      ledger: { staleSec: hardcore ? 1800 : 3600 },
     },
     null,
     2
@@ -164,6 +168,7 @@ export async function runInit(args: string[]): Promise<number> {
     force: args.includes("--force"),
     hooks: args.includes("--hooks"),
     dryRun: args.includes("--dry-run"),
+    hardcore: args.includes("--hardcore"),
   };
   const actions: Action[] = [];
   const engineRel = enginePath();
@@ -184,12 +189,15 @@ export async function runInit(args: string[]): Promise<number> {
   };
 
   // 1. harness.config.json
-  write(resolve(REPO_ROOT, "harness.config.json"), starterConfig(basename(REPO_ROOT), stack), "harness.config.json");
+  write(resolve(REPO_ROOT, "harness.config.json"), starterConfig(basename(REPO_ROOT), stack, flags.hardcore), "harness.config.json");
 
-  // 2. .harness/*.json (copy bundled defaults so the repo can customize)
+  // 2. .harness/*.json (copy bundled defaults; hardcore profile uses *.hardcore.json sources)
+  const ruleSrc: Record<string, string> = flags.hardcore
+    ? { "enforcement.json": "enforcement.hardcore.json", "keywords.json": "keywords.json", "severity-map.json": "severity-map.hardcore.json" }
+    : { "enforcement.json": "enforcement.json", "keywords.json": "keywords.json", "severity-map.json": "severity-map.json" };
   for (const name of ["enforcement.json", "keywords.json", "severity-map.json"]) {
     const dst = resolve(REPO_ROOT, ".harness", name);
-    const src = resolve(HARNESS_CONFIG_DIR, name);
+    const src = resolve(HARNESS_CONFIG_DIR, ruleSrc[name]);
     if (existsSync(dst) && !flags.force) {
       actions.push({ path: `.harness/${name}`, how: "skip" });
       continue;
@@ -251,6 +259,22 @@ export async function runInit(args: string[]): Promise<number> {
     }
   }
 
+  // 5b. hardcore: pre-push hook → full verify + error-queue drain
+  if (flags.hardcore && existsSync(gitDir) && statSync(gitDir).isDirectory()) {
+    const prePush = resolve(gitDir, "hooks", "pre-push");
+    const body =
+      `#!/usr/bin/env bash\n# installed by 'harness init --hardcore' — block pushes that fail verify / have open errors\nROOT="$(git rev-parse --show-toplevel)"\nbash "$ROOT/scripts/harness" verify || exit 1\nbash "$ROOT/scripts/harness" errors drain_check 1 || exit 1\n`;
+    if (existsSync(prePush) && !flags.force) {
+      actions.push({ path: ".git/hooks/pre-push", how: "skip" });
+    } else if (flags.dryRun) {
+      actions.push({ path: ".git/hooks/pre-push", how: "would" });
+    } else {
+      mkdirSync(dirname(prePush), { recursive: true });
+      writeFileSync(prePush, body, { mode: 0o755 });
+      actions.push({ path: ".git/hooks/pre-push", how: "create" });
+    }
+  }
+
   // 6. agent hooks
   if (flags.hooks) {
     const settingsPath = resolve(REPO_ROOT, ".claude", "settings.json");
@@ -267,7 +291,7 @@ export async function runInit(args: string[]): Promise<number> {
   }
 
   // report
-  info(`harness init ${flags.dryRun ? "(dry-run) " : ""}— repo: ${REPO_ROOT}`);
+  info(`harness init ${flags.hardcore ? "🥋 HARDCORE " : ""}${flags.dryRun ? "(dry-run) " : ""}— repo: ${REPO_ROOT}`);
   info(`  detected stack: ${stack.ids.length ? stack.ids.join(", ") : "none (generic — fill verify.checks manually)"}`);
   for (const a of actions) {
     const mark = a.how === "skip" ? "·" : a.how === "would" ? "?" : "✓";

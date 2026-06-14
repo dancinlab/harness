@@ -20,7 +20,8 @@ const HELP = `dancinlab/harness — project-agnostic AI coding harness
 usage: harness <cmd> [args]
 
 setup:
-  init [--force] [--hooks] [--dry-run]   scaffold config + .harness rules + gitignore + wrapper
+  init [--force] [--hooks] [--dry-run] [--hardcore]   scaffold config + .harness rules + gitignore + wrapper
+                                         (--hardcore = strict profile: block-everything + branch protection + pre-push verify)
 
 hook delegates (wire these into your agent's settings.json):
   pre bash                 PreToolUse(Bash)  — enforcement match → block/warn

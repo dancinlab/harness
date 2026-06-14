@@ -48,6 +48,9 @@ export interface HarnessConfig {
   convergence?: { issuesFile: string };
   // optional shared-file sync: a shell script the repo runs to fan files out
   sync?: { script: string };
+  // upstream dependencies to fix IN-SESSION (not defer to an inbox memo) when a
+  // downstream task surfaces an upstream bug/improvement. `harness upstream`.
+  upstreams: { name: string; repo: string; branch?: string }[];
   // markdown guides whose relative links `gc` checks for drift
   guides: string[];
   // nudge per-subfolder CLAUDE.md authoring: `folders` command + post-edit hint
@@ -89,6 +92,7 @@ const DEFAULTS: HarnessConfig = {
   severityMapFile: ".harness/severity-map.json",
   verify: { checks: [] },
   lint: { freshnessFiles: [] },
+  upstreams: [{ name: "hexa-lang", repo: "dancinlab/hexa-lang" }],
   guides: ["CLAUDE.md", "AGENTS.md", "README.md"],
   folderGuides: {
     enabled: true,
@@ -114,7 +118,7 @@ const DEFAULTS: HarnessConfig = {
       "(REPORT|SUMMARY|NOTES|TODO|AUDIT|STATUS|ANALYSIS)\\.md$",
       "\\d{6,8}[-_].*\\.md$",
     ],
-    allow: ["README.md", "CHANGELOG.md", "ARCHITECTURE.md", "ING.md", "CLAUDE.md", "AGENTS.md", "LICENSE", "CONTRIBUTING.md", "SECURITY.md"],
+    allow: ["README.md", "CHANGELOG.md", "ARCHITECTURE.md", "ING.md", "ATLAS.md", "CLAIMS.md", "CLAUDE.md", "AGENTS.md", "LICENSE", "CONTRIBUTING.md", "SECURITY.md"],
   },
   ledger: { staleSec: 3600 },
 };

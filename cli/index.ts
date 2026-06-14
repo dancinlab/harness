@@ -20,6 +20,9 @@ import { runPrCycle } from "../modules/pr-cycle.ts";
 import { runPod, runDemi, runDojo } from "../modules/runbooks.ts";
 import { runPool } from "../modules/pool.ts";
 import { runIng } from "../modules/ing.ts";
+import { runUpstream } from "../modules/upstream.ts";
+import { runVerdict } from "../modules/verdict.ts";
+import { runAtlas } from "../modules/atlas.ts";
 import { runFolders } from "../modules/folders.ts";
 import { runPrefs } from "../modules/prefs.ts";
 import { runEasy } from "../modules/easy.ts";
@@ -71,6 +74,9 @@ reports:
   folders [scan|scaffold <dir>]   per-subfolder CLAUDE.md coverage + scaffolding
   handoff [reason]             session snapshot → .harness/handoff/
   ing [show|add|done|next|pod ...]   in-progress board → ING.md (작업 · POD running · next)
+  verdict {record <id> <cmd>|list|show <id>}   verification evidence ledger → .verdicts/ (PASS/FAIL)
+  atlas {add <id> <claim>|link <id> <vid>|list}   claim registry → ATLAS.md (verified via PASS verdict)
+  upstream {list|fix <name|repo>}   in-session upstream (hexa-lang…) fix runbook (no inbox-only defer)
   convergence {status|recompute|by-category}   optional incident tracker
   sync {run|diff}              run configured shared-file sync script
 
@@ -151,6 +157,12 @@ async function main(): Promise<number> {
       return runHandoff(rest);
     case "ing":
       return runIng(rest);
+    case "verdict":
+      return runVerdict(rest);
+    case "atlas":
+      return runAtlas(rest);
+    case "upstream":
+      return runUpstream(rest);
     case "convergence":
       return runConvergence(rest);
     case "sync":

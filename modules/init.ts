@@ -39,6 +39,10 @@ function hookSnippet(engineRel: string): string {
         UserPromptSubmit: [
           { hooks: [{ type: "command", command: `bash ${bin} prompt "$CLAUDE_USER_PROMPT"` }] },
           { hooks: [{ type: "command", command: `bash ${bin} prefs inject` }] },
+          { hooks: [{ type: "command", command: `bash ${bin} easy inject` }] },
+        ],
+        SessionStart: [
+          { hooks: [{ type: "command", command: `bash ${bin} easy inject` }] },
         ],
       },
     },

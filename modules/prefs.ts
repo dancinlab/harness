@@ -9,7 +9,7 @@ import { resolve, dirname } from "node:path";
 import { REPO_ROOT } from "../lib/paths.ts";
 import { readJsonOr, writeJson } from "../lib/json.ts";
 import { info } from "../lib/log.ts";
-import { execShell } from "../lib/exec.ts";
+import { readStdin } from "../lib/exec.ts";
 
 export interface Prefs {
   code: string;
@@ -50,16 +50,14 @@ export function codeLangViolation(file: string, content: string): string | null 
   return `code authoring pref is '${p.code}' but Hangul found in ${file} — keep code/comments English (move UI text to locale files), or add // @lang-ok`;
 }
 
-function eventName(): Promise<string> {
+function eventName(): string {
   // inject reads the firing hook event from stdin JSON and echoes it back.
-  return execShell("cat").then((r) => {
-    try {
-      const j = JSON.parse(r.stdout);
-      return String(j.hook_event_name ?? j.hookEventName ?? "UserPromptSubmit");
-    } catch {
-      return "UserPromptSubmit";
-    }
-  });
+  try {
+    const j = JSON.parse(readStdin());
+    return String(j.hook_event_name ?? j.hookEventName ?? "UserPromptSubmit");
+  } catch {
+    return "UserPromptSubmit";
+  }
 }
 
 export async function runPrefs(args: string[]): Promise<number> {
@@ -67,7 +65,7 @@ export async function runPrefs(args: string[]): Promise<number> {
   const p = loadPrefs();
 
   if (sub === "inject") {
-    const ev = await eventName();
+    const ev = eventName();
     process.stdout.write(
       JSON.stringify({ hookSpecificOutput: { hookEventName: ev, additionalContext: body(p) } }) + "\n"
     );

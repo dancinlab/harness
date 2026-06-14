@@ -13,6 +13,7 @@ import { runGc } from "../modules/gc.ts";
 import { runConvergence } from "../modules/convergence.ts";
 import { runSync } from "../modules/sync.ts";
 import { runInit } from "../modules/init.ts";
+import { runUninstall } from "../modules/uninstall.ts";
 import { runFolders } from "../modules/folders.ts";
 import { runPrefs } from "../modules/prefs.ts";
 import { runEasy } from "../modules/easy.ts";
@@ -28,6 +29,7 @@ usage: harness <cmd> [args]
 setup:
   init [--force] [--hooks] [--dry-run] [--hardcore]   scaffold config + .harness rules + gitignore + wrapper
                                          (--hardcore = strict profile: block-everything + branch protection + pre-push verify)
+  uninstall [--dry-run] [--keep-logs]   remove harness-injected files (config/.harness/hooks/wrapper); keeps user content
 
 hook delegates (wire these into your agent's settings.json):
   pre bash                 PreToolUse(Bash)  — enforcement match → block/warn
@@ -72,6 +74,8 @@ async function main(): Promise<number> {
     case "init":
     case "install":
       return runInit(rest);
+    case "uninstall":
+      return runUninstall(rest);
     case "pre":
       return runPre(rest);
     case "post":

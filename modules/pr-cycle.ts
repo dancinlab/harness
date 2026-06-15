@@ -1,5 +1,6 @@
-// harness pr-cycle [extra gh flags]
-// One-shot PR cycle: push current branch → open PR → self-merge (admin · delete-
+// harness pr-cycle [--no-doc] [extra gh flags]
+// One-shot PR cycle: doc-update gate (CHANGELOG required, ARCHITECTURE advised;
+// --no-doc to skip) → push current branch → open PR → self-merge (admin · delete-
 // branch; squash→merge→rebase fallback if a method is disallowed; retries while
 // CI is pending) → VERIFY the merge commit actually landed on origin/<base> and
 // print an unambiguous "✅ MERGED → <base> @ <sha> · verified" block → post-merge
@@ -57,6 +58,27 @@ export async function runPrCycle(args: string[]): Promise<number> {
     return 1;
   }
   info(`pr-cycle: branch '${branch}'`);
+
+  // 0. doc-update gate — every cycle MUST update docs (CHANGELOG append; ARCHITECTURE
+  //    SSOT when present). Refuse to ship code without a CHANGELOG entry. Override: --no-doc.
+  if (!args.includes("--no-doc")) {
+    const baseGuess =
+      (await git("git rev-parse --abbrev-ref origin/HEAD 2>/dev/null")).out.replace(/^origin\//, "") || "main";
+    await git(`git fetch -q origin ${JSON.stringify(baseGuess)}`);
+    const changed = (await git(`git diff --name-only origin/${baseGuess}...HEAD`)).out.split("\n").filter(Boolean);
+    const ignore = /(^|\/)(tests?|__tests__|spec)\/|\.(test|spec)\.[a-z]+$|(^|\/)\.harness(-engine)?\//i;
+    const meaningful = changed.filter((f) => !ignore.test(f));
+    const hasChangelog = changed.some((f) => /(^|\/)CHANGELOG\.md$/.test(f));
+    const archExists = (await git("git ls-files ARCHITECTURE.md")).out.length > 0;
+    const hasArch = changed.some((f) => /(^|\/)ARCHITECTURE\.md$/.test(f));
+    if (meaningful.length && !hasChangelog) {
+      loudFail(`pr-cycle: 문서 업데이트 필수 — 이 사이클 변경(${meaningful.length}개)에 CHANGELOG.md 갱신이 없습니다.`);
+      info("   CHANGELOG.md 에 이번 변경을 append 한 뒤 다시 실행하세요 (정말 문서 불필요하면 --no-doc).");
+      info(archExists && !hasArch ? "   + ARCHITECTURE.md(SSOT)도 설계 변경이면 갱신 권장." : "");
+      return 1;
+    }
+    if (archExists && !hasArch) info("   ⓘ ARCHITECTURE.md(SSOT) 미갱신 — 설계가 바뀌었다면 갱신하세요 (권장).");
+  }
 
   // 1. push
   const push = await git(`git push --no-verify -u origin ${JSON.stringify(branch)}`);

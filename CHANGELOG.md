@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## feat: pr-cycle doc-gate + commons c14 — every cycle = docs + verified merge
+
+- pr-cycle 에 **doc-update 게이트** 추가: 이번 사이클(origin/<base>...HEAD) 에 의미있는 변경이 있는데 `CHANGELOG.md` 갱신이 없으면 push 전 **거부**(`--no-doc` 로만 우회). `ARCHITECTURE.md`(SSOT) 존재 시 미갱신이면 권장 안내.
+- commons **c14** 추가: 매 작업 사이클 = ① 문서(CHANGELOG append + 설계변경 시 ARCHITECTURE) ② `harness pr-cycle` 로 검증된 main 머지. 커밋만 쌓기/문서 없이 머지 금지.
+
 ## feat: pr-cycle — relay-verbatim Korean merge report block
 
 - 최종 출력을 "✅ <base> 머지 완료 — 검증됨 / 상태 / 머지 커밋 → origin/<base> 포함 확인 / 최신 / PR #" 블록으로 (새 세션 에이전트가 그대로 복사해 보고하도록). 미검증 시 "⚠ <base> 머지 미검증 — 수동 확인 필요".

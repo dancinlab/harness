@@ -170,6 +170,8 @@ bash .harness-engine/bin/harness verify list
 
 매 사이클(`harness pr-cycle`)의 doc-gate 는 의미있는 변경에 대해 **CHANGELOG.md(append) + (존재 시) ARCHITECTURE.md·README.md 현행화**를 요구한다 — 셋 중 미갱신이 있으면 머지를 거부한다(`--no-doc` 는 진짜 문서 불필요할 때만). 이 README 도 그 대상이므로 매 사이클 최신 상태로 유지된다. (commons c14)
 
+같은 doc-gate 가 **pre-commit `harness lint` 에서도 발화한다** — pr-cycle 을 거치지 않는 작업이라도, 의미있는 코드 변경이 staged 인데 CHANGELOG / (존재 시) ARCHITECTURE·README 가 같이 staged 안 됐으면 **commit 을 차단**한다(`CHANGELOG-MISSING`·`ARCHITECTURE-MISSING`·`README-MISSING`, 모두 block). 즉 "모든 작업 이후" 문서 현행화가 강제된다. 진짜 문서 불필요한 변경만 `git commit --no-verify`.
+
 ## 라이선스
 
 MIT

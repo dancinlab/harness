@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## feat(lint): doc-gate at commit time too — ARCHITECTURE·README·CHANGELOG enforced every task
+
+- pre-commit `harness lint` 에 doc-gate 추가: 의미있는 코드 변경이 staged 인데 `CHANGELOG.md` / (존재 시) `ARCHITECTURE.md`·`README.md` 가 같이 staged 안 됐으면 **commit 차단**. 기존엔 `pr-cycle` 시점에만 강제됐으나, 이제 pr-cycle 을 거치지 않는 모든 작업/커밋에도 동일 강제. 신규 룰 `ARCHITECTURE-MISSING`·`README-MISSING` = block (severity-map). 우회: `git commit --no-verify`.
+- commons c14 에 "매 커밋 lint 에서도 발화" 명시. README·ARCHITECTURE 의 lint/doc-gate 설명 현행화.
+
 ## feat(domain): long-horizon goal/milestone tracker (sidecar parity)
 
 - `harness domain` 추가 — 장기 목표·마일스톤 추적. `<NAME>.md`(snapshot: `@title:`·`@goal:`·`- [ ]`/`- [x]` 마일스톤) + `<NAME>.tape`(append 로그) + `DOMAINS.tape`(roster `@domain NAME := "./path"`) + `.harness/domain-active`(repo-local active 포인터). verbs: init·set|`<NAME>`·list|ls[--sync]·goal·ms|milestone·title·done `<match>`·absorb `<file>`[--state]·todo|new·bare(show). NAME = UPPERCASE/digit 시작 [A-Z0-9+-]+ (`_` reject, `+` 메타도메인 e.g. `RTSC+HTS`).

@@ -8,6 +8,8 @@
       "STALE": "warn",
       "CONVERGENCE-MISSING": "block",
       "CHANGELOG-MISSING": "block",
+      "ARCHITECTURE-MISSING": "block",
+      "README-MISSING": "block",
       "DOC-SCATTER": "warn",
       "DOC-NO-QUICKREF": "warn",
       "CLAUDE-MD-MISSING": "warn",

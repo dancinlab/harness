@@ -1,0 +1,12 @@
+{
+  "name": "harness",
+  "description": "dancinlab harness — project-agnostic AI coding harness (governance hooks for Claude Code)",
+  "owner": { "name": "dancinlab" },
+  "plugins": [
+    {
+      "name": "harness",
+      "source": "./plugin",
+      "description": "harness governance hooks — guards (force-push · tmp · handoff-scatter · doc-scatter · askq) + injects (commons · recommend · prefs · easy) + SessionStart (worktree gc · handoff · ing). Wires the global `harness` CLI into Claude Code; the CLI itself is installed separately (~/.harness/cli + ~/.local/bin/harness)."
+    }
+  ]
+}

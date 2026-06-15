@@ -1,0 +1,9 @@
+{
+  "name": "harness",
+  "version": "0.1.0",
+  "description": "Project-agnostic AI coding harness — global governance hooks (guards + injects) that wire the `harness` CLI into Claude Code, the plugin-equivalent of a per-repo settings.json install. Requires `harness` on PATH (install: clone dancinlab/harness to ~/.harness/cli + symlink bin/harness into ~/.local/bin).",
+  "author": { "name": "dancinlab" },
+  "repository": "https://github.com/dancinlab/harness",
+  "license": "MIT",
+  "keywords": ["claude-code", "hook", "harness", "governance", "guard"]
+}

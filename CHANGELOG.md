@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## feat: ing — jsonl board + SessionStart inject (잘 안 쓰이던 ING 개선)
+
+- ING.md → **repo-root `ING.jsonl`** (한 줄 1항목, 기계가독·append/scrub). kinds: work·next·pod.
+- `done <id|match>` = **scrub**(완료분 제거 → CHANGELOG 로 졸업, ING 은 active 만 보유). 비면 파일 삭제.
+- **`ing inject`**(SessionStart): 진행중 작업 + running pod 를 매 세션 표면화 → 패시브 .md 라 안 쓰이던 문제 해결. 비었으면 무음. init SessionStart 와이어.
+- verbs: show·add·next·done·pod{add|rm|list}·inject.
+
 ## feat: askq-text — deny AskUserQuestion option-box, ask in plain chat (sidecar askq-text parity)
 
 - **`harness pre askq`** (PreToolUse(AskUserQuestion), `config.askqText` 기본 on) — 화살표 옵션-트리 박스(문의선택지) 호출을 deny + 에이전트에게 "질문을 평문 채팅으로 다시 하라(옵션은 인라인 bullet + 추천 표시, 자유 답변 허용)" 지시. FORM 리다이렉트(질문 자체는 허용) — bypass(안 물어봐도 될 걸 안 묻기)와는 구분. ExitPlanMode 는 영향 없음.

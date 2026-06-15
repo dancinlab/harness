@@ -52,6 +52,7 @@ function hookSnippet(engineRel: string): string {
           { hooks: [{ type: "command", command: g(`bash ${bin} recommend inject`) }] },
           { hooks: [{ type: "command", command: g(`bash ${bin} worktree gc`) }] },
           { hooks: [{ type: "command", command: g(`bash ${bin} handoff inject`) }] },
+          { hooks: [{ type: "command", command: g(`bash ${bin} ing inject`) }] },
         ],
       },
     },

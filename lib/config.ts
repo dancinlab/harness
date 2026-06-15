@@ -104,6 +104,10 @@ export interface HarnessConfig {
   // inbox/*.md at any depth) on Write/Edit — handoffs route through the
   // repo-root handoff.jsonl registry (`harness handoff add`), not ad-hoc files.
   handoffGuard: boolean;
+  // askqText DENIES the AskUserQuestion option-box tool (PreToolUse) and tells
+  // the agent to ask in plain CHAT text instead (options inline, mark the
+  // recommended one, accept a free-form answer). A FORM redirect, not anti-punt.
+  askqText: boolean;
   ledger: { staleSec: number };
 }
 
@@ -170,6 +174,7 @@ const DEFAULTS: HarnessConfig = {
   git: { guardForcePush: true },
   tmpGuard: true,
   handoffGuard: true,
+  askqText: true,
   ledger: { staleSec: 3600 },
 };
 

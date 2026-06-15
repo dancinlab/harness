@@ -213,10 +213,20 @@ export function matchPromptHints(text: string): PromptHintRule[] {
   return out;
 }
 
+// PreToolUse(AskUserQuestion) — deny the arrow-key option box; ask in plain chat.
+export async function preAskq(_args: string[]): Promise<number> {
+  if (!config().askqText) return 0;
+  return emitBlock(
+    "ASKQ-TEXT",
+    "this session asks questions in plain CHAT, not the arrow-key option box. Re-ask conversationally as plain text in your reply — do NOT call AskUserQuestion: state the question in prose; if you had options, list them inline (short bullets) and mark the one you'd recommend; accept a free-form answer. (ExitPlanMode for plan approval is unaffected.)"
+  );
+}
+
 export async function runPre(args: string[]): Promise<number> {
   const sub = args[0];
   if (sub === "bash") return preBash(args.slice(1));
   if (sub === "write") return preWrite(args.slice(1));
-  process.stderr.write("usage: harness pre {bash|write}\n");
+  if (sub === "askq") return preAskq(args.slice(1));
+  process.stderr.write("usage: harness pre {bash|write|askq}\n");
   return 1;
 }

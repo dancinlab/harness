@@ -52,6 +52,7 @@ setup:
 hook delegates (wire these into your agent's settings.json):
   pre bash                 PreToolUse(Bash)  — enforcement match → block/warn
   pre write                PreToolUse(Write/Edit) — path/content rules
+  pre askq                 PreToolUse(AskUserQuestion) — deny option-box → ask in plain chat (config.askqText)
   post bash <exit> [cmd]   PostToolUse(Bash) — record + route non-zero exits
   post edit <file>         PostToolUse(Write/Edit) — flag L0 edits
   prompt <text>            UserPromptSubmit  — keyword triggers + prompt hints

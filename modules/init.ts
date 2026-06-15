@@ -36,6 +36,7 @@ function hookSnippet(engineRel: string): string {
         PreToolUse: [
           { matcher: "Bash", hooks: [{ type: "command", command: g(`CLAUDE_TOOL_INPUT="$CLAUDE_TOOL_INPUT" bash ${bin} pre bash`) }] },
           { matcher: "Write|Edit", hooks: [{ type: "command", command: g(`CLAUDE_TOOL_INPUT="$CLAUDE_TOOL_INPUT" bash ${bin} pre write`) }] },
+          { matcher: "AskUserQuestion", hooks: [{ type: "command", command: g(`bash ${bin} pre askq`) }] },
         ],
         PostToolUse: [
           { matcher: "Write|Edit", hooks: [{ type: "command", command: g(`bash ${bin} post edit "$CLAUDE_FILE_PATH"`) }] },

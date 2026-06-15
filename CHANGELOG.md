@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## feat: askq-text — deny AskUserQuestion option-box, ask in plain chat (sidecar askq-text parity)
+
+- **`harness pre askq`** (PreToolUse(AskUserQuestion), `config.askqText` 기본 on) — 화살표 옵션-트리 박스(문의선택지) 호출을 deny + 에이전트에게 "질문을 평문 채팅으로 다시 하라(옵션은 인라인 bullet + 추천 표시, 자유 답변 허용)" 지시. FORM 리다이렉트(질문 자체는 허용) — bypass(안 물어봐도 될 걸 안 묻기)와는 구분. ExitPlanMode 는 영향 없음.
+- init: PreToolUse 에 `AskUserQuestion` matcher → `pre askq` 와이어링.
+
 ## feat: handoff rework — repo-root handoff.jsonl queue + anti-scatter guard (sidecar handoff parity)
 
 - handoff 를 **per-project repo-root `handoff.jsonl`** open-work 큐로 재설계 (단일 글로벌 레지스트리 아님 · 커밋 → GitHub 보존 · repo 와 함께 이동).

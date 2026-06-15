@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## feat: Claude Code plugin package (marketplace) — reload via /plugin
+
+- harness 를 **Claude Code 플러그인**으로 패키징: `.claude-plugin/marketplace.json`(마켓 "harness") + `plugin/.claude-plugin/plugin.json` + `plugin/hooks/hooks.json`(전역 `harness` CLI 를 guard 와 함께 호출). sidecar 처럼 `/plugin` 으로 reload·enable/disable 관리 가능.
+- 설치: `claude plugin marketplace add ~/.harness/cli` → `claude plugin install harness@harness`. settings.json 직접 주입(install-hooks)과 **택일** — 플러그인 쓰면 `harness install-hooks --uninstall` 로 settings 훅 제거(중복발동 방지).
+- `harness install-hooks --uninstall` 추가 (settings.json 에서 harness 훅 제거).
+
 ## feat: install-hooks (global) + self-update — harness fires everywhere (plugin-equivalent)
 
 - 문제: harness 훅이 repo별 `.claude/settings.json` 에만 있어 (gitignore/미클론/미-init 시) **무시됨**. 이전 sidecar 는 전역 플러그인이라 항상 발동했는데 제거됨 → mini 전역 훅 0개 → 아무것도 안 걸림.

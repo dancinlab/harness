@@ -52,9 +52,31 @@ function isHarness(e: unknown): boolean {
 
 function installHooks(args: string[]): number {
   const repo = args.includes("--repo");
+  const uninstall = args.includes("--uninstall");
   const settingsPath = repo
     ? resolve(REPO_ROOT, ".claude", "settings.json")
     : resolve(homedir(), ".claude", "settings.json");
+  if (uninstall) {
+    if (!existsSync(settingsPath)) {
+      info(`install-hooks --uninstall: ${settingsPath} absent (nothing to do)`);
+      return 0;
+    }
+    let d: Record<string, unknown>;
+    try {
+      d = JSON.parse(readFileSync(settingsPath, "utf8"));
+    } catch {
+      warn(`install-hooks: ${settingsPath} malformed — aborting.`);
+      return 1;
+    }
+    const hooks = (d.hooks ?? {}) as Record<string, unknown[]>;
+    for (const ev of Object.keys(hooks)) {
+      hooks[ev] = (hooks[ev] ?? []).filter((e) => !isHarness(e));
+      if (!hooks[ev].length) delete hooks[ev];
+    }
+    writeFileSync(settingsPath, JSON.stringify(d, null, 2) + "\n", "utf8");
+    ok(`install-hooks: harness hooks REMOVED from ${settingsPath} (use the plugin instead).`);
+    return 0;
+  }
   let d: Record<string, unknown> = {};
   if (existsSync(settingsPath)) {
     try {

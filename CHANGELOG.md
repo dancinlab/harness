@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## feat(setup): install-hooks enables SendMessage (agent-teams) by default
+
+- `harness install-hooks [--global|--repo]` 가 hook 배선과 함께 `settings.json` 의 `env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 을 세팅 — 백그라운드 subagent 에 `SendMessage`(Claude Code 실험 agent-teams)를 기본 활성화. 키가 이미 있으면 사용자 값 보존(덮어쓰지 않음). 검증: 신규 settings → flag=1, 기존 `"0"` → 재실행해도 보존.
+- 배경: 실행 중 백그라운드 에이전트에 메시지를 못 붙이는 문제(SendMessage 미가용)를 신규 설치 시점에 자동 해소. ghost·mini 는 수동 적용 완료.
+
 ## feat(gap): multi-axis gap exploration runbook (sidecar parity)
 
 - `harness gap [full|list|<scope>]` 추가 — 현재 작업을 40개 돌파전략 렌즈(8 family: Math-Structural·Adversarial-Stress·Economic-Resource·Epistemic-Evidence·Convergence-Closure·Simplicity-Canonical·Temporal-Dynamics·Coverage-Consistency)로 훑어 gap 을 표면화. 3모드: bare=mode C(40렌즈 인라인 트리아지 → hot family 만 subagent deep-dive) · `full`=mode A(family당 subagent fan-out, 트리아지 생략) · `list`=카탈로그 출력. surface·prioritise 만 하고 fix 안 함.

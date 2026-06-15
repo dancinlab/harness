@@ -92,9 +92,17 @@ function installHooks(args: string[]): number {
     const cur = (hooks[ev] ?? []).filter((e) => !isHarness(e)); // dedup old harness entries
     hooks[ev] = [...cur, ...items];
   }
+  // Enable agent-teams (SendMessage to background subagents) by default — only
+  // SETS the flag if absent, never overwrites a user's explicit value.
+  const env = (d.env ?? (d.env = {})) as Record<string, string>;
+  let envNote = "";
+  if (!("CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS" in env)) {
+    env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS = "1";
+    envNote = " + env CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 (SendMessage)";
+  }
   mkdirSync(dirname(settingsPath), { recursive: true });
   writeFileSync(settingsPath, JSON.stringify(d, null, 2) + "\n", "utf8");
-  ok(`install-hooks: harness hooks merged → ${settingsPath} (${repo ? "repo" : "global"}). Needs \`harness\` on PATH.`);
+  ok(`install-hooks: harness hooks merged → ${settingsPath} (${repo ? "repo" : "global"})${envNote}. Needs \`harness\` on PATH.`);
   info("  events: PreToolUse · PostToolUse · UserPromptSubmit · SessionStart (existing non-harness hooks preserved)");
   return 0;
 }

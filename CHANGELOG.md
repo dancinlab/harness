@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## feat(domain): long-horizon goal/milestone tracker (sidecar parity)
+
+- `harness domain` 추가 — 장기 목표·마일스톤 추적. `<NAME>.md`(snapshot: `@title:`·`@goal:`·`- [ ]`/`- [x]` 마일스톤) + `<NAME>.tape`(append 로그) + `DOMAINS.tape`(roster `@domain NAME := "./path"`) + `.harness/domain-active`(repo-local active 포인터). verbs: init·set|`<NAME>`·list|ls[--sync]·goal·ms|milestone·title·done `<match>`·absorb `<file>`[--state]·todo|new·bare(show). NAME = UPPERCASE/digit 시작 [A-Z0-9+-]+ (`_` reject, `+` 메타도메인 e.g. `RTSC+HTS`).
+- 구현: `modules/domain.ts` + cli 등록. sidecar `skills/domain/_domain.hexa`(1565 LOC hexa) → harness ts 이식, active store 는 세션별 tsv 대신 repo-local 단일 파일로 단순화. ing(작업)·trail(곁가지)와 층위 구분: domain=장기 목표/마일스톤.
+- 검증: 임시 repo 에서 init→goal→ms×3→done(▓░░░░ 25%)→list(★active)→bare-name 전환→absorb(포인터 교체)→`_` reject 전부 PASS.
+
 ## feat(setup): install-hooks enables SendMessage (agent-teams) by default
 
 - `harness install-hooks [--global|--repo]` 가 hook 배선과 함께 `settings.json` 의 `env.CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 을 세팅 — 백그라운드 subagent 에 `SendMessage`(Claude Code 실험 agent-teams)를 기본 활성화. 키가 이미 있으면 사용자 값 보존(덮어쓰지 않음). 검증: 신규 settings → flag=1, 기존 `"0"` → 재실행해도 보존.

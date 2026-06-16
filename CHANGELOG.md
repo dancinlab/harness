@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## fix(ing): `done <id>` no longer mass-scrubs the board (substring → exact-id match)
+
+- **데이터 유실 버그**: `modules/ing.ts` 의 `done` 이 `r.id === m || text.includes(m)` 로 매칭 — `done 1` 시 `text.includes("1")` 가 텍스트에 숫자 1이 든 **모든 항목**(H_1382·303M·id=12…)을 매칭해 보드 전체를 scrub. 텍스트에 숫자가 흔한 ING 에선 단일 id done 이 OPEN 항목까지 통째로 날림(anima 세션 2회 재현 + main merge 로 빈 ING 전파).
+- **근본 수정**: id 정확매칭(`r.id === m`)을 **우선**. id 매칭이 없을 때만 text substring fallback 을 쓰되 **정확히 1건일 때만** 삭제 — 여러 건 매칭이면 거부(`모호 — 정확한 id 로 지정`)해 느슨한 term 의 대량 scrub 을 차단. pod 은 종전대로 제외.
+- 검증(c2): 텍스트에 "1"이 든 3건 보드에서 `done 1` → id=1만 삭제(1건), #2·#3 유지 · `done 99` → 거부 · `done korean`(1건 매칭) → 삭제. 출력으로 확인.
+- ARCHITECTURE.json L4 modules 에 `ing` 노드 추가(종전 누락).
+
 ## fix(doc-gate): pr-cycle gates ARCHITECTURE.json (not just .md) + adds ING.jsonl 현행화
 
 - `modules/pr-cycle.ts` doc-gate 가 `ARCHITECTURE.md` 만 하드코딩하던 걸 **`ARCHITECTURE.json` 우선**(없으면 `.md`)으로 일반화 — lint.ts 와 동일 패턴. 의미있는 변경에 ARCHITECTURE(존재 형식) 미동반이면 거부.

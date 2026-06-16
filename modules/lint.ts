@@ -63,12 +63,14 @@ export async function runLint(args: string[]): Promise<number> {
         msg: `${codeChanges.length} code file(s) staged without ${file} (e.g. ${codeChanges[0]})`,
       });
     }
-    // 1c. doc SSOTs: existing ARCHITECTURE.md / README.md must be refreshed
-    //     alongside meaningful code changes too — same gate pr-cycle enforces,
-    //     now at commit time so it fires on EVERY task, not just pr-cycle.
+    // 1c. doc SSOTs: existing ARCHITECTURE (.json tree or .md prose) / README.md
+    //     must be refreshed alongside meaningful code changes too — same gate
+    //     pr-cycle enforces, now at commit time so it fires on EVERY task.
+    //     Only one ARCHITECTURE form needs to exist; whichever is present is gated.
     //     Escape hatch: `git commit --no-verify` when a doc is genuinely N/A.
     if (codeChanges.length > 0) {
-      for (const doc of ["ARCHITECTURE.md", "README.md"]) {
+      const archDoc = existsSync(repoPath("ARCHITECTURE.json")) ? "ARCHITECTURE.json" : "ARCHITECTURE.md";
+      for (const doc of [archDoc, "README.md"]) {
         if (existsSync(repoPath(doc)) && !staged.includes(doc)) {
           violations.push({
             rule: doc === "README.md" ? "README-MISSING" : "ARCHITECTURE-MISSING",

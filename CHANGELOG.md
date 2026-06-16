@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## docs(architecture): ARCHITECTURE.md → ARCHITECTURE.json (tree SSOT) + ARCHITECTURE.html (viewer)
+
+- **신규 SSOT `ARCHITECTURE.json`** — 아키텍처를 산문(.md) 대신 **컬럼형 재귀 트리**로 표현. 노드마다 명시적 컬럼 키(`이름`·`역할`·`구분`·`상세`) + `children`. 상단 `columns[]`가 표시 열 순서를 정의(`tree:true` 컬럼이 가지 렌더). JSON이 단일 진실원 — AI/툴은 파싱, 사람은 뷰어로 본다.
+- **신규 뷰어 `ARCHITECTURE.html`** — 의존성 0 자립형. `ARCHITECTURE.json`을 fetch해 컬럼 그리드 트리로 렌더(접기/펼치기·전체 검색·다크모드). `file://` fetch 차단 시 드래그&드롭 fallback + `python3 -m http.server` 안내. 데이터는 일절 안 들고 있음(SSOT는 json).
+- **`ARCHITECTURE.md` 삭제** — 내용은 전량 json으로 이전(+ git history 보존).
+- **lint doc-gate 일반화** (`modules/lint.ts`): 하드코딩 `ARCHITECTURE.md` → `ARCHITECTURE.json`이 있으면 그걸, 없으면 `.md`를 게이트. 둘 중 존재하는 형식만 현행화 강제. rule 이름(`ARCHITECTURE-MISSING`)은 유지.
+- **commons 갱신** (`config/commons.md` c4·c14): ARCHITECTURE SSOT가 `.md` 산문 또는 `.json` 트리[+`.html` 뷰어] 중 택1임을 명시. README의 ARCHITECTURE 참조도 json/html로 갱신.
+- 검증: `python3 json.load` PASS · flatten 시뮬 60행/4컬럼·트리 가지(`├─└─│`) 정렬 PASS.
+
 ## fix(pool): remote ssh command no longer expands locally — argv exec, not shell string
 
 - `pool on <host> <cmd>` 가 `execShell` 으로 `ssh ... "remotecmd"` 전체 문자열을 **로컬 mac 셸(`bash -lc`)** 에 통과시키던 버그. ssh 가 보내기 *전에* 로컬 셸이 `$VAR`/`$(...)`/백틱을 먼저 전개 → `harness pool on aiden 'echo $(hostname)'` 가 원격 호스트가 아니라 **mac 의 hostname** 을 출력하고, 셸 변수는 로컬에서 빈 값으로 사라짐.

@@ -161,7 +161,7 @@ bash .harness-engine/bin/harness ci list
 ## 더 읽기
 
 - [docs/languages.md](docs/languages.md) — 언어/플랫폼 범용성 (Python·Rust·C·Go·Swift·hexa 프리셋 + Node 런타임 요구)
-- [ARCHITECTURE.md](ARCHITECTURE.md) — 하네스를 "어떻게 구성하는가" 전수 설계 (단일 SSOT · 루트, 운영 하네스 전수조사에서 일반화)
+- [ARCHITECTURE.json](ARCHITECTURE.json) — 하네스 아키텍처 트리 SSOT (컬럼형 노드: 이름·역할·구분·상세). 사람용 뷰어는 [ARCHITECTURE.html](ARCHITECTURE.html) (`python3 -m http.server` 후 브라우저로 열기)
 - [docs/install.md](docs/install.md) — repo 통합 상세 (submodule / vendor / 멀티 repo)
 - [docs/extending.md](docs/extending.md) — 규칙 추가, 도메인 모듈 확장 패턴
 

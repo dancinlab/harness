@@ -84,7 +84,7 @@ hook delegates (wire these into your agent's settings.json):
                            long-horizon goal/milestone tracker → <NAME>.md + .tape + DOMAINS.tape roster
   demi                     design-architecture program runbook (7-verb spine)
   gap [full|list|<scope>]   multi-axis gap exploration — 40 breakthrough lenses (8 families) · triage→deepen runbook
-  pool {list|add|rm|on|status}   host roster + remote exec (~/.harness/pool.json, global)
+  pool {list|add|rm|on|status|specs}   host roster + remote exec + cores/mem/GPU probe (~/.harness/pool.json, global)
   secret <verb> [args]     passthrough to the secret CLI (Keychain creds · get/set/rotate/list/init/backup/sync)
                            ⚠ \`get\` exposes the value in context — prefer inline \`\$(secret get <k>)\` for tool args
   lsp {wire|status|rebuild <file>}   editor LSP wiring (.lsp.json; hexa-lang \`hexa lsp\` for .hexa by default)

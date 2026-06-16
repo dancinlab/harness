@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## feat(pool): `specs` — 호스트별 코어·메모리·GPU 프로브 + 인라인 표기
+
+- 신규 `harness pool specs [name]` — 각 공용 호스트를 ssh 로 프로브해 **코어 수·총 메모리(GiB)·GPU 모델**을 수집하고 로스터(`~/.harness/pool.json`)의 `Host.specs` 에 캐시. 한 호스트만 지정(`specs <name>`)도 지원.
+- 프로브는 POSIX-sh 단일 라인(`CORES=…|MEM=…|GPU=…`) — Linux(`nproc`·`/proc/meminfo`·`nvidia-smi`)와 macOS(`sysctl`·`system_profiler`) 양쪽 대응. 단일따옴표 awk/sed 로 원격 필드변수(`$2`) 보호, `${...}` 미사용으로 ssh verbatim 전달 안전.
+- `list`·`status` 가 캐시된 스펙을 `〈12c · 30G · GPU:RTX 5070〉` 형태로 인라인 표기. `list` 는 미수집 시 `pool specs` 안내 1줄 출력. GPU 없으면 `GPU:없음`.
+- `shared:false` **제한 호스트(akida·ghost)는 프로브하지 않음** — on/status 차단과 동일하게 공용 자원만 건드림.
+- 검증(c2): `harness pool specs` 실동작 — aiden·summer 각 `12c · 30G · GPU:NVIDIA GeForce RTX 5070` 수집, akida·ghost 차단(프로브 안 함) 확인. `list`·`status` 인라인 반영 + `npx tsx cli/index.ts help` 로드 OK.
+
 ## docs(commons): c17 — 무거운 작업은 pool(공유 컴퓨트)에서 분산 실행
 
 - 신규 always-on 규칙 **c17** 추가: 빌드·테스트·대규모 스윕·장시간 연산 등 무거운 작업은 로컬 단일 머신에 몰지 말고 `harness pool` 로 등록된 공유 컴퓨트 호스트에서 돌린다(`pool on`/`bg`/`route`/`status`). `shared:false` 제한 호스트는 공유 풀로 쓰지 않음(가드 차단). GPU·학습은 c12 대로 `hexa cloud`/`hexa dojo` 우선.

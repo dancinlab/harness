@@ -72,7 +72,7 @@
               { "이름": "handoff", "역할": "git 스냅샷 → 세션 인계", "구분": "module", "상세": "" },
               { "이름": "convergence", "역할": "incident 집계", "구분": "module", "상세": "스키마만 맞으면 범용" },
               { "이름": "sync", "역할": "공유파일 sync 셸 스크립트 래퍼", "구분": "module", "상세": "" },
-              { "이름": "pool", "역할": "호스트 로스터 + 원격 실행", "구분": "module", "상세": "shared:false 제한 호스트는 allow 컨텍스트 밖에서 on/status 차단. ssh는 execArgs로 직접 spawn(로컬 $ 전개 방지)" }
+              { "이름": "pool", "역할": "호스트 로스터 + 원격 실행 + 자원 프로브", "구분": "module", "상세": "shared:false 제한 호스트는 allow 컨텍스트 밖에서 on/status 차단. ssh는 execArgs로 직접 spawn(로컬 $ 전개 방지). specs 가 코어/메모리/GPU 를 POSIX-sh 프로브(Linux+macOS)해 로스터에 캐시 → list·status 에 인라인 표기. 제한 호스트는 프로브 제외" }
             ]
           },
           {

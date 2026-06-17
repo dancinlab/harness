@@ -1,5 +1,6 @@
 # /sbs — plan-first 순차 런북 (2-mode · chat-form · plan.md handoff)
 
+> 📍 SSOT: 설계 [ARCHITECTURE.json](../ARCHITECTURE.json). 본 문서는 /sbs 런북.
 > harness `recommend resolve-mode` 가 결정한 mode 를 따른다. AUTO = 4축 가중평균 자동선택, MANUAL = 라운드별 사용자 채팅 응답. 둘 다 같은 흐름.
 
 ## 1. mode 파싱
@@ -45,4 +46,4 @@ plan 문서: drafts/<slug>-plan.md (생성 예정)
 **functional**(새 동작?) · **visible**(노출 경로?) · **conformance**(locked decision ↔ 코드 1:1) · **regression**(기존 표면 미손상). 각 PASS/FAIL/SKIP(SKIP=PASS). regression FAIL → `git revert <SHA>` 자동 + banner. 나머지 FAIL → ship 유지 + plan.md `## qa-deferred` + alert. 결과는 plan.md `## qa-results` 에 기록.
 
 ## 9. 인계 dossier (handoff agent · QA 직후)
-plan PR≥3 또는 변경 LOC≥500 이면 `drafts/<slug>-plan.md` 에 `## handoff` 섹션 작성(PR 상태 · SSOT 파일 인덱스 · 새 API surface · 새 컴포넌트 트리 · 환경변수 · 다음 우선순위 · 알려진 한계 · 시작 가이드). 아니면 SKIP 한 줄 기록. ⛔ 별도 HANDOFF.md 금지 — `harness handoff` 또는 plan.md 에만.
+plan PR≥3 또는 변경 LOC≥500 이면 `drafts/<slug>-plan.md` 에 `## handoff` 섹션 작성(PR 상태 · SSOT 파일 인덱스 · 새 API surface · 새 컴포넌트 트리 · 환경변수 · 다음 우선순위 · 알려진 한계 · 시작 가이드). 아니면 SKIP 한 줄 기록. ⛔ 별도 HANDOFF.md 금지 — `harness ing` 또는 plan.md 에만.

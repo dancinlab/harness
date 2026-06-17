@@ -51,7 +51,6 @@ export const LOG_DIR = process.env.HARNESS_LOG_DIR
   ? resolve(process.env.HARNESS_LOG_DIR)
   : resolve(REPO_ROOT, ".harness", "logs");
 
-export const HANDOFF_DIR = resolve(REPO_ROOT, ".harness", "handoff");
 
 export const LOGS = {
   lint: resolve(LOG_DIR, "lint_log.jsonl"),

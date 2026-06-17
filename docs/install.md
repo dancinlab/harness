@@ -1,5 +1,7 @@
 # 설치 / 통합
 
+> 📍 SSOT: 설계 [ARCHITECTURE.json](../ARCHITECTURE.json) · 이력 [CHANGELOG.md](../CHANGELOG.md). 본 문서는 보조 설치 가이드.
+
 ## 배치 옵션
 
 하네스 엔진은 repo 안 어디에 두든 동작한다(`lib/paths.ts` 가 repo 루트를 상향 탐색). 세 가지 권장 배치:
@@ -78,7 +80,6 @@ repo 의 `.gitignore` 에 로그 디렉토리를 추가한다:
 
 ```
 .harness/logs/
-.harness/handoff/
 ```
 
 규칙 파일(`.harness/enforcement.json` 등)과 `harness.config.json` 은 **커밋한다**(팀 공유 SSOT).
@@ -90,12 +91,12 @@ repo 의 `.gitignore` 에 로그 디렉토리를 추가한다:
 ```bash
 bash .harness-engine/bin/harness uninstall --dry-run   # 무엇을 지울지 미리보기
 bash .harness-engine/bin/harness uninstall             # 실제 제거
-bash .harness-engine/bin/harness uninstall --keep-logs # 로그/handoff 만 남김
+bash .harness-engine/bin/harness uninstall --keep-logs # 로그만 남김
 ```
 
 | 제거 | 보존 (절대 안 건드림) |
 |------|----------------------|
-| `harness.config.json` · `.harness/`(규칙·prefs·logs·handoff) | `ARCHITECTURE.md` · `CHANGELOG.md` · `CLAUDE.md` |
+| `harness.config.json` · `.harness/`(규칙·prefs·logs) | `ARCHITECTURE.md` · `CHANGELOG.md` · `CLAUDE.md` |
 | `scripts/harness` 래퍼 (시그니처 확인된 것만) | `scripts/scratch/` · 소스 코드 |
 | `.git/hooks/pre-commit`·`pre-push` (harness 설치분만) | 사용자 커스텀 git hook |
 | `.gitignore` 의 harness 추가 2줄 | |

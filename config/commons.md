@@ -36,9 +36,12 @@ SSOT quickref 1줄. 메인 CLAUDE.md = 프로젝트 설명 + 트리구조(노드
 흩어진 산출물 디렉토리(`scripts/scratch/`·`.verdicts/`·`bench/`·`experiments/` 등) 신설 금지. 임시물도
 버리지 말 것. (재생성 가능한 빌드 결과 `build/` 만 `.gitignore` · 머신 자동로그는 `.harness/`.)
 
-## c6 — handoff via registry, not scatter
-세션/크로스레포 인수인계는 repo-root **`handoff.jsonl`**(`harness handoff add`). `HANDOFF.md`·
-`INBOX.md`·`inbox/*.md` 흩뿌리기 금지. 완료분은 done = scrub(제거).
+## c6 — 인계는 ING 로, 흩뿌리지 말 것
+세션/크로스레포 인수인계는 repo-root **`ING.jsonl`** 로 통일한다(c11 과 한 보드). 같은 repo 는
+`harness ing add <text>`, **타 프로젝트로는 `harness ing add <text> --to <repo>`** — 대상 repo 의
+`ING.jsonl` 에 `from` 태그를 달아 직접 남기고, 그 repo SessionStart 에 `📥<from>` 으로 표면화된다.
+`HANDOFF.md`·`INBOX.md`·`inbox/*.md` 흩뿌리기 금지(handoff-guard 차단). 완료분은 `harness ing done` = scrub.
+(구 `harness handoff` / `handoff.jsonl` 레지스트리는 **폐기** — ING 로 흡수.)
 
 ## c7 — git safety
 force-push 금지(`--force`/`-f`/`--force-with-lease`/refspec `+`). 비밀키/시드 실값 커밋 금지 —

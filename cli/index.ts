@@ -9,7 +9,6 @@ import { runErrors } from "../modules/errors.ts";
 import { runLedger } from "../modules/ledger.ts";
 import { runBitterGate } from "../modules/bitter-gate.ts";
 import { runAudit } from "../modules/audit.ts";
-import { runHandoff } from "../modules/handoff.ts";
 import { runGc } from "../modules/gc.ts";
 import { runConvergence } from "../modules/convergence.ts";
 import { runSync } from "../modules/sync.ts";
@@ -112,12 +111,10 @@ reports:
   lockdown {status|add <path...>|rm <path...>|check <path>}   manage L0 set (opt-in · none until designated)
                                add/rm mutate harness.config.json lockdown.files
   folders [scan|scaffold <dir>]   per-subfolder CLAUDE.md coverage + scaffolding
-  handoff {add <text> [--to <repo>]|ls|done <id>|inject|snapshot}   repo-root handoff.jsonl open-work queue
-                               (committed · done=scrub · SessionStart inject · anti-scatter guard) + snapshot dossier
   end                          session-closure safety check (uncommitted·unpushed·stash·PRs·branches·worktrees)
   worktree {scan|gc|guard <cmd>}   no-pileup/no-stranded enforcement — flag stranded worktrees · auto-sweep merged
                            (SessionStart-wire \`worktree gc\`; \`scan\` exit 1 gates new work on abandoned worktrees)
-  ing [show|add|done|next|pod ...|inject]   in-progress board → ING.jsonl (작업·POD·next · done=scrub · SessionStart inject)
+  ing [show|add [--to <repo>]|done|next|pod ...|inject]   in-progress board → ING.jsonl (작업·POD·next · done=scrub · SessionStart inject · --to <repo> = 타 프로젝트 ING 로 전달)
   verdict {record <id> <cmd>|list|show <id>}   verification evidence ledger → .verdicts/ (PASS/FAIL)
   atlas {add <id> <claim>|link <id> <vid>|list}   claim registry → ATLAS.md (verified via PASS verdict)
   upstream {list|fix <name|repo>}   in-session upstream (hexa-lang…) fix runbook (no inbox-only defer)
@@ -224,8 +221,6 @@ async function main(): Promise<number> {
       return runArchitecture(rest);
     case "claudemd":
       return runClaudemd(rest);
-    case "handoff":
-      return runHandoff(rest);
     case "end":
       return runEnd(rest);
     case "secret":

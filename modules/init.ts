@@ -2,7 +2,7 @@
 // One-shot scaffold for a consuming repo:
 //   • harness.config.json     (project name auto-detected from repo dir)
 //   • .harness/{enforcement,keywords,severity-map}.json  (copied from bundled defaults)
-//   • .gitignore              (append log/handoff ignores)
+//   • .gitignore              (append log ignores)
 //   • scripts/harness         (thin wrapper)
 //   • prints the .claude/settings.json hook snippet (or writes it with --hooks)
 // Never overwrites existing files unless --force. With --dry-run, only reports.
@@ -51,7 +51,6 @@ function hookSnippet(engineRel: string): string {
           { hooks: [{ type: "command", command: g(`bash ${bin} easy inject`) }] },
           { hooks: [{ type: "command", command: g(`bash ${bin} recommend inject`) }] },
           { hooks: [{ type: "command", command: g(`bash ${bin} worktree gc`) }] },
-          { hooks: [{ type: "command", command: g(`bash ${bin} handoff inject`) }] },
           { hooks: [{ type: "command", command: g(`bash ${bin} ing inject`) }] },
         ],
       },
@@ -263,9 +262,9 @@ export async function runInit(args: string[]): Promise<number> {
     actions.push({ path: "state/", how: flags.dryRun ? "would" : "create" });
   }
 
-  // 3. .gitignore — ensure log/handoff dirs are ignored
+  // 3. .gitignore — ensure machine log dir is ignored
   const giPath = resolve(REPO_ROOT, ".gitignore");
-  const needLines = [".harness/logs/", ".harness/handoff/"];
+  const needLines = [".harness/logs/"];
   const existing = existsSync(giPath) ? readFileSync(giPath, "utf8") : "";
   const missing = needLines.filter((l) => !existing.split("\n").some((x) => x.trim() === l));
   if (missing.length) {

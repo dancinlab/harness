@@ -67,7 +67,6 @@ harness/
 | `audit [full\|summary\|json]` | 6축 자가 스코어카드 (/60) | 주기적 |
 | `gc [scan\|drift]` | 가이드 마크다운의 깨진 링크 탐지 | 주기적 |
 | `folders [scan\|scaffold <dir>]` | 서브폴더별 CLAUDE.md 누락 탐지 + 템플릿 생성 (편집 시 자동 넛지) | 주기적/작업 중 |
-| `handoff [reason]` | 세션 스냅샷 → `.harness/handoff/` | 세션 종료 |
 | `convergence {status\|recompute\|by-category}` | (선택) incident 수렴 추적 | 버그 수정 후 |
 | `sync {run\|diff}` | (선택) repo 자체 공유파일 sync 스크립트 실행 | 공유파일 변경 후 |
 | `pool {list\|add\|rm\|on <h> <cmd>\|status\|specs [h]}` | 호스트 로스터 + 원격 실행. `shared:false` 호스트는 **제한 호스트** — `allow` 프로젝트 컨텍스트 밖에선 `on` 차단(공용 컴퓨트로 못 씀). `on` 은 ssh 를 직접 spawn(argv)해 `cmd` 의 `$`/`$(...)` 가 로컬이 아니라 **원격 셸**에서 전개됨. `specs` 는 호스트별 코어/메모리/GPU 를 ssh 프로브해 로스터에 캐시(`list`·`status` 에 `〈12c · 30G · GPU:…〉` 인라인 표기) — 제한 호스트는 프로브하지 않음 | 원격 실행 · 자원 확인 시 |
@@ -97,7 +96,7 @@ bash .harness-engine/bin/harness init --hooks
 ✓ .harness/enforcement.json    번들 기본 규칙 복사 (repo 가 수정)
 ✓ .harness/keywords.json
 ✓ .harness/severity-map.json
-✓ .gitignore                   로그/handoff 무시 추가
+✓ .gitignore                   로그 무시 추가
 ✓ scripts/harness              얇은 래퍼
 ✓ .claude/settings.json        hook 배선 (--hooks 일 때)
 ```
@@ -153,7 +152,7 @@ bash .harness-engine/bin/harness ci list
 에이전트 Edit   ─▶ [pre write] ─ 경로/내용 규칙 ─▶ block/warn
                   [post edit <file>] ─ L0? ─▶ 경고
 커밋 전          ─▶ [lint] + [verify]
-세션 종료        ─▶ [handoff]
+세션 종료        ─▶ [ing]
 ```
 
 모든 단계는 `.harness/logs/*.jsonl` 에 한 줄씩 쌓인다 → `audit` 이 이를 읽어 건강도를 점수화한다.

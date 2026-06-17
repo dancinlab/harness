@@ -100,9 +100,9 @@ export interface HarnessConfig {
   // data is discarded on reboot/reaper. Steer it to docs.scratchDir, which is
   // git-tracked and committed, so progress is preserved on GitHub. Warn-only.
   tmpGuard: boolean;
-  // handoffGuard BLOCKS scattered handoff markdown (HANDOFF.md / INBOX.md /
-  // inbox/*.md at any depth) on Write/Edit — handoffs route through the
-  // repo-root handoff.jsonl registry (`harness handoff add`), not ad-hoc files.
+  // handoffGuard BLOCKS scattered hand-off markdown (HANDOFF.md / INBOX.md /
+  // inbox/*.md at any depth) on Write/Edit — hand-offs route through the
+  // repo-root ING.jsonl board (`harness ing add [--to <repo>]`), not ad-hoc files.
   handoffGuard: boolean;
   // askqText DENIES the AskUserQuestion option-box tool (PreToolUse) and tells
   // the agent to ask in plain CHAT text instead (options inline, mark the

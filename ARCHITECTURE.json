@@ -27,7 +27,7 @@
           { "이름": "PreToolUse(Bash)", "역할": "도구 호출 직전 → pre bash", "구분": "surface", "상세": "enforcement 정규식 매칭. block=stdout JSON / warn=stderr" },
           { "이름": "PreToolUse(Write)", "역할": "쓰기 직전 → pre write", "구분": "surface", "상세": "경로·내용·우회패턴 매칭. stdout JSON / stderr" },
           { "이름": "PostToolUse", "역할": "도구 호출 직후 → post bash / edit", "구분": "surface", "상세": "exit/파일경로로 실패 라우팅, L0 편집 경고. errors 큐 / stderr" },
-          { "이름": "체크포인트", "역할": "commit/세션 → lint / verify / handoff", "구분": "surface", "상세": "검증·신선도·인계. exit code + stderr" }
+          { "이름": "체크포인트", "역할": "commit/세션 → lint / verify / ing", "구분": "surface", "상세": "검증·신선도·인계. exit code + stderr" }
         ]
       },
       {
@@ -66,11 +66,10 @@
               { "이름": "verify", "역할": "검증 명령 병렬 실행", "구분": "module", "상세": "명령은 config 선언" },
               { "이름": "errors", "역할": "(kind,code)→severity 분류", "구분": "module", "상세": "맵은 외부 JSON" },
               { "이름": "ledger", "역할": "에이전트 작업 등록 (중복 방지)", "구분": "module", "상세": "도메인 무관" },
-              { "이름": "ing", "역할": "진행중 작업 보드 (ING.jsonl)", "구분": "module", "상세": "work/next/pod · done=scrub. done은 id 정확매칭 우선, text fallback은 1건일 때만(대량삭제 방지)" },
+              { "이름": "ing", "역할": "진행보드 + cross-repo 인계 (ING.jsonl)", "구분": "module", "상세": "work/next/pod · done=scrub. `add --to <repo>`=형제 프로젝트 ING.jsonl 에 from 태그로 직접 전달(구 handoff 흡수). done은 id 정확매칭 우선, text fallback은 1건일 때만(대량삭제 방지)" },
               { "이름": "bitter-gate", "역할": "JSONL 빈도 분석", "구분": "module", "상세": "dormant 규칙 폐기 검토" },
               { "이름": "audit", "역할": "JSONL 카운트 기반 6축 스코어카드", "구분": "module", "상세": "" },
               { "이름": "gc", "역할": "마크다운 가이드 링크 drift 탐지", "구분": "module", "상세": "" },
-              { "이름": "handoff", "역할": "git 스냅샷 → 세션 인계", "구분": "module", "상세": "" },
               { "이름": "architecture", "역할": "설계 SSOT SessionStart 주입", "구분": "module", "상세": "repo-root ARCHITECTURE.json(우선)/.md 를 SessionStart additionalContext 로 주입 — CLAUDE.md 처럼 첫 턴부터 설계 트리가 컨텍스트에 상주. 80KB 초과 시 head+포인터로 절단. 부재 시 무음" },
               { "이름": "claudemd", "역할": "프로젝트 규칙 매턴 재주입", "구분": "module", "상세": "repo-root CLAUDE.md 를 매 UserPromptSubmit 마다 additionalContext 로 재주입 — commons inject 와 같은 운반 장치. CLAUDE.md 는 Claude Code 기본으로 SessionStart 1회만 들어가 대화가 길어지면 묻히는데, 매턴 재주입으로 프로젝트 규칙을 commons 급 salience 로 유지(MUST-FOLLOW 헤더 prepend). 선택적 `<!-- enforce:start/end -->` 블록이 있으면 그 hard-rules 섹션만 재주입(전체 맵 재전송 회피), 없으면 전체. 80KB 초과 절단. 부재 시 무음" },
               { "이름": "convergence", "역할": "incident 집계", "구분": "module", "상세": "스키마만 맞으면 범용" },
@@ -98,7 +97,7 @@
         "구분": "group",
         "상세": "YES면 ①, NO면 ③",
         "children": [
-          { "이름": "① 완전 범용", "역할": "이 repo에 포함", "구분": "grade", "상세": "pre/post/prompt/lint/verify/errors/ledger/bitter-gate/audit/gc/handoff/convergence/sync/pool/architecture/claudemd" },
+          { "이름": "① 완전 범용", "역할": "이 repo에 포함", "구분": "grade", "상세": "pre/post/prompt/lint/verify/errors/ledger/bitter-gate/audit/gc/ing/convergence/sync/pool/architecture/claudemd" },
           { "이름": "② 부분 범용", "역할": "패턴만 문서화, 코드 미포함", "구분": "grade", "상세": "구현이 특정 디렉토리 규약에 묶임 (extending.md)" },
           { "이름": "③ 도메인 전용", "역할": "포함 금지", "구분": "grade", "상세": "deploy/db/ssh/health/site/정산 등 특정 인프라·비즈니스에 묶임" }
         ]
@@ -141,7 +140,7 @@
           { "이름": "3. (선택) 규칙 추가", "역할": "cp config/enforcement.json .harness/", "구분": "step", "상세": "→ repo 규칙 append" },
           { "이름": "4. hook 배선", "역할": ".claude/settings.json에 pre/post/prompt delegate", "구분": "step", "상세": "" },
           { "이름": "5. 검증", "역할": "harness audit / harness ci list", "구분": "step", "상세": "" },
-          { "이름": "6. 운영", "역할": "commit 전 verify, 세션 끝 handoff, 규칙 추가 전 bitter-gate", "구분": "step", "상세": "" }
+          { "이름": "6. 운영", "역할": "commit 전 verify, 세션 끝 ing, 규칙 추가 전 bitter-gate", "구분": "step", "상세": "" }
         ]
       },
       {

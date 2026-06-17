@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## refactor(ing): retire the `handoff` feature — ING absorbs cross-repo hand-off
+
+- `harness handoff` (별도 `handoff.jsonl` 레지스트리 + add/ls/done/inject/snapshot) **완전 폐기**. cross-session/cross-repo 인계는 이제 ING 하나로 통합(c6 = c11 한 보드).
+- **새 기능 `harness ing add <text> --to <repo>`** — 형제 프로젝트(`~/<repo>`)의 `ING.jsonl` 에 `from` 태그를 달아 직접 남긴다. 대상 repo SessionStart 에 `📥<from>` 으로 표면화(work/show inject 가 from 구분 표시). 대상 repo 부재 시 거부.
+- 제거: `modules/handoff.ts` · cli `handoff` 등록/help · plugin+init `handoff inject` hook · setup hook 목록 · `lib/paths.ts` `HANDOFF_DIR` · init `.harness/handoff/` gitignore · keywords `session-handoff` tool→`harness ing`.
+- 유지: `handoff-guard`(HANDOFF.md/INBOX.md/inbox/*.md 흩뿌리기 차단 — 안내를 ING 로 전환). enforcement 코드 `HANDOFF-SCATTER` 유지.
+- c6 재정의: "인계는 ING 로, 흩뿌리지 말 것". 이 repo `handoff.jsonl` 3건 → ING 마이그레이션(2건 로컬 work · 1건 `--to kosmos` 전달).
+- Command count 43 → 42. 검증: `tsx cli/index.ts help` 로드 OK · `ing add --to kosmos` 스모크(kosmos ING.jsonl 에 from:harness 기록) · 전 JSON valid · handoff 핵심 잔여 0.
+
 ## refactor(init): absorb the hardcore profile into the default + retire `--hardcore`
 
 - `harness init --hardcore` 폐기. 흡수 후 **기본 init 이 곧 (구)hardcore** — strict 가 디폴트: `protectedBranches:[main,master]` · pre-push(verify + errors drain) hook · single-doc scaffolds(ARCHITECTURE.md/CHANGELOG.md/CLAUDE.md/state/) · ledger staleSec 1800 · enforcement 15룰(block-everything; `--no-verify`·force-push·destructive-git·debug-leftover·hardcoded-secret 차단) · severity fallback=block 가 전부 기본값.

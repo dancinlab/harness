@@ -14,8 +14,8 @@ harness/
 ├─ bin/harness          — launcher (autodetects tsx; npx fallback)
 ├─ cli/index.ts         — command dispatcher (L0) — registers every module
 ├─ lib/                 — engine core: config · paths · exec · log · json · lockdown (L0)
-├─ modules/             — 43 commands: pre/post hooks · lint/verify · guards (git/tmp/handoff/docs)
-│                         · injects (commons/claudemd/recommend/prefs/easy) · pr-cycle · handoff · ing · trail
+├─ modules/             — 42 commands: pre/post hooks · lint/verify · guards (git/tmp/scatter/docs)
+│                         · injects (commons/claudemd/recommend/prefs/easy) · pr-cycle · ing(+cross-repo --to) · trail
 │                         · imagine · research · watch · secret · lsp · worktree · pod/dojo/demi/micro-exp …
 ├─ config/             — bundled rule SSOTs: commons.md · recommend.tape · enforcement/keywords/severity.json
 ├─ templates/          — runbook bodies (sbs · bypass · go · brainstorm · pod · dojo · demi · micro-exp …)
@@ -28,7 +28,7 @@ harness/
 ├─ harness.config.json — this repo's harness config (+ .example)
 ├─ ARCHITECTURE.md     — final-architecture SSOT (update-in-place)
 ├─ CHANGELOG.md        — change history (append-only)
-└─ handoff.jsonl       — open-work handoff queue (c6 · done=scrub)
+└─ ING.jsonl           — in-progress board + cross-repo 인계 (c6·c11 · `ing add [--to <repo>]` · done=scrub)
 ```
 
 ## 작업 규칙 (this repo)

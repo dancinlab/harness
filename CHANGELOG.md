@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## docs(commons): split c17 by blocker type — compiler/runtime core → ING, the rest → direct fix
+
+c17 (upstream-fix) was "fix any upstream block directly". Split it by the kind of blocker:
+- **Compiler/runtime core** (compiler/codegen · runtime.a · gen3/gen4 byteeq · toolchain build
+  failure · OOM substrate) → do NOT touch directly; **hand off via ING**
+  (`harness ing add <symptom+repro> --to hexa-lang`). This is a high-risk zone where multiple
+  sessions dig deep concurrently, so a direct edit invites collisions/regressions — leave it on
+  the board and proceed. (This session itself never touched hexa-lang's compiler core, only its
+  cloud layer.)
+- **Everything else** (app logic · CLI · stdlib · cloud · config · docs, i.e. outside the core)
+  → still fix the upstream repo directly + land via `harness pr-cycle` (no local shim), in an
+  isolated `git worktree`, STOP on concurrent-session activity.
+Rationale: for the compiler/runtime substrate, ING hand-off IS the safe straight-ahead move (not
+an escape hatch) precisely because of the multi-session collision risk. commons rule count unchanged.
+
 ## docs(commons): consolidate — merge c6+c11 into one ING rule, add upstream-fix rule, renumber to c1–c17
 
 Two changes, one cleanup pass over the commons SSOT:

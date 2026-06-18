@@ -147,12 +147,17 @@ exception/bypass 마커(`# *-ok` 류) · opt-out 플래그 · skip 조건 · fal
 연장선 — "혹시 몰라서" 남기는 뒷문이 곧 우회습관. 이미 있는 마커 탈출구(force-push `# force-ok` 등)는
 기존 규칙이라 유지하되, **새로** 만드는 차단·가드·정책에는 기본적으로 우회구멍을 두지 않는다.
 
-## c17 — upstream 막힘은 직접 고쳐라 (hexa 등 · 필요시 반드시)
-작업이 의존하는 **upstream**(특히 `hexa`/`hexa-lang`, 그 외 dancinlab 소유 repo)의 버그·한계·
-미지원에 막히면 — 로컬에서 wrapper·shadow·fork·monkey-patch 로 **덮지 말고** 그 upstream repo 를
-**직접 고쳐 `harness pr-cycle` 로 정식 머지**한다(**필요시 반드시 진행** · "남의 코드"라 미루지 말 것).
-dancinlab 생태계는 한 몸 — harness 가 hexa 빌트인(`hexa cloud`/`dojo`/`deck`)에 의존하듯(c11), 도구
-사슬의 진짜 원인이 upstream 에 있으면 거기서 고치는 게 근본 수정이다. 다른 세션과 충돌할 수 있는 공유
-checkout 은 **격리 worktree**(`git worktree add`)에서 작업하고(동시 세션 활동 감지 시 STOP·c7·c9),
-upstream 도 c12 대로 문서+검증 머지로 닫는다. c1(근본수정)·c16(우회금지)의 연장 — 막힘의 진짜 위치가
-upstream 이면 로컬에 그림자를 만들지 말고 거기로 내려가 고친다.
+## c17 — upstream 막힘: 컴파일/런타임 코어는 ING 로, 그 외는 직접 fix
+작업이 의존하는 **upstream**(특히 `hexa`/`hexa-lang`, 그 외 dancinlab 소유 repo)의 버그·한계·미지원에
+막히면 — 막힘의 **종류로 갈라** 처리한다:
+- **컴파일러·런타임 코어**(compiler/codegen · runtime.a · gen3/gen4 byteeq · toolchain 빌드 실패 · OOM
+  등 substrate)는 **직접 고치지 말고 ING 로 인계**한다: `harness ing add <증상+재현> --to hexa-lang`(또는
+  해당 upstream). 이 영역은 **여러 세션이 동시에 깊게 파고드는 고위험 지대** — 함부로 손대면 충돌·회귀다
+  (이번 세션도 hexa-lang 컴파일러 코어는 건드리지 않고 cloud 레이어만 고쳤다). 인계로 남기고 본 작업은 진행.
+- **그 외**(응용 로직 · CLI · stdlib · cloud · 설정 · 문서 등 코어 밖)는 로컬에서 wrapper·shadow·fork·
+  monkey-patch 로 **덮지 말고** 그 upstream repo 를 **직접 고쳐 `harness pr-cycle` 로 정식 머지**한다
+  (**필요시 반드시 진행** · "남의 코드"라 미루지 말 것). 공유 checkout 은 **격리 worktree**(`git worktree
+  add`)에서 작업하고 동시 세션 활동 감지 시 STOP(c7·c9).
+dancinlab 생태계는 한 몸 — harness 가 hexa 빌트인(c11)에 의존하듯, 응용층 막힘의 진짜 원인이 upstream 에
+있으면 거기서 고치는 게 근본 수정(c1)이다. upstream 도 c12 대로 문서+검증 머지로 닫는다. c1·c16(우회금지)의
+연장 — 단, 컴파일/런타임 substrate 는 다세션 충돌 위험이 커 직접수정 대신 ING 인계가 안전한 정공법이다.

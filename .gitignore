@@ -6,6 +6,11 @@ logs/
 .DS_Store
 build/
 
+# ING.jsonl — 진행보드는 로컬 세션 상태 (브랜치 전환·reset 에 안 덮이게 untrack · 완료는 CHANGELOG 로 보존)
+ING.jsonl
+ING.jsonl.bak
+ING.jsonl.tmp.*
+
 # agent worktrees (transient · harness Agent isolation)
 .claude/worktrees/
 # npm lockfile (regenerable)

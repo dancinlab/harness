@@ -264,7 +264,7 @@ export async function runInit(args: string[]): Promise<number> {
 
   // 3. .gitignore — ensure machine log dir is ignored
   const giPath = resolve(REPO_ROOT, ".gitignore");
-  const needLines = [".harness/logs/"];
+  const needLines = [".harness/logs/", "ING.jsonl", "ING.jsonl.bak", "ING.jsonl.tmp.*"];
   const existing = existsSync(giPath) ? readFileSync(giPath, "utf8") : "";
   const missing = needLines.filter((l) => !existing.split("\n").some((x) => x.trim() === l));
   if (missing.length) {

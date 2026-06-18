@@ -51,8 +51,10 @@ SSOT quickref 1줄. 메인 CLAUDE.md = 프로젝트 설명 + 트리구조(노드
 - **진행추적**: `harness ing add <text>`(작업) · `next`(다음) · `pod add`(실행중 GPU pod) · 완료분은
   `harness ing done <id>` = **scrub**(제거 → 완료는 CHANGELOG 로). SessionStart 에 자동 표면화되니 "지금
   뭐 하던 중" 을 남겨라. **상태변동 트리거(파일 변동과 무관)**: 파일이 하나도 안 바뀌어도 작업 **상태**가
-  바뀌면(시작·진행단계 전환·블로커·완료·다음 한 수 결정) 그 턴에 보드를 현행화한다(add/next/done). ING 는
-  커밋 불필요(빠른 갱신), 의미있는 코드 변동은 c12 로 닫는다.
+  바뀌면(시작·진행단계 전환·블로커·완료·다음 한 수 결정) 그 턴에 보드를 현행화한다(add/next/done).
+  **`ING.jsonl` 은 gitignore(untrack)** — 진행보드는 **로컬 세션 상태**라 브랜치 전환·`reset`/`checkout` 에
+  덮이지 않아야 한다(tracked 면 그 함정에 빠진다). 빠른 갱신·커밋 불필요. 의미있는 코드 변동은 c12 로 닫고,
+  완료·인계 내용은 CHANGELOG/대상 repo 보드에 남아 보존된다.
 - **인계**: 같은 repo 는 `harness ing add <text>`, **타 프로젝트로는 `harness ing add <text> --to <repo>`**
   — 대상 repo 의 `ING.jsonl` 에 `from` 태그를 달아 직접 남기고, 그 repo SessionStart 에 `📥<from>` 으로
   표면화된다. `HANDOFF.md`·`INBOX.md`·`inbox/*.md` 흩뿌리기 금지(handoff-guard 차단).

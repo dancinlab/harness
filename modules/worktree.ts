@@ -164,7 +164,7 @@ export async function worktreeAddAdvisory(cmd: string): Promise<string> {
     for (const w of stranded) lines.push(`    • ${w.path} [${w.branch}] ${w.dirty ? "dirty " : ""}${w.ahead ? "unpushed:" + w.ahead : ""}`);
   }
   // branch-reuse stale-base warning (anima #1105)
-  const m = cmd.match(/git\s+worktree\s+add\s+(?:--\S+\s+)*-b\s+(\S+)/);
+  const m = cmd.match(/git\s+worktree\s+add\b.*?-b\s+(\S+)/);
   if (m) {
     const br = m[1].replace(/['"]/g, "");
     const exists = (await git(`git rev-parse --verify -q ${JSON.stringify(br)}`)).code === 0;

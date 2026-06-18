@@ -1,5 +1,29 @@
 # CHANGELOG
 
+## qa(harness): full-module QA sweep — fix 7 bugs (atlas · enforcement · folders · worktree)
+
+Ran a QA sweep across all ~55 commands (4 parallel agents, throwaway repos). Runbook/util
+commands clean; fixed 7 real defects:
+- **atlas regex injection (data loss)** — `add`/`link` built a `RegExp` from the raw id, so
+  `link "row."` matched & mutated UNRELATED rows. Now compares the first table cell by exact
+  string (`cellId`), never a regex.
+- **atlas link to nonexistent id** — used to print success while writing nothing; now refuses
+  with exit 1 ("add it first").
+- **atlas unescaped `|`** — a `|` in a claim spawned phantom table columns; now escaped to `\|`.
+- **enforcement `H-RM-RF-ROOT` under-match (safety)** — `rm -rf /*`, `rm -rf / && …`, and
+  `rm -fr /` all slipped through (end-anchor `\s*$` + hardcoded r-before-f order). New regex:
+  r/f flags order- & case-insensitive via lookahead, no end-anchor (so trailing glob/chained
+  commands still block). `rm -rf build/` / `rm file.txt` still pass.
+- **folders scaffold path traversal** — `folders scaffold ../x` wrote a CLAUDE.md OUTSIDE the
+  repo; added a `relative(REPO_ROOT, abs)` containment guard (refuses `..`-escaping targets).
+- **worktree stale-base warning regex** — only matched `add -b <branch> <path>`; the standard
+  `add <path> -b <branch>` order never warned. Loosened to `add\b.*?-b\s+(\S+)`.
+
+Deferred (reported, not fixed): verdict `record` arg-flattening (argv→shell quoting is an
+inherent trade-off — forcing quotes would break `record id "a && b"`), `git -c … push --force`
+adjacency bypass (very low real-world likelihood), and `docsActive()` keying on `.md` only
+while `lint` gates on `.json` (a default mismatch — design call, not a crash).
+
 ## qa(ing): full-module QA + `done` multi-id / unified message; CLAUDE post-impl QA rule
 
 Ran a full QA sweep of the `ing` module (24 cases over show·add·next·done·pod·inject·--to

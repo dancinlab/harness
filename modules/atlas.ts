@@ -29,6 +29,13 @@ function read(): string {
   return readFileSync(p, "utf8");
 }
 
+// First table cell = the atom id. Compare by EXACT string (not a regex built from
+// the user's id — a raw id like `row.` or `a|b` would otherwise match/clobber
+// unrelated rows). Returns null for header/separator/non-rows.
+function cellId(line: string): string | null {
+  const m = /^\|\s*([^|]*?)\s*\|/.exec(line);
+  return m ? m[1].trim() : null;
+}
 function rows(text: string): string[] {
   return text.split("\n").filter((l) => /^\| /.test(l) && !/^\|\s*id\s*\|/.test(l) && !/^\|-+/.test(l.replace(/\s/g, "")));
 }
@@ -44,9 +51,11 @@ export async function runAtlas(args: string[]): Promise<number> {
       info("usage: harness atlas add <id> <claim...>");
       return 1;
     }
-    const lines = text.split("\n").filter((l) => !new RegExp(`^\\|\\s*${id}\\s*\\|`).test(l));
+    const lines = text.split("\n").filter((l) => cellId(l) !== id);
     const sep = lines.findIndex((l) => /^\|-+/.test(l.replace(/\s/g, "")));
-    const row = `| ${id} | ${claim} | 🟠 unverified | — |`;
+    // Escape `|` (else it adds phantom table columns) and flatten newlines.
+    const safe = claim.replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
+    const row = `| ${id} | ${safe} | 🟠 unverified | — |`;
     if (sep >= 0) lines.splice(sep + 1, 0, row);
     else lines.push(row);
     writeFileSync(atlasPath(), lines.join("\n"), "utf8");
@@ -64,11 +73,16 @@ export async function runAtlas(args: string[]): Promise<number> {
     const vfile = resolve(REPO_ROOT, "state", vid + ".txt");
     let tier = "🟠 unverified";
     if (existsSync(vfile)) tier = /# tier: PASS/.test(readFileSync(vfile, "utf8")) ? "🟢 PASS" : "🔴 FAIL";
-    const lines = text.split("\n").map((l) =>
-      new RegExp(`^\\|\\s*${id}\\s*\\|`).test(l)
-        ? l.replace(/\|[^|]*\|[^|]*\|$/, `| ${tier} | state/${vid}.txt |`)
-        : l
-    );
+    let found = false;
+    const lines = text.split("\n").map((l) => {
+      if (cellId(l) !== id) return l;
+      found = true;
+      return l.replace(/\|[^|]*\|[^|]*\|$/, `| ${tier} | state/${vid}.txt |`);
+    });
+    if (!found) {
+      info(`atlas: no atom "${id}" — add it first: harness atlas add ${id} <claim>`);
+      return 1;
+    }
     writeFileSync(atlasPath(), lines.join("\n"), "utf8");
     info(`atlas: ${id} ← ${vid} (${tier})`);
     return 0;

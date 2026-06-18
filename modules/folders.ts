@@ -127,6 +127,12 @@ export async function runFolders(args: string[]): Promise<number> {
       return 1;
     }
     const abs = repoPath(target);
+    // Containment: never scaffold outside the repo (`scaffold ../x` must not write
+    // a CLAUDE.md outside REPO_ROOT). `..`-prefixed relative path = escaped.
+    if (relative(REPO_ROOT, abs).startsWith("..")) {
+      warn(`folders: '${target}' 는 repo 밖 — repo 내부 디렉토리만 scaffold 합니다 (no path traversal)`);
+      return 1;
+    }
     const path = resolve(abs, fg().filename);
     if (existsSync(path) && !args.includes("--force")) {
       warn(`${relative(REPO_ROOT, path)} already exists (use --force to overwrite)`);

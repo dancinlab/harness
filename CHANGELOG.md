@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## qa(ing): full-module QA + `done` multi-id / unified message; CLAUDE post-impl QA rule
+
+Ran a full QA sweep of the `ing` module (24 cases over show·add·next·done·pod·inject·--to
+in throwaway repos). All green except two real gaps in `done`, now fixed:
+- **multi-id** — `harness ing done 1 2 3` scrubs several at once. Guard: only when EVERY
+  token is a real id (a stray non-id refuses the whole batch instead of part-scrubbing),
+  so `done task 1` still text-searches "task 1" rather than letting the "1" token hijack it.
+- **message** — the not-found path said "no work/next item matching" even though `done`
+  now also targets pods; unified to "no item matching" (+ usage hint lists pods as `(pod)`).
+Also recorded a `CLAUDE.md` working rule: **after any feature/bugfix, run a full QA sweep**
+of that feature (all subcommands + edge cases, PASS/FAIL tally per c2) and fix what it
+finds before closing — cross-checking with direct args when a failure smells like a test
+harness artifact (e.g. zsh not word-splitting `$var`, which faked 2 failures this run).
+
 ## fix(ing): `harness ing done <id>` now scrubs pods too (was work/next only)
 
 Root cause: the `done` handler filtered with `r.kind !== "pod"` in BOTH the id match

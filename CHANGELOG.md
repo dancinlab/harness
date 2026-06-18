@@ -1,5 +1,21 @@
 # CHANGELOG
 
+## fix(ing): untrack ING.jsonl (gitignore) — branch-switch/reset no longer clobbers the board
+
+ING.jsonl was git-tracked, so a `git checkout`/`reset --hard` (e.g. switching branches, or a
+zombie reset) rolled the board back to the committed version — silently wiping the session's
+`ing add/done` edits. (This bit us mid-session during the hexa-cloud work.) It also contradicted
+c6's "커밋 불필요". Fix: the in-progress board is **local session state** → gitignore it.
+- `.gitignore`: add `ING.jsonl` (+ `.bak`/`.tmp.*` rotation); `git rm --cached ING.jsonl` (file
+  kept locally, just un-tracked).
+- `init.ts`: gitignore scaffold now seeds those 3 lines, so every newly-init'd repo is safe.
+- commons c6: ING.jsonl is now stated as **gitignore(untrack)** — branch/reset can't overwrite
+  it; completed/handoff content still persists via CHANGELOG and the target repo's board.
+- ing.ts: dropped the stale "(commit ING.jsonl)" hint; `--to` message now says the target repo
+  surfaces it at next SessionStart (no commit needed). CLAUDE tree updated.
+Note: sibling repos (hexa-lang, anima, …) are still tracked — they pick this up on their next
+`harness init`/manual `git rm --cached ING.jsonl`; not auto-migrated here.
+
 ## qa(harness): fix the 3 deferred QA findings + commons rules (수렴진화 3-state · QA → c2)
 
 Resolved the 3 items the full-module QA sweep had deferred:

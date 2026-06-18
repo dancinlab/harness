@@ -28,7 +28,7 @@ harness/
 ├─ harness.config.json — this repo's harness config (+ .example)
 ├─ ARCHITECTURE.md     — final-architecture SSOT (update-in-place)
 ├─ CHANGELOG.md        — change history (append-only)
-└─ ING.jsonl           — in-progress board + cross-repo 인계 (c6·c11 · `ing add [--to <repo>]` · done=scrub)
+└─ ING.jsonl           — in-progress board (gitignored · 로컬 세션 보드) + cross-repo 인계 (c6 · `ing add [--to <repo>]` · done=scrub)
 ```
 
 ## 작업 규칙 (this repo)

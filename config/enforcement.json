@@ -36,7 +36,7 @@
     {
       "id": "H-RM-RF-ROOT",
       "desc": "rm -rf on a broad path",
-      "match": "\\brm\\s+-[a-zA-Z]*r[a-zA-Z]*f[a-zA-Z]*\\s+(/|~|\\$HOME|\\*)\\s*$",
+      "match": "\\brm\\s+-(?=[a-zA-Z]*[rR])(?=[a-zA-Z]*[fF])[a-zA-Z]+\\s+(/|~|\\*|\\$HOME)",
       "exceptions": ["# rm-ok"],
       "action": "block",
       "reason": "rm -rf on / ~ $HOME / 또는 bare * 차단. 경로를 좁히거나 `# rm-ok <사유>`."

@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## fix(pre): PreToolUse block schema — every code-level guard was a silent no-op
+
+Root cause for "직접 CLI 막았는데 `vastai destroy` 가 그냥 실행됨": `emitBlock` emitted the
+legacy `{"decision":"block"}` (+exit 0), which current Claude Code **no longer honors for
+PreToolUse** — it only reads `hookSpecificOutput.permissionDecision`. So the guard printed
+its reason to stdout and the tool ran anyway. This silently neutered ALL code-level
+PreToolUse blocks (force-push · cloud-raw c11 · poll c19) **and** every config
+`action:"block"` rule across every repo — they had zero teeth.
+
+- `modules/pre.ts` `emitBlock` now emits the current schema as the operative key —
+  `{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny",
+  "permissionDecisionReason":"[id] …"}}` — and keeps the legacy `decision`/`reason`
+  fields appended for older Claude Code builds (harmless; new builds read
+  hookSpecificOutput, old read decision). One function → fixes pre bash + pre write +
+  all config block rules at once.
+- Verified via the actual `pre bash` hook output: raw `vastai destroy` and
+  `git push --force` now return `permissionDecision:"deny"`. `@convergence
+  PRETOOLUSE_DENY_SCHEMA` ossified inline.
+- Propagation: needs commit → `harness self-update` (global `~/.harness/cli` is
+  git-commit-based, not working-tree); per-repo `.harness-engine` submodules pick it
+  up on their next bump.
+
 ## feat(heartbeat-guard): c22 — warn when a LIVE long-runner goes unchecked >10min (abandonment)
 
 c19 caps how OFTEN you may poll (anti-cache-bust); the OPPOSITE failure mode had no

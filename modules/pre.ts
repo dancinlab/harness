@@ -74,8 +74,22 @@ function parseToolInput(): Record<string, unknown> {
   }
 }
 
+// PreToolUse deny. Current Claude Code honors ONLY `hookSpecificOutput.permissionDecision`
+// for PreToolUse — the legacy top-level `decision:"block"` is ignored for this event,
+// so emitting only that made EVERY code-level guard (force-push · cloud-raw c11 · poll
+// c19) and every config `action:"block"` rule a silent no-op (stdout text, zero teeth).
+// We emit the current schema as the operative key and keep the legacy fields appended
+// for older CC builds (harmless — new builds read hookSpecificOutput, old read decision).
+// @convergence state=ossified id=PRETOOLUSE_DENY_SCHEMA value="pre-hook block must emit hookSpecificOutput.permissionDecision=deny (current PreToolUse schema), not the legacy {decision:block} which current Claude Code ignores — else the guard prints but never blocks" threshold="a session ran raw `vastai destroy` despite c11 because emitBlock emitted only {decision:block}+exit0, which CC silently dropped; verified the new schema blocks via the actual `pre bash` hook output"
 function emitBlock(id: string, reason: string): number {
-  process.stdout.write(JSON.stringify({ decision: "block", reason: `[${id}] ${reason}` }) + "\n");
+  const full = `[${id}] ${reason}`;
+  process.stdout.write(
+    JSON.stringify({
+      hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: full },
+      decision: "block", // legacy fallback for older Claude Code builds
+      reason: full,
+    }) + "\n"
+  );
   appendJsonl(LOGS.mistakes, { kind: "pre_block", rule_id: id, reason });
   return 0;
 }

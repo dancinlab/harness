@@ -77,6 +77,19 @@ harness/
 
 ---
 
+## 슬래시 명령 (플러그인 · 공용셋)
+
+`plugin/commands/*.md` — 전체 사용자-대면 명령이 **Claude Code 슬래시 명령**으로 노출된다(sidecar 패턴).
+각 `.md` 는 프런트매터(`description` + **Triggers** 자연어구 + `argument-hint` + `allowed-tools: Bash`)와
+`!`harness <cmd> $ARGUMENTS`` 본문의 얇은 위임자 — Claude Code 가 description/Triggers 로 인지해
+`/paper`·`/imagine`·`/pr-cycle`·`/sbs`·`/fleet`·`/ing`·`/verify` 등을 띄운다(한국어·영어 트리거 양쪽).
+
+**공용셋(global)·프로젝트 무관**: 명령이 플러그인 1곳에 살고 harness 플러그인으로 배포되므로 프로젝트마다
+복사/갱신할 필요가 없다. 중앙 갱신 = `harness self-update` + 플러그인 update. 재생성기 = `_tools/gen_commands.py`
+(데이터테이블 → `.md` 일괄 생성). hook-내부 전용(`pre`/`post`/`prompt`)은 슬래시로 노출하지 않는다.
+
+---
+
 ## 빠른 시작
 
 ### 1. 하네스를 repo 에 둔다 (submodule 권장)

@@ -288,6 +288,26 @@
         ]
       },
       {
+        "이름": "plugin — 배포 (공용셋)",
+        "역할": "harness 를 Claude Code 플러그인으로 배포 — 훅 + 슬래시 명령. 프로젝트 무관·중앙 1곳",
+        "구분": "group",
+        "상세": ".claude-plugin/marketplace.json(plugins[].source=./plugin) → plugin/.claude-plugin/plugin.json(v0.2.0). 갱신=harness self-update + plugin update",
+        "children": [
+          {
+            "이름": "plugin/hooks/hooks.json",
+            "역할": "거버넌스 훅 배선 (guards + injects + SessionStart)",
+            "구분": "config",
+            "상세": "command -v harness 가드 — CLI 부재 시 무음"
+          },
+          {
+            "이름": "plugin/commands/*.md",
+            "역할": "전체 사용자-대면 명령의 슬래시 노출 (sidecar 패턴)",
+            "구분": "config",
+            "상세": "프런트매터(description+Triggers+argument-hint+allowed-tools) + `!`harness <cmd> $ARGUMENTS`` 위임자. 공용셋=프로젝트 무관. 재생성=_tools/gen_commands.py. hook-내부(pre/post/prompt) 제외"
+          }
+        ]
+      },
+      {
         "이름": "module-grading — 모듈 분류",
         "역할": "'규칙을 JSON으로 빼면 다른 repo에서 그대로 도나?'",
         "구분": "group",

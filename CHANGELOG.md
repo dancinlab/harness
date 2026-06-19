@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## feat(plugin): global slash-command set — every harness command recognized as /cmd (sidecar pattern)
+
+`plugin/commands/*.md` 50개 신설 — 하네스의 전체 사용자-대면 명령을 sidecar식 슬래시 명령으로 노출. 각 `.md`는 프런트매터(rich `description` + **Triggers** 자연어구 + `argument-hint` + `allowed-tools: Bash`) + `!`harness <cmd> $ARGUMENTS`` 본문의 얇은 위임자. Claude Code가 description/Triggers로 인지 → `/paper`·`/imagine`·`/pr-cycle`·`/sbs`·`/fleet`·`/ing`·`/verify`… 한국어("논문 만들어"·"PR 돌려"·"진행보드") + 영어 트리거 양쪽.
+
+- **공용셋(shared/global) · 프로젝트 무관**: 명령이 플러그인 1곳(commands/)에 살고 harness 플러그인으로 배포 → 프로젝트마다 복사/갱신 불필요. 중앙 갱신 = `harness self-update` + 플러그인 update. (plugin.json 0.1.0→0.2.0 으로 update 트리거)
+- **범위**: tools(paper·imagine·research·watch·secret·lsp) · runbooks(sbs·abg·afg·fleet·pod·dojo·micro-exp·bypass·go·brainstorm·gap·demi) · gates/ledgers(pr-cycle·lint·ci·verify·audit·gc·docs·folders·end·worktree·ing·verdict·atlas·upstream·convergence·sync·errors·ledger·bitter-gate·lockdown·pool) · config(recommend·prefs·easy·commons·architecture·claudemd) · setup(init·install-hooks·update·self-update·uninstall). hook-intern 전용(pre·post·prompt)은 제외.
+- **생성 규율**: `_tools/gen_commands.py` 데이터테이블에서 일괄 생성(일관성·재생성 가능). YAML 프런트매터 안전성 검증(콜론-스페이스 0·50/50 파싱) + 본문은 `command -v harness` 가드(미설치 시 안내).
+
 ## feat(paper): demiurge-house scientific-paper command (scaffold · cover · build · g51 gate)
 
 `harness paper` 신설 — demiurge 하우스 페이퍼 규율을 도구로 박제(self-improving tool). 매 캠페인마다 손으로 재조립하던 LaTeX 프리앰블·표지·빌드·페이지 게이트를 한 명령으로 통일.

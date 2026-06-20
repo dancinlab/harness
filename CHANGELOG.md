@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## fix(guard): rm -rf guard was over-blocking — now matches the root ITSELF, not every absolute path (plugin 0.9.0 → 0.9.1)
+
+`DANGER-RM-RF-ROOT` / `H-RM-RF-ROOT` matched any target starting with `/` (or `~`/`$HOME`), so legitimate
+`rm -rf /tmp/x`, `rm -rf ~/foo`, `rm -rf /Users/me/build` were all vetoed — too conservative (kept tripping
+real work, needing `# rm-ok` every time). Tightened to a boundary-anchored target: it now blocks ONLY the
+catastrophic roots — bare `/` · `/*` · `~` · `~/` · `~/*` · `$HOME`(`/`,`/*`) · `${HOME}` · bare `*` — while
+specific subpaths pass. The `# rm-ok <reason>` escape stays for an intentional root-level delete.
+
+- `modules/danger-guard.ts` + `config/enforcement.json` (mirrored SSOTs) — same tightened regex.
+- Verified with an 18-case block/allow matrix (10 catastrophic → block, 8 subpaths → allow): 18/18.
+- README guard row clarified (root-only). plugin.json 0.9.0 → 0.9.1.
+
 ## feat(imagine): video generation — Seedance 2.0 text-to-video + image-to-video (plugin 0.8.0 → 0.9.0)
 
 `imagine` was image-only. It now generates video too, routed by the output extension, with exact pinned

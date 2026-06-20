@@ -29,9 +29,11 @@ function hookSpec(): Record<string, unknown[]> {
       entry('harness prompt "$CLAUDE_USER_PROMPT"'),
       entry("harness commons inject"),
       entry("harness claudemd inject"),
+      entry("harness architecture inject"),
       entry("harness recommend inject"),
       entry("harness prefs inject"),
       entry("harness easy inject"),
+      entry("harness ing inject"),
     ],
     SessionStart: [
       entry("harness commons inject"),

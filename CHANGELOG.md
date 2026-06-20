@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## feat(hooks): inject ARCHITECTURE.json + ING.jsonl every turn (UserPromptSubmit), not just SessionStart (plugin 0.4.0 → 0.4.1)
+
+`architecture inject` and `ing inject` were wired ONLY into SessionStart — surfaced once per
+session, then buried as the conversation grew. The design SSOT (ARCHITECTURE.json) and the
+in-progress board (ING.jsonl) deserve the same per-turn salience that `claudemd inject` (CLAUDE.md)
+and `commons`/`recommend` already get. Both inject commands are event-agnostic (they echo the
+received `hook_event_name`), so this is pure hook wiring — no code change.
+
+- `hooks/hooks.json` + `modules/setup.ts` — added `architecture inject` and `ing inject` to the
+  UserPromptSubmit chain (kept in SessionStart too). So the design tree + the WIP board re-inject
+  every turn.
+- `.claude-plugin/plugin.json` 0.4.0 → 0.4.1 so `/plugin update` re-copies the new hooks.json.
+- ARCHITECTURE architecture-module node updated (SessionStart → SessionStart + every UserPromptSubmit).
+
 ## chore(plugin): bump 0.3.0 → 0.4.0 so `/plugin update` re-copies the bundled CLI
 
 `claude plugin update` only re-copies the installed plugin cache when plugin.json's VERSION

@@ -9,6 +9,12 @@
 // per-command, visible opt-out (c16-compatible) — but is NOT a config toggle.
 //
 // @convergence state=ossified id=CODE_GUARD_DESTRUCTIVE_BYPASS value="--no-verify (gate bypass), git reset --hard/clean -fd (working-tree destroy), rm -rf / ~ $HOME (catastrophic), curl|wget|sh (remote code exec) are blocked in CODE before config rules — not regex-only — so a profile edit can't disable them; inline `# ...-ok` markers still allow an explicit per-command override" threshold="these were block-policy but enforcement.json-only; a regex/profile edit (or the stdin-input bug that disabled the whole pre layer) would have left the irreversible/gate-bypass commands unguarded"
+//
+// EXCEPTION: the rm-rf-root rule is opt-in via `config.dangerGuard.rmRfRoot` (default
+// false = OFF, the user opted out). The other three (no-verify · reset-hard · curl|sh)
+// stay code-level always-on — they're cheaper to false-trip and easy to escape inline.
+import { config } from "../lib/config.ts";
+
 type Hit = { id: string; reason: string };
 
 const RULES: { id: string; re: RegExp; ok: string; why: string }[] = [
@@ -44,7 +50,9 @@ const RULES: { id: string; re: RegExp; ok: string; why: string }[] = [
 
 // Returns the first matching destructive/bypass rule (honoring its inline marker), or null.
 export function detectDangerousBash(rawCmd: string): Hit | null {
+  const rmRfRoot = config().dangerGuard.rmRfRoot;
   for (const r of RULES) {
+    if (r.id === "DANGER-RM-RF-ROOT" && !rmRfRoot) continue; // opted out (default)
     if (r.re.test(rawCmd) && !rawCmd.includes(r.ok)) return { id: r.id, reason: r.why };
   }
   return null;

@@ -134,6 +134,10 @@ export interface HarnessConfig {
   // ing staleness (c6) — warn at session Stop when ≥ `editThreshold` code files were
   // edited since the ing board was last touched (add/next/done). 0 disables the nudge.
   ing: { editThreshold: number };
+  // danger-guard — code-level destructive-command blocks. rmRfRoot gates ONLY the
+  // catastrophic `rm -rf /` · `~` · `$HOME` · `*` block; default false = NOT guarded
+  // (the user opted out). no-verify / reset-hard / curl|sh remain always-on (code).
+  dangerGuard: { rmRfRoot: boolean };
   // mem-guard — OOM prevention. PreToolUse preflight warns (warnPct) / blocks
   // (blockPct) a background-spawn (`&`/nohup) when system available RAM is low; the
   // opt-in launchd watchdog (`harness mem-guard install`) notifies every
@@ -211,6 +215,7 @@ const DEFAULTS: HarnessConfig = {
   ledger: { staleSec: 3600 },
   ing: { editThreshold: 5 },
   memGuard: { enabled: true, warnPct: 15, blockPct: 0, watchdogIntervalSec: 45 },
+  dangerGuard: { rmRfRoot: false },
 };
 
 function deepMerge<T>(base: T, over: Partial<T>): T {

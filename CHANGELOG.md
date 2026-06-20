@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## fix(plugin): `commands: []` — kill duplicate slash entries (`/fleet` + `/harness:fleet` → bare `/fleet` only)
+
+The picker showed EVERY command twice: a bare `/fleet` (from `harness shadow`'s user-scope
+`~/.claude/commands/fleet.md`) AND a namespaced `/harness:fleet` (from the plugin auto-loading its
+`commands/` dir). Root cause (c1): the plugin double-registered commands that `harness shadow` already
+exposes bare. Claude Code namespaces plugin commands as `/<plugin>:<cmd>` UNCONDITIONALLY (verified
+against the plugins-reference manifest schema — there is no bare-command escape hatch from inside a
+plugin; per-command "micro-plugins" still yield `/fleet:fleet`, NOT bare). The retired sidecar showed
+bare single commands because it shipped them as user-scope files, not as plugin commands.
+
+Fix: `.claude-plugin/plugin.json` adds `"commands": []`, which REPLACES the default `commands/`
+directory scan with an empty list (plugins-reference: the `commands` field "replaces the default") →
+the plugin registers ZERO namespaced commands. Slash commands now come ONLY from `harness shadow`'s
+bare `~/.claude/commands/*.md` delegators → one bare `/fleet` in the picker, no `/harness:fleet`. The
+`commands/` files still ship in the plugin (they are the source shadow mirrors from) — they are just
+not loaded as plugin commands. Aligns the plugin with harness's own shadow design. plugin.json bumped
+0.9.6 → 0.9.7; `comment_commands` field documents the intentional-empty so it is not "fixed" later.
+Takes effect after `/plugin update` + reload. Docs lockstep: CLAUDE.md tree + ARCHITECTURE plugin
+node + commands node. (Also `commands/fleet-lab.md` added so `/fleet-lab` shows bare via shadow.)
+
 ## feat(fleet): `fleet lab` — research-driven perpetual frontier lab (a `fleet` subcommand)
 
 A research-specialized variant of `/fleet`. Each lane is a BLOCKING FRONTIER (a wall); every round

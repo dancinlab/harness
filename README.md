@@ -81,19 +81,25 @@ harness/
 
 ## 슬래시 명령 (플러그인 · 공용셋)
 
-`commands/*.md` — 전체 사용자-대면 명령이 **Claude Code 슬래시 명령**으로 노출된다(슬래시-명령 패턴).
-각 `.md` 는 프런트매터(`description` + **Triggers** 자연어구 + `argument-hint` + `allowed-tools: Bash`)와
-`!`harness <cmd> $ARGUMENTS`` 본문의 얇은 위임자 — Claude Code 가 description/Triggers 로 인지해
-`/paper`·`/imagine`·`/pr-cycle`·`/sbs`·`/fleet`·`/ing`·`/ci`·`/kick`(=`hexa kick` 발견엔진·alias `drill`)·`/poll`(≥10분 자가폴링 런북) 등을 띄운다(한국어·영어 트리거 양쪽).
+`commands/*.md` — 전체 사용자-대면 명령이 **bare `/cmd` 슬래시 명령**으로 노출된다(`/paper`·`/imagine`·
+`/pr-cycle`·`/sbs`·`/fleet`·`/fleet-lab`·`/ing`·`/ci`·`/kick`·`/poll` …). 각 `.md` 는 프런트매터(`description` +
+**Triggers** 자연어구 + `argument-hint` + `allowed-tools: Bash`)와 `!`harness <cmd> $ARGUMENTS`` 본문의 얇은
+위임자 — Claude Code 가 description/Triggers 로 인지한다(한국어·영어 트리거 양쪽).
+
+**노출 경로 = `harness shadow` (bare · user-scope)**: Claude Code 는 플러그인 명령을 **무조건 `/plugin:cmd`**
+네임스페이스로 띄우므로, 그대로 두면 `harness shadow` 의 bare `/fleet` 와 플러그인 `/harness:fleet` 가 picker 에
+**2줄로 중복**된다. 그래서 `.claude-plugin/plugin.json` 이 **`commands: []`** (기본 `commands/` 스캔을 빈 목록으로
+대체)로 플러그인 명령 등록을 끄고, 슬래시 노출은 `harness shadow` 가 `commands/*.md` 를 `~/.claude/commands/` 에
+bare `/cmd` 위임자로 미러하는 단일 경로만 쓴다(마커 추적 · 손수 작성한 동명 파일은 보존 · `shadow remove` 로 정리)
+→ picker 에 bare 1줄.
 
 **자기완결(self-contained) 플러그인 · 프로젝트 무관**: marketplace `source: "."` 라 **repo 루트가 곧 플러그인** —
-훅·명령뿐 아니라 `harness` CLI 본체(`bin/`·`cli/`·`lib/`·`modules/`·`config/`)까지 한 덩어리로 실린다.
-훅은 `${CLAUDE_PLUGIN_ROOT}/bin/harness`(플러그인 자기 번들)를 실행하므로, **`/plugin update` + 리로드 한 번에
-CLI·hooks·commands 가 동시에 최신화**된다 — 프로젝트마다 복사·갱신도, 별도 `harness self-update` 도 불필요.
-(전역 `harness` on PATH 는 폴백으로 유지 — 번들이 없으면 그걸 쓴다.) 재생성기 = `_tools/gen_commands.py`
-(데이터테이블 → `.md` 일괄 생성). hook-내부 전용(`pre`/`post`/`prompt`)은 슬래시로 노출하지 않는다.
-
-> 플러그인을 안 쓰는 환경 폴백: `harness shadow plan` 이 `commands/*.md` 를 `~/.claude/commands/` 에 얇은 `/cmd` 위임자로 미러한다(마커 추적 · 손수 작성한 동명 파일은 보존 · `shadow remove` 로 정리). 사이드카 의존 0.
+훅뿐 아니라 `harness` CLI 본체(`bin/`·`cli/`·`lib/`·`modules/`·`config/`·`commands/`)까지 한 덩어리로 실린다
+(`commands/` 는 shadow 가 미러하는 SOURCE 로 실릴 뿐, 플러그인 명령으로 로드되진 않는다). 훅은
+`${CLAUDE_PLUGIN_ROOT}/bin/harness`(플러그인 자기 번들)를 실행하므로, **`/plugin update` + 리로드 한 번에
+CLI·hooks 가 최신화**된다 — 프로젝트마다 복사·갱신도, 별도 `harness self-update` 도 불필요(슬래시는 갱신 후
+`harness shadow` 재실행으로 반영). (전역 `harness` on PATH 는 폴백.) 재생성기 = `_tools/gen_commands.py`.
+hook-내부 전용(`pre`/`post`/`prompt`)은 슬래시로 노출하지 않는다.
 >
 > `ing add` 자유텍스트에 셸 특수문자(괄호·따옴표·`$`·`→`)가 있으면 슬래시 `$ARGUMENTS` 무인용 확장이 깨진다 — `printf '%s' "<text>" \| harness ing add --stdin` (STDIN 경로)로 안전하게 등록한다(`--to <repo>` 와도 호환).
 

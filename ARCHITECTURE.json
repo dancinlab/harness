@@ -197,6 +197,12 @@
                 "상세": "new=PAPERS/<slug>/{main.tex(이모지 제목·g5 tier-badge·TikZ+pgfplots·fal.ai 표지 include)·references.bib·PAPER.md} → cover(imagine 위임) → build(xelatex+bibtex×3·pages/refs 보고·g51 ≥10p 게이트·깨진/빈 PDF 실패처리). 손 조립 규율을 도구로 박제(self-improving)"
               },
               {
+                "이름": "kick (alias drill)",
+                "역할": "hexa-lang gap-breakthrough/discovery 엔진 패스스루",
+                "구분": "module",
+                "상세": "`hexa kick --seed \"<seed>\"` 래퍼(sidecar /kick 패리티). bare 인자→--seed 합치기 · 선두 플래그(--rounds N·--engine mk9|mk10)→verbatim 패스스루. 긴 실행 → stdio inherit(라이브 스트림·timeout 없음). hexa PATH 없으면 127+안내"
+              },
+              {
                 "이름": "errors",
                 "역할": "(kind,code)→severity 분류",
                 "구분": "module",

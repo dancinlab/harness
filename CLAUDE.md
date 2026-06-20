@@ -20,8 +20,9 @@ harness/
 ├─ config/             — bundled rule SSOTs: commons.md · recommend.md · enforcement/keywords/severity.json
 ├─ templates/          — runbook bodies (sbs · bypass · go · brainstorm · pod · dojo · demi · micro-exp …)
 ├─ styles/             — easy.{md,ko,ja,zh,ru} friendly-response style
-├─ plugin/             — Claude Code plugin (.claude-plugin/plugin.json + hooks/hooks.json)
-├─ .claude-plugin/marketplace.json — local marketplace ("harness") for `claude plugin install`
+├─ commands/           — Claude Code plugin slash-commands (/cmd set · sidecar pattern)
+├─ hooks/              — plugin hooks (hooks.json → run.sh dispatcher → bundled CLI via ${CLAUDE_PLUGIN_ROOT})
+├─ .claude-plugin/     — plugin.json + marketplace.json. SELF-CONTAINED plugin: marketplace source=`.` (repo root IS the plugin), so bin/cli/lib/modules ship inside it → `/plugin update`+reload refreshes CLI+hooks+commands as one unit (no separate self-update)
 ├─ docs/               — auxiliary guides (install · extending · languages)
 ├─ scripts/            — helper scripts (운영/스캐폴드용)
 ├─ state/              — 실험·벤치·검증(verdict/claim)·스크래치 단일 산출물 루트 (c5 · git-tracked)

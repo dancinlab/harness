@@ -26,9 +26,13 @@ const RULES: { id: string; re: RegExp; ok: string; why: string }[] = [
   },
   {
     id: "DANGER-RM-RF-ROOT",
-    re: /\brm\s+-(?=[a-zA-Z]*[rR])(?=[a-zA-Z]*[fF])[a-zA-Z]+\s+(\/|~|\*|\$HOME)/,
+    // Block only when the target IS the root/home/wildcard itself — bare `/` · `/*` ·
+    // `~` · `~/` · `~/*` · `$HOME`(/, /*) · `${HOME}` · bare `*`. A boundary lookahead
+    // means specific subpaths (`/tmp/x`, `/Users/me/build`, `~/foo`, `$HOME/scratch`)
+    // are NOT blocked — they're normal deletes. (Was over-blocking every absolute path.)
+    re: /\brm\s+-(?=[a-zA-Z]*[rR])(?=[a-zA-Z]*[fF])[a-zA-Z]+\s+(?:-{1,2}[a-zA-Z-]+\s+)*(?:\/\*?|~(?:\/\*?)?|\$\{?HOME\}?(?:\/\*?)?|\*)(?=$|\s|[;&|])/,
     ok: "# rm-ok",
-    why: "`rm -rf` targeting `/`, `~`, `$HOME`, or a bare `*` — catastrophic, irreversible delete. Narrow the path to the exact dir, or add `# rm-ok <reason>`.",
+    why: "`rm -rf` targeting the ROOT itself — bare `/` · `/*` · `~` · `~/` · `$HOME` · `*` — catastrophic, irreversible. (Specific subpaths like `/tmp/x` or `~/foo` are allowed.) For an intentional root-level delete add `# rm-ok <reason>`.",
   },
   {
     id: "DANGER-CURL-PIPE-SH",

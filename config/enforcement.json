@@ -35,11 +35,11 @@
     },
     {
       "id": "H-RM-RF-ROOT",
-      "desc": "rm -rf on a broad path",
-      "match": "\\brm\\s+-(?=[a-zA-Z]*[rR])(?=[a-zA-Z]*[fF])[a-zA-Z]+\\s+(/|~|\\*|\\$HOME)",
+      "desc": "rm -rf on the root/home/wildcard itself (not specific subpaths)",
+      "match": "\\brm\\s+-(?=[a-zA-Z]*[rR])(?=[a-zA-Z]*[fF])[a-zA-Z]+\\s+(?:-{1,2}[a-zA-Z-]+\\s+)*(?:/\\*?|~(?:/\\*?)?|\\$\\{?HOME\\}?(?:/\\*?)?|\\*)(?=$|\\s|[;&|])",
       "exceptions": ["# rm-ok"],
       "action": "block",
-      "reason": "rm -rf on / ~ $HOME / 또는 bare * 차단. 경로를 좁히거나 `# rm-ok <사유>`."
+      "reason": "rm -rf on the root itself (/ · /* · ~ · ~/ · $HOME · *) 차단 — 특정 하위경로(/tmp/x · ~/foo)는 허용. 의도된 루트 삭제면 `# rm-ok <사유>`."
     },
     {
       "id": "H-TMP-SCRATCH",

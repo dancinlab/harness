@@ -1,0 +1,28 @@
+{
+  "_note": "harness governance hooks — SELF-CONTAINED: every hook runs the plugin's OWN bundled harness CLI via hooks/run.sh (resolves ${CLAUDE_PLUGIN_ROOT}/bin/harness, falls back to a global `harness` on PATH, silent if neither). A `/plugin update` + reload refreshes the CLI together with hooks/commands — no separate `harness self-update`. Mirrors `harness install-hooks` (modules/setup.ts), which keeps the bare-`harness` form for the settings.json install path.",
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Bash", "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" pre bash" }] },
+      { "matcher": "Write|Edit", "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" pre write" }] },
+      { "matcher": "AskUserQuestion", "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" pre askq" }] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Write|Edit", "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" post edit \"$CLAUDE_FILE_PATH\"" }] }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" prompt \"$CLAUDE_USER_PROMPT\"" }] },
+      { "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" commons inject" }] },
+      { "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" claudemd inject" }] },
+      { "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" recommend inject" }] },
+      { "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" prefs inject" }] },
+      { "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" easy inject" }] }
+    ],
+    "SessionStart": [
+      { "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" commons inject" }] },
+      { "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" recommend inject" }] },
+      { "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" architecture inject" }] },
+      { "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" worktree gc" }] },
+      { "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" ing inject" }] }
+    ]
+  }
+}

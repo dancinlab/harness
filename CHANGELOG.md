@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## feat(plugin): SELF-CONTAINED plugin — CLI ships inside it, `/plugin update`+reload = everything latest (sidecar parity)
+
+The harness shipped as TWO decoupled clones: the CLI lived at `~/.harness/cli` (refreshed only by
+`harness self-update`'s git pull), and the CC plugin (`./plugin`) carried just hooks+commands that
+called the global `harness`. So a CLI fix (e.g. the STDIN guard fix below) required a manual
+`harness self-update` — reloading the plugin did NOT pick it up. sidecar avoided this by bundling
+the CLI in the plugin; this change does the same.
+
+- **repo root IS the plugin** — marketplace `source` `./plugin` → `.`; `plugin/.claude-plugin/plugin.json`
+  → root `.claude-plugin/plugin.json`; `plugin/hooks` → `hooks/`; `plugin/commands` → `commands/`.
+  The payload now includes `bin/ · cli/ · lib/ · modules/ · config/ · templates/ · styles/`.
+- **hooks run the bundled CLI** — new `hooks/run.sh` dispatcher resolves `${CLAUDE_PLUGIN_ROOT}/bin/harness`
+  first (the plugin's own copy), falls back to a global `harness` on PATH, and exits 0 silently if
+  neither exists. `hooks/hooks.json` calls `run.sh` for every surface. So `/plugin update` + reload
+  refreshes CLI+hooks+commands as ONE unit — no per-project copy, no separate `harness self-update`.
+- `bin/harness` already resolves its dir relative to itself, so the bundled copy runs standalone
+  (tsx via the repo walk-up or `npx --yes tsx` when the cloned payload has no `node_modules`).
+- plugin.json 0.2.0 → 0.3.0; marketplace + README + ARCHITECTURE + CLAUDE.md updated in lockstep.
+- Verified: plugin-context (`CLAUDE_PLUGIN_ROOT=$PWD`) blocks raw `vastai` via stdin; benign `ls`
+  passes; global fallback still blocks when `CLAUDE_PLUGIN_ROOT` is unset; a host with neither is
+  silent (exit 0); bundled `bin/harness help` loads.
+- ⚠ Host step for TRUE reload-only updates: re-point the CC marketplace from the local `directory`
+  source (`~/.harness/cli`) to the GitHub repo (`dancinlab/harness`) so `/plugin update` git-pulls.
+  The classic `~/.harness/cli` + `harness self-update` install stays valid as a fallback.
+
 ## fix(pre): code-level guards (cloud-raw c11 · force-push · poll c19) read tool input from STDIN, not an unset env var
 
 The `pre bash`/`pre write` hooks resolved their tool input ONLY from `$CLAUDE_TOOL_INPUT` /

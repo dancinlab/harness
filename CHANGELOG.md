@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## feat(kick): `harness kick` (alias `drill`) — hexa-lang gap-breakthrough/discovery passthrough (plugin 0.6.0 → 0.7.0)
+
+Ports sidecar's `/kick` (skills/kick) into harness: a thin wrapper over `hexa kick --seed "<seed>"`
+— the hexa-lang gap-breakthrough / discovery engine (aliased to `hexa drill`).
+
+- `modules/kick.ts` (NEW) — resolves `hexa` on PATH; bare natural-language args join into
+  `--seed "<seed>"`, a leading flag (`--rounds N`, `--engine mk9|mk10`, …) passes through verbatim.
+  Long-running engine → INHERITED stdio (live stream, no capture/timeout), unlike the short
+  `secret`/`research` captures. Missing `hexa` → exit 127 + install guidance.
+- `cli/index.ts` — `kick` + `drill` alias registered; help line.
+- `commands/kick.md` (NEW) — `/kick <seed>` slash delegator → `harness kick $ARGUMENTS` (sidecar parity:
+  Korean + English triggers — "돌파해줘"·"발산"·"gap breakthrough on"·"drill <X>").
+- ARCHITECTURE kick node. plugin.json 0.6.0 → 0.7.0.
+
 ## docs: sync CLAUDE.md/README/ARCHITECTURE with install·shadow·ci-track (no code change)
 
 Project map / design SSOT had drifted from the commands shipped this session.

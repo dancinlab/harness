@@ -42,6 +42,7 @@ function hookSpec(): Record<string, unknown[]> {
       entry("harness worktree gc"),
       entry("harness ing inject"),
     ],
+    Stop: [entry("harness ing staleness-check")],
   };
 }
 
@@ -106,7 +107,7 @@ function installHooks(args: string[]): number {
   mkdirSync(dirname(settingsPath), { recursive: true });
   writeFileSync(settingsPath, JSON.stringify(d, null, 2) + "\n", "utf8");
   ok(`install-hooks: harness hooks merged → ${settingsPath} (${repo ? "repo" : "global"})${envNote}. Needs \`harness\` on PATH.`);
-  info("  events: PreToolUse · PostToolUse · UserPromptSubmit · SessionStart (existing non-harness hooks preserved)");
+  info("  events: PreToolUse · PostToolUse · UserPromptSubmit · SessionStart · Stop (existing non-harness hooks preserved)");
   return 0;
 }
 

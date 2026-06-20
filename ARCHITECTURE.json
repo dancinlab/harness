@@ -58,7 +58,13 @@
             "이름": "PostToolUse",
             "역할": "도구 호출 직후 → post bash / edit",
             "구분": "surface",
-            "상세": "exit/파일경로로 실패 라우팅, L0 편집 경고, c22 heartbeat(live 장기잡 미확인 warn). errors 큐 / stderr"
+            "상세": "exit/파일경로로 실패 라우팅, L0 편집 경고, c22 heartbeat(live 장기잡 미확인 warn), c6 ing-staleness(코드 편집 카운트 bump). errors 큐 / stderr"
+          },
+          {
+            "이름": "Stop",
+            "역할": "에이전트 응답 종료 → ing staleness-check",
+            "구분": "surface",
+            "상세": "c6 ing-staleness warn: 코드 ≥editThreshold(기본 5) 편집했는데 ing 보드 무변동이면 1회 경고 후 카운터 리셋. warn-only(강제 불가 — '이 편집이 ing 갱신 대상'의 ground truth 없음). stderr"
           },
           {
             "이름": "체크포인트",

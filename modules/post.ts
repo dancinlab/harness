@@ -17,6 +17,7 @@ import {
   recordAutoRunner,
 } from "./heartbeat-guard.ts";
 import { liveLongRunnerLabels } from "./ing.ts";
+import { bumpEditIfCode } from "./ing-staleness.ts";
 import { existsSync, statSync, readFileSync } from "node:fs";
 
 export async function postBash(args: string[]): Promise<number> {
@@ -68,6 +69,8 @@ export async function postEdit(args: string[]): Promise<number> {
   const file = args[0] ?? "";
   if (!file) return 0;
   appendJsonl(LOGS.observations, { kind: "post_edit", file });
+  // c6 ing-staleness: a code edit bumps the "work moved, board untouched" counter.
+  bumpEditIfCode(file);
   if (isL0(file)) {
     const reminder = config().lockdown.onEditReminder ?? "L0 file edited — handle deliberately.";
     process.stderr.write(`\x1b[31m⚠ L0 LOCKDOWN: ${file} — ${reminder}\x1b[0m\n`);

@@ -15,6 +15,7 @@ import { info, ok, warn, nowIso } from "../lib/log.ts";
 import { readStdin, execArgs } from "../lib/exec.ts";
 import { config } from "../lib/config.ts";
 import { setLiveMarker, staleLongRunnerWarn } from "./heartbeat-guard.ts";
+import { ingStalenessWarn } from "./ing-staleness.ts";
 
 // live long-runner labels (ing-board pods) for the c21 heartbeat guard.
 export async function liveLongRunnerLabels(cwd: string = REPO_ROOT): Promise<string[]> {
@@ -143,6 +144,7 @@ export async function runIng(args: string[]): Promise<number> {
     const rows = await readItems();
     const item: Item = { kind: sub === "add" ? "work" : "next", id: nextId(rows), ts: nowIso(), text };
     await writeItems([...rows, item], `ing: + ${sub === "add" ? "work" : "next"} ${text}`);
+    resetIngStaleness(); // c6: board touched → clear the edits-since-update counter
     ok(`ing: + ${sub === "add" ? "작업" : "다음"} — ${text}`);
     return 0;
   }
@@ -183,6 +185,7 @@ export async function runIng(args: string[]): Promise<number> {
     const afterDone = rows.filter((r) => !drop.has(`${r.kind} ${r.id}`));
     await writeItems(afterDone, `ing: done ${m}`); // scrub → CHANGELOG
     setLiveMarker(afterDone.some((r) => r.kind === "pod")); // c21: clear marker when no pod remains
+    resetIngStaleness(); // c6: board touched → clear the edits-since-update counter
     ok(`ing: ✓ done "${m}" scrubbed (${toRemove.length}건) — 완료분은 CHANGELOG 로`);
     return 0;
   }
@@ -214,6 +217,14 @@ export async function runIng(args: string[]): Promise<number> {
     } catch {
       return 0;
     }
+    return 0;
+  }
+
+  // staleness-check (Stop hook · c6) — warn once when many code files were edited
+  // without the board being touched. warn-only, on stderr (Stop output surfaces it).
+  if (sub === "staleness-check") {
+    const msg = ingStalenessWarn(config().ing.editThreshold);
+    if (msg) warn(`[ing-staleness] ${msg}`);
     return 0;
   }
 

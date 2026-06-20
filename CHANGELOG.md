@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## feat(ing): c6 ing-staleness nudge — warn at Stop when code edited but board untouched (plugin 0.9.4 → 0.9.5)
+
+The every-turn `ing inject` only ever SHOWED the board; nothing nudged the agent to UPDATE it as work
+moved, so the board drifted stale and the next session's inject surfaced an out-of-date picture. Added a
+soft staleness nudge. (A hard commit-block was rejected: there's no ground truth for "this edit should
+change ing", so blocking would be a false-positive factory — this is warn-only.)
+
+- `modules/ing-staleness.ts` (new) — a file-backed counter in LOG_DIR: `bumpEditIfCode` (called from
+  `post edit`) increments on each CODE file edit (docs/config ignored); `resetIngStaleness` (called from
+  `ing add/next/done`) clears it; `ingStalenessWarn(threshold)` returns a one-line warn + resets when the
+  counter ≥ threshold (so it nags at most once per N edits, not every Stop).
+- New `Stop` hook → `harness ing staleness-check` (wired in both `hooks/hooks.json` and the settings.json
+  install path `modules/setup.ts`). Threshold is `config().ing.editThreshold` (default 5; 0 disables).
+- This is the buildable slice of "강제 할수 있나": inject is already force-delivered every turn, and
+  ARCHITECTURE currency is already a HARD commit block (lint CHANGELOG/ARCHITECTURE rules = `block`
+  severity). ing freshness can only be nudged (warn), not forced — documented as such.
+- Verified: 7/7 lifecycle cases (under-threshold silent · docs ignored · threshold-hit warns · resets after
+  warn · ing-touch clears · threshold 0 disables) + CLI `ing staleness-check` warns once then goes silent.
+- plugin.json 0.9.4 → 0.9.5.
+
 ## feat(heartbeat): c22 now auto-tracks un-registered `&`/nohup background long-runners (plugin 0.9.3 → 0.9.4)
 
 The c22 abandonment guard (≥10-min check of a live long-runner) only ever fired for jobs registered via

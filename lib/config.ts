@@ -131,6 +131,9 @@ export interface HarnessConfig {
   // checks and warns past maxSilenceSec.
   poll: { maxSilenceSec: number };
   ledger: { staleSec: number };
+  // ing staleness (c6) — warn at session Stop when ≥ `editThreshold` code files were
+  // edited since the ing board was last touched (add/next/done). 0 disables the nudge.
+  ing: { editThreshold: number };
 }
 
 const DEFAULTS: HarnessConfig = {
@@ -201,6 +204,7 @@ const DEFAULTS: HarnessConfig = {
   askqText: true,
   poll: { maxSilenceSec: 600 },
   ledger: { staleSec: 3600 },
+  ing: { editThreshold: 5 },
 };
 
 function deepMerge<T>(base: T, over: Partial<T>): T {

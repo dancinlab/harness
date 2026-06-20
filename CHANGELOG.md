@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## feat(pool): `pool list` now shows LIVE CPU + GPU load per host (plugin 0.9.2 → 0.9.3)
+
+`pool list` previously read only the cached roster (offline) — it showed static specs (cores/mem/GPU) but
+nothing about how busy each host is right now. Added a live-load probe so `list` answers "which host is free?"
+at a glance.
+
+- `modules/pool.ts` — new `LOAD_PROBE` (POSIX-sh, Linux + macOS): emits `LOAD=<loadavg1>|CORES=<n>|GPU=<util,memUsedMiB,memTotalMiB,count|none>`.
+  CPU load = 1-min loadavg ÷ cores → %; GPU = nvidia-smi averaged util + summed VRAM across all GPUs. `list`
+  SSH-probes every non-blocked host in PARALLEL (pmap, cap 8) and appends a `⚡CPU N% · GPU M%·used/totalGiB` badge.
+- Load is NOT cached (unlike specs) — it changes second-to-second, so `list` now does a live SSH round-trip
+  (blocked restricted hosts are never reached; unreachable hosts show `⚡도달 불가`). Specs stay cached.
+- Verified: `pool list` on the live roster shows `aiden ⚡CPU 141%(16.87) · GPU 0%·0.2/12GiB`, blocked
+  hosts (akida·ghost) un-probed.
+- plugin.json 0.9.2 → 0.9.3.
+
 ## fix(exec): spawn `error` event was unhandled → a SessionStart hook crash (plugin 0.9.1 → 0.9.2)
 
 `/reload-plugins` in a repo with a stale linked worktree (its dir deleted) crashed the SessionStart hook

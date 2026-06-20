@@ -1,7 +1,7 @@
 // harness pool {list|add|rm|on|status|specs} — host roster + remote exec (sidecar
 // pool parity). The host roster is machine-level, so it lives GLOBALLY at
 // ~/.harness/pool.json (shared across repos), not per-repo.
-//   list                 show roster (with cached cores/mem/GPU if probed)
+//   list                 show roster (cached cores/mem/GPU + LIVE CPU/GPU load)
 //   add <name> [target]  add host (target = ssh alias or user@host; default = name)
 //   rm <name>            remove host
 //   on <name> <cmd...>   run a command on a host over ssh
@@ -99,6 +99,69 @@ const PROBE =
   `else G=$(system_profiler SPDisplaysDataType 2>/dev/null | sed -n 's/.*Chipset Model: //p' | head -1); fi; ` +
   `echo "CORES=$C|MEM=$M|GPU=$G"`;
 
+// Live load snapshot of a host (NOT cached — load changes second-to-second).
+interface Load {
+  load1?: number; // 1-min loadavg
+  cores?: number; // logical cores (to turn loadavg into a %)
+  gpu?: { util: number; memUsed: number; memTotal: number; n: number }; // MiB, n = #GPUs
+}
+
+// Remote LIVE-load probe. POSIX-sh, Linux + macOS aware. Emits ONE parseable line
+// `LOAD=<loadavg1>|CORES=<n>|GPU=<util,memUsedMiB,memTotalMiB,count|none>`. GPU
+// fields are averaged util + summed memory across all visible GPUs (nvidia-smi).
+const LOAD_PROBE =
+  `L=$(awk '{print $1}' /proc/loadavg 2>/dev/null); ` +
+  `[ -z "$L" ] && L=$(sysctl -n vm.loadavg 2>/dev/null | awk '{print $2}'); ` +
+  `C=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null); ` +
+  `if command -v nvidia-smi >/dev/null 2>&1; then ` +
+  `G=$(nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits 2>/dev/null ` +
+  `| awk -F', *' '{u+=$1;mu+=$2;mt+=$3;n++} END{if(n>0)printf "%d,%d,%d,%d",u/n,mu,mt,n; else printf "none"}'); ` +
+  `else G=none; fi; ` +
+  `echo "LOAD=$L|CORES=$C|GPU=$G"`;
+
+// ssh-probe one host's live load. Returns null when unreachable or unparsable.
+async function probeLoad(h: Host): Promise<Load | null> {
+  const res = await execArgs("ssh", [...SSH_ARGS, h.target, LOAD_PROBE], { timeoutMs: 15_000 });
+  if (res.code !== 0) return null;
+  const line = res.stdout.split(/\r?\n/).find((l) => l.includes("LOAD="));
+  if (!line) return null;
+  const kv: Record<string, string> = {};
+  for (const part of line.trim().split("|")) {
+    const i = part.indexOf("=");
+    if (i > 0) kv[part.slice(0, i)] = part.slice(i + 1).trim();
+  }
+  const load1 = parseFloat(kv.LOAD ?? "");
+  const cores = parseInt(kv.CORES ?? "", 10);
+  let gpu: Load["gpu"];
+  if (kv.GPU && kv.GPU !== "none") {
+    const [u, mu, mt, n] = kv.GPU.split(",").map((x) => parseInt(x, 10));
+    if (Number.isFinite(u) && Number.isFinite(mt) && mt > 0) {
+      gpu = { util: u, memUsed: mu, memTotal: mt, n: Number.isFinite(n) ? n : 1 };
+    }
+  }
+  return {
+    load1: Number.isFinite(load1) ? load1 : undefined,
+    cores: Number.isFinite(cores) && cores > 0 ? cores : undefined,
+    gpu,
+  };
+}
+
+// Compact one-line live-load badge: `CPU 45% · GPU 30%·2.1/24GiB`.
+function fmtLoad(l?: Load | null): string {
+  if (!l) return "";
+  const parts: string[] = [];
+  if (l.load1 != null) {
+    const pct = l.cores ? ` ${Math.round((l.load1 / l.cores) * 100)}%` : "";
+    parts.push(`CPU${pct}(${l.load1.toFixed(2)})`);
+  }
+  if (l.gpu) {
+    const used = (l.gpu.memUsed / 1024).toFixed(1);
+    const total = (l.gpu.memTotal / 1024).toFixed(0);
+    parts.push(`GPU ${l.gpu.util}%·${used}/${total}GiB${l.gpu.n > 1 ? `×${l.gpu.n}` : ""}`);
+  }
+  return parts.join(" · ");
+}
+
 // ssh-probe one host's hardware. Returns null when unreachable or unparsable.
 async function probeSpecs(h: Host): Promise<Specs | null> {
   const res = await execArgs("ssh", [...SSH_ARGS, h.target, PROBE], { timeoutMs: 20_000 });
@@ -141,18 +204,30 @@ export async function runPool(args: string[]): Promise<number> {
       return 0;
     }
     info(`pool hosts (${rosterPath()}):`);
+    // Live-load probe: NOT cached (load is second-to-second), so `list` SSH-probes
+    // each non-blocked host in parallel. Blocked restricted hosts are not reached.
+    info("  (라이브 부하 프로브 중…)");
+    const loads = new Map<string, Load | null>();
+    const probed = await pmap(
+      r.hosts.filter((h) => guard(h).ok),
+      8,
+      async (h) => ({ name: h.name, load: await probeLoad(h) }),
+    );
+    for (const { name, load } of probed) loads.set(name, load);
     let anyProbed = false;
     for (const h of r.hosts) {
       if (h.specs) anyProbed = true;
       const spec = h.specs ? `   〈${fmtSpecs(h.specs)}〉` : "";
+      const g = guard(h);
+      // Load badge: only for hosts we actually reached (guard-ok + probe success).
+      const load = g.ok ? (loads.has(h.name) ? (loads.get(h.name) ? `   ⚡${fmtLoad(loads.get(h.name))}` : "   ⚡도달 불가") : "") : "";
       if (!isRestricted(h)) {
-        info(`  • ${h.name}  →  ${h.target}${spec}`);
+        info(`  • ${h.name}  →  ${h.target}${spec}${load}`);
         continue;
       }
-      const g = guard(h);
       const tag = g.ok ? `🔓 허용(${g.via})` : "🔒 차단";
       const who = h.allow && h.allow.length ? ` · 허용: ${h.allow.join(", ")}` : " · 공용 아님";
-      info(`  • ${h.name}  →  ${h.target}${spec}   [${tag}${who}]${h.note ? `  — ${h.note}` : ""}`);
+      info(`  • ${h.name}  →  ${h.target}${spec}${load}   [${tag}${who}]${h.note ? `  — ${h.note}` : ""}`);
     }
     if (!anyProbed) info("  (스펙 미수집 — `harness pool specs` 로 코어/메모리/GPU 프로브)");
     return 0;

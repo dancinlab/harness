@@ -409,7 +409,7 @@
             "이름": "poll.maxSilenceSec = 600",
             "역할": "c22 방치가드 임계 (live 장기잡 미확인 max 침묵)",
             "구분": "config",
-            "상세": "heartbeat-guard: 상태확인 cmd 에 lastPoll 스탬프, post bash·ing inject 에서 초과 시 warn. c19(min 간격)의 반대"
+            "상세": "heartbeat-guard: 상태확인 cmd 에 lastPoll 스탬프, post bash·ing inject 에서 초과 시 warn. live 대상 = ing pods + ledger agents + 자동감지 bg런너(미등록 `&`/nohup/disown 의 long-runner 를 post bash 가 감지·기록, 2h TTL 자동만료). c19(min 간격)의 반대"
           },
           {
             "이름": "dojo {defaultLang,stack,delegate}",

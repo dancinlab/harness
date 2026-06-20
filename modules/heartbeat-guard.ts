@@ -21,6 +21,12 @@ import { readJsonl } from "../lib/json.ts";
 
 const HEARTBEAT = resolve(LOG_DIR, "heartbeat.json");
 const LIVE_MARKER = resolve(LOG_DIR, ".live-runner");
+// auto-detected (un-registered) background long-runners — fire-and-forget jobs
+// launched with `&`/nohup/disown that never went through `ing pod add` / ledger.
+const AUTO_RUNNERS = resolve(LOG_DIR, "auto-runners.json");
+// TTL so a finished auto-detected job stops nagging on its own (we can't observe
+// its exit — a detached `&` job's PID isn't in the command string). 2h ceiling.
+const AUTO_RUNNER_TTL_SEC = 7200;
 
 // status-check commands that count as "checking a long-runner" → reset the heartbeat.
 const POLL_ACTIVITY =
@@ -65,6 +71,77 @@ export function liveMarkerSet(): boolean {
   return existsSync(LIVE_MARKER);
 }
 
+// A fire-and-forget BACKGROUND launch of a long-runner: a detach construct
+// (nohup · setsid · disown · trailing job-control `&`) over a known long-runner or
+// sub-agent term. This is what `ing pod add`/ledger registration would have tracked
+// — detecting it lets c21 nag even when the user skipped registration entirely.
+const BG_DETACH = /\bnohup\b|\bsetsid\b|\bdisown\b|(^|[^&>])&[ \t]*(\bdisown\b)?[ \t]*$/m;
+const BG_LONGRUNNER =
+  /\b(claude\s+(?:-p|--print)|codex|hexa\s+cloud|runpodctl?|vastai?|nvidia-smi|torchrun|deepspeed|accelerate\s+launch|finetune|train(?:ing)?|dojo|sbatch|srun|measure\d*)\b/i;
+
+// Returns a short label when `cmd` fire-and-forget-launches a background long-runner
+// (un-registered), or null. Used to AUTO-arm the c21 heartbeat so a detached `&`
+// job is tracked without an explicit `ing pod add`.
+export function detectBackgroundLaunch(rawCmd: string): string | null {
+  const cmd = rawCmd ?? "";
+  if (!BG_DETACH.test(cmd)) return null;
+  const m = BG_LONGRUNNER.exec(cmd);
+  if (!m) return null;
+  return `bg job (${m[1].replace(/\s+/g, " ").trim()})`;
+}
+
+// Read non-expired auto-runner labels, GC expired ones (and clear the live marker
+// when nothing auto/registered remains). nowMs injected for testability.
+export function autoRunnerLabels(nowMs: number): string[] {
+  let rows: { label: string; at: string }[] = [];
+  try {
+    const parsed = JSON.parse(readFileSync(AUTO_RUNNERS, "utf8"));
+    if (Array.isArray(parsed)) rows = parsed;
+  } catch {
+    return [];
+  }
+  const live = rows.filter((r) => {
+    const t = Date.parse(r.at);
+    return !Number.isNaN(t) && (nowMs - t) / 1000 < AUTO_RUNNER_TTL_SEC;
+  });
+  if (live.length !== rows.length) {
+    try {
+      if (live.length) writeFileSync(AUTO_RUNNERS, JSON.stringify(live) + "\n");
+      else {
+        unlinkSync(AUTO_RUNNERS);
+        // marker may have been ours — drop it if no registered agent is live either.
+        if (!activeAgentLabels().length) setLiveMarker(false);
+      }
+    } catch {
+      /* best-effort GC */
+    }
+  }
+  return live.map((r) => r.label);
+}
+
+// Record an auto-detected background long-runner (dedup by label, refresh its
+// timestamp) and arm the live marker so the per-bash heartbeat gate trips.
+export function recordAutoRunner(label: string, nowMs: number): void {
+  try {
+    let rows: { label: string; at: string }[] = [];
+    try {
+      const parsed = JSON.parse(readFileSync(AUTO_RUNNERS, "utf8"));
+      if (Array.isArray(parsed)) rows = parsed;
+    } catch {
+      /* fresh */
+    }
+    const at = new Date(nowMs).toISOString();
+    const idx = rows.findIndex((r) => r.label === label);
+    if (idx >= 0) rows[idx].at = at;
+    else rows.push({ label, at });
+    mkdirSync(LOG_DIR, { recursive: true });
+    writeFileSync(AUTO_RUNNERS, JSON.stringify(rows) + "\n");
+    setLiveMarker(true);
+  } catch {
+    /* best-effort */
+  }
+}
+
 // active background agents from the ledger work-registry (merged by agent_id, last
 // write wins — mirrors ledger.ts merge), as human labels.
 export function activeAgentLabels(): string[] {
@@ -86,7 +163,7 @@ export function activeAgentLabels(): string[] {
 // added here) and the heartbeat age, return a c21 warn string or null. `nowMs` is
 // injected so this stays testable.
 export function staleLongRunnerWarn(podLabels: string[], maxSilenceSec: number, nowMs: number): string | null {
-  const live = [...podLabels, ...activeAgentLabels()];
+  const live = [...podLabels, ...activeAgentLabels(), ...autoRunnerLabels(nowMs)];
   if (!live.length) return null;
   const last = lastPollMs();
   const silentSec = last === null ? Number.POSITIVE_INFINITY : Math.round((nowMs - last) / 1000);

@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## feat(danger-guard): rm-rf-root block is now opt-in (config dangerGuard.rmRfRoot, default OFF)
+
+Per user request — `rm -rf` should not be guarded. The catastrophic-delete block (`rm -rf /` · `/*` · `~` ·
+`$HOME` · `*`) is now gated by `config.dangerGuard.rmRfRoot`, default `false` = NOT guarded. The other
+three code-level danger rules (`--no-verify` gate-bypass · `git reset --hard` tree-destroy · `curl|sh`
+remote-exec) stay always-on.
+
+- `modules/danger-guard.ts` — `detectDangerousBash` skips `DANGER-RM-RF-ROOT` when `!dangerGuard.rmRfRoot`.
+- `lib/config.ts` — new `dangerGuard: { rmRfRoot: boolean }`, default `{ rmRfRoot: false }`.
+- Removed the `H-RM-RF-ROOT` regex rule from `config/enforcement.json` AND `.harness/enforcement.json`
+  (the config-layer backup would otherwise still block regardless of the code toggle).
+- Verified: toggle off (default) → `rm -rf /` · `~` · `$HOME/*` pass; reset-hard + curl|sh still block;
+  toggle on → rm-rf-root blocks again. Re-enable any time with `dangerGuard.rmRfRoot: true`.
+
+
 ## fix(self-update): always target the GLOBAL install (~/.harness/cli), never reset a dev clone
 
 `self-update` updated `HARNESS_ROOT` — whichever clone the running binary lives in. Run via `npx tsx`

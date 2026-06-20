@@ -345,7 +345,7 @@
         "이름": "plugin — 배포 (자기완결 · 공용셋)",
         "역할": "harness 를 Claude Code 플러그인으로 배포 — 훅 + 슬래시 명령 + CLI 본체가 ONE 유닛. 프로젝트 무관·중앙 1곳",
         "구분": "group",
-        "상세": "SELF-CONTAINED: .claude-plugin/marketplace.json(plugins[].source=`.` = repo 루트가 곧 플러그인) → .claude-plugin/plugin.json(v0.3.0). 루트가 페이로드라 bin/·cli/·lib/·modules/·config/ 가 플러그인에 같이 실린다. 훅은 ${CLAUDE_PLUGIN_ROOT}/bin/harness(번들 CLI)를 실행 → `/plugin update`+reload 한 번에 CLI+hooks+commands 동시 갱신(별도 self-update 불필요). 전역 `harness` 는 폴백.",
+        "상세": "SELF-CONTAINED: .claude-plugin/marketplace.json(plugins[].source=`.` = repo 루트가 곧 플러그인) → .claude-plugin/plugin.json(`commands: []` = 플러그인 명령 네임스페이스 OFF, 중복 방지). 루트가 페이로드라 bin/·cli/·lib/·modules/·config/·commands/ 가 플러그인에 같이 실린다. 훅은 ${CLAUDE_PLUGIN_ROOT}/bin/harness(번들 CLI)를 실행 → `/plugin update`+reload 로 CLI+hooks 동시 갱신(별도 self-update 불필요). 슬래시 명령은 `harness shadow` 가 commands/ → ~/.claude/commands/ 로 bare /cmd 미러(플러그인 네임스페이스 `/harness:cmd` 미사용 — picker 1줄). 전역 `harness` 는 폴백.",
         "children": [
           {
             "이름": "hooks/hooks.json + hooks/run.sh",
@@ -355,9 +355,9 @@
           },
           {
             "이름": "commands/*.md",
-            "역할": "전체 사용자-대면 명령의 슬래시 노출 (슬래시-명령 패턴)",
+            "역할": "슬래시-명령 위임자 셋 (bare /cmd · shadow 가 미러하는 SOURCE)",
             "구분": "config",
-            "상세": "프런트매터(description+Triggers+argument-hint+allowed-tools) + `!`harness <cmd> $ARGUMENTS`` 위임자. 공용셋=프로젝트 무관. 재생성=_tools/gen_commands.py. hook-내부(pre/post/prompt) 제외"
+            "상세": "프런트매터(description+Triggers+argument-hint+allowed-tools) + `!`harness <cmd> $ARGUMENTS`` 위임자. **플러그인 명령으로 로드 안 됨** — plugin.json `commands: []` 가 기본 commands/ 스캔을 빈 목록으로 대체(Claude Code 는 플러그인 명령을 무조건 `/plugin:cmd` 네임스페이스로 노출하므로, 이걸 끄지 않으면 `harness shadow` 의 bare `/fleet` 와 플러그인 `/harness:fleet` 가 picker 에 2줄로 중복). 대신 `harness shadow` 가 이 파일들을 ~/.claude/commands/ 에 bare `/cmd` user-scope 위임자로 미러 → picker 에 bare 1줄만. 공용셋=프로젝트 무관. hook-내부(pre/post/prompt) 제외"
           }
         ]
       },

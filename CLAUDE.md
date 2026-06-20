@@ -22,7 +22,7 @@ harness/
 ├─ config/             — bundled rule SSOTs: commons.md · recommend.md · enforcement/keywords/severity.json
 ├─ templates/          — runbook bodies (sbs · bypass · go · brainstorm · pod · dojo · demi · micro-exp …)
 ├─ styles/             — easy.{md,ko,ja,zh,ru} friendly-response style
-├─ commands/           — Claude Code plugin slash-commands (/cmd set · slash-command pattern)
+├─ commands/           — slash-command delegator set. Source that `harness shadow` mirrors into ~/.claude/commands/ as BARE `/cmd` (user-scope). NOT loaded as plugin commands — plugin.json sets `commands: []` so the picker shows bare `/fleet` only, never a `/harness:fleet` duplicate.
 ├─ hooks/              — plugin hooks (hooks.json → run.sh dispatcher → bundled CLI via ${CLAUDE_PLUGIN_ROOT})
 ├─ .claude-plugin/     — plugin.json + marketplace.json. SELF-CONTAINED plugin: marketplace source=`.` (repo root IS the plugin), so bin/cli/lib/modules ship inside it → `/plugin update`+reload refreshes CLI+hooks+commands as one unit (no separate self-update)
 ├─ docs/               — auxiliary guides (install · extending · languages)

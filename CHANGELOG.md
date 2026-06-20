@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## feat(heartbeat): c22 now auto-tracks un-registered `&`/nohup background long-runners (plugin 0.9.3 → 0.9.4)
+
+The c22 abandonment guard (≥10-min check of a live long-runner) only ever fired for jobs registered via
+`ing pod add` or the ledger work-registry. A fire-and-forget job thrown with a bare `&`/`nohup`/`disown` —
+the most common way to leave something running and walk away — was invisible: `live` was empty so
+`staleLongRunnerWarn` returned null and the 10-min nudge never came. This is exactly the gap "왜 10분 강제 안되지"
+pointed at.
+
+- `modules/heartbeat-guard.ts` — new `detectBackgroundLaunch(cmd)`: a detach construct
+  (`nohup`·`setsid`·`disown`·trailing job-control `&`) over a known long-runner / sub-agent term
+  (`claude -p`·`hexa cloud`·`torchrun`·`deepspeed`·`runpodctl`·`vastai`·`training`·`dojo`·`sbatch`/`srun`…).
+  `recordAutoRunner` persists the detected job to `auto-runners.json` and arms the `.live-runner` marker;
+  `autoRunnerLabels` reads non-expired entries and GCs them. `staleLongRunnerWarn` now merges these
+  auto-detected labels alongside pods + ledger agents.
+- 2h TTL (`AUTO_RUNNER_TTL_SEC`) auto-expires an auto-detected job — we can't observe a detached job's exit
+  (its PID isn't in the command string), so the TTL bounds the false-nag window for jobs that already finished.
+- `modules/post.ts` — `post bash` calls `detectBackgroundLaunch` + `recordAutoRunner` on every command, so an
+  un-registered launch is tracked the moment it runs (no `ing pod add` needed).
+- Verified: 9/9 detection cases (nohup/claude -p/disown/setsid match; `python train.py`, `ls -la &`,
+  `echo && echo`, `2>&1` correctly NOT matched); warn fires for an un-registered bg job; TTL expires at 3h.
+- plugin.json 0.9.3 → 0.9.4.
+
 ## feat(pool): `pool list` now shows LIVE CPU + GPU load per host (plugin 0.9.2 → 0.9.3)
 
 `pool list` previously read only the cached roster (offline) — it showed static specs (cores/mem/GPU) but

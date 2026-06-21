@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## docs(fleet-full): harden the runbook with 3 field-proven lessons from a long GPU campaign
+
+A multi-hour `fleet full` campaign (forge cuBLAS-independence on hexa-lang) surfaced three
+recurring failure modes the runbook didn't guard against. Folded them back into
+`templates/fleet-full.md`:
+
+- **long-runner lifecycle (§5.5, new)** — the biggest one. A legitimate ~30–50 min GPU
+  measurement was mis-read as a "stalled zombie" ~8 times; each re-ping/resume RESET the
+  agent's progress and re-triggered a "still warming up" report — the pinging itself caused
+  the stall. Rule: slow ≠ stalled; never re-ping a live measuring agent; when in doubt capture
+  ground-truth directly on the host (`pgrep`/`nvidia-smi`/`tail log`) instead of guessing; a
+  "came to rest" with empty output is NOT a result; verify a late "came to rest" against
+  current main/SSOT before acting (it may be a stale/superseded duplicate).
+- **mechanism-family census (§3)** — a frontier was declared a measured 🧱 after falsifying 3
+  levers that were all ONE family (precision-emulation); orthogonal families (sparsity,
+  sub-cubic, fusion, megakernel) were never enumerated. Rule: "N levers falsified" within a
+  single family ≠ dry → reopen (🔓) on the orthogonal family. §6 depletion now requires
+  exhaustion across mechanism *families*, not just deeper params of one.
+- **착륙 = 수치 / landing = numbers (§3)** — an agent returning without captured measurements
+  (or only a commit-message "MEASURED" claim) is NOT a landing: re-fire the same round, never
+  advance the phase (c2).
+
 ## feat(ship): one-shot propagate to ALL surfaces — pr-cycle → self-update → shadow
 
 A harness change lives on three surfaces — the merged repo, the global CLI clone

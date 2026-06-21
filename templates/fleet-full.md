@@ -45,6 +45,8 @@
 - **abstract→research**: escape 가 **반증가능 예측 + 싼 반증 관측**을 낳았을 때. 막연한 사변으로 강하 금지.
 - **reopen**: 🧱(새 research 레버) · 🌌(새 lens) 둘 다 reopenable. 한 프론티어가 research↔implement↔abstract 를 여러 번 왕복할 수 있다.
 - **lazy-ceiling 금지(c14 d)**: "끝"은 research census + 추상 peel 을 **둘 다** 소진한 뒤에만. 1-pass 직관 박제 금지.
+- **mechanism-family census (벽 선언의 필수 전제)**: abstract 페이즈는 *직교 매커니즘 family* 를 census 해야 한다 — 한 family(예: precision-emulation = FP16-split·INT8-split·scheduling)만 측정-소진한 건 dry 아님. 다른 family(sparsity · sub-cubic · fusion · megakernel · 작업분해 …)를 인용으로 enumerate 한 뒤 각각 falsify 해야 양축 dry. "3 레버 다 falsify" 가 같은 family 면 🧱 아님 → 직교 family 로 reopen(🔓). (실전: TF32 "하드웨어 천장" 이 emulation family 만 본 착각이었고 megakernel/Stream-K family 가 미탐색이었다.)
+- **착륙 = 수치 (c2)**: agent 가 측정 수치 없이 landing/"came to rest" 하면 그건 착륙 아님(미완) — 같은 라운드 재발사, 다음 페이즈 전진 금지. 커밋 메시지의 "MEASURED" 주장·LLM 자가판정만으론 부족 · 캡처된 출력이 유일한 증거.
 
 ## 4. 🛰️ 캠페인 report — 필수 형태 (캠페인 live 인 매 턴)
 ```
@@ -64,8 +66,17 @@ status 토큰 — `🔬`research · `🛠️`implement+measure · `🧅`abstract
 - 파괴적/되돌릴수없는/외부노출(public push·삭제·대량쓰기) → 확인 후 재개.
 - Agent 가 rate-limit/socket 으로 죽음 → checkpoint(브랜치/worktree/박제 LAWS)에서 재발사(지수 backoff) — 처음부터 재시작 금지.
 
+## 5.5 장수 측정 agent 규율 (long-runner lifecycle · 핵심 · 실전 박제)
+implement 페이즈의 GPU/원격 측정은 흔히 수십 분 걸린다 — 이 구간을 잘못 다루면 **진행을 죽이고 가짜 벽을 박는다**. 규율:
+- **느린 ≠ 멈춤**: 무거운 측정(large-n GEMM · FP64 레퍼런스 대조 · n≥8K sweep)은 수십 분이 정상. Monitor-wait 재-arm 통지를 "stall/zombie" 로 오판해 `blocked`/🧱 박제 금지 — measurement-blocked 선언은 **호스트 직접 확인으로 root-cause 측정한 뒤에만**(c2).
+- **재-ping 금지 (가장 비싼 실수)**: live 측정 agent 를 ping/resume/SendMessage/TaskStop 하면 매 ping = **resume = 진행 리셋 + "아직 warming up" 재보고** 의 무한루프. 자연 완료(agent 자체 Monitor fire)를 기다린다. 조급한 ping 이 stall 의 *원인* 이 된다.
+- **ping 대신 ground-truth**: 막혔는지 의심되면 추정 말고 **호스트에 직접 들어가 실측** — `pool on <host> 'pgrep -af <bench>; nvidia-smi; tail -5 <log>'`. (실전: "8회 stall" 로 보인 lane 이 사실 CPU 99.9%/GPU 0% 로 FP64-CPU-레퍼런스에 갈린 bench 설계결함이었고, ps 한 번이 그걸 즉시 규명했다.)
+- **"came to rest" ≠ 결과**: 빈/idle 출력으로 쉰 통지는 terminal 아님 — 산출(브랜치 커밋 · 로그 수치)을 직접 회수. 닫은 lane 의 **좀비 잔향 통지**는 무대응(다시 건드리면 resume).
+- **stale 중복 통지 검증**: 늦게 도착한 "came to rest" 는 그 사이 이미 머지/superseded 일 수 있다 — **현재 main/SSOT 와 대조 후에만** 행동. 구(旧) 방향 브랜치를 무검증 머지하면 방금 고친 걸 되돌린다.
+- **체크포인트 = 재개의 전제**: agent 가 죽기 전 산출을 브랜치 push 로 보존해야 "재시작" 이 아닌 "재개" 가 된다. 재개는 **좁은 범위(증명 + 수치 회수)** 로 재발사해 rate-limit/throttle 을 회피.
+
 ## 6. depletion
-모든 프론티어가 🧱(research 레버 0) AND 🌌(abstract lens 0) — 즉 **경험과 추상 양쪽 다 dry** — 이거나 📦(deferred)/resolved → roster 삭제 + 최종 요약. 단 둘 다 차세션 research/lens 로 부활 가능하므로 SSOT 에 다음 표적 + 반증 조건을 남긴다. **양축 dry 는 research probe + 추상 peel 둘 다 소진 후에만**(c14 d).
+모든 프론티어가 🧱(research 레버 0) AND 🌌(abstract lens 0) — 즉 **경험과 추상 양쪽 다 dry** — 이거나 📦(deferred)/resolved → roster 삭제 + 최종 요약. 단 둘 다 차세션 research/lens 로 부활 가능하므로 SSOT 에 다음 표적 + 반증 조건을 남긴다. **양축 dry 는 research probe + 추상 peel 둘 다 소진 후에만**(c14 d) · 그리고 **소진은 직교 mechanism-family 전수**여야 한다(§3 — 한 family 만 falsify 한 건 dry 아님, 🔓 reopen 대상).
 
 ## 7. 동시성
 고정 레인 cap 없음 — 머신 부하 정직하게. research·abstract 라운드는 동시 다발 OK(싸다). implement 라운드는 worktree 격리 + pool 호스트 직렬화(같은 GPU 연타 회피).

@@ -45,6 +45,7 @@ function hookSnippet(engineRel: string): string {
           { hooks: [{ type: "command", command: g(`bash ${bin} commons inject`) }] },
           { hooks: [{ type: "command", command: g(`bash ${bin} prefs inject`) }] },
           { hooks: [{ type: "command", command: g(`bash ${bin} easy inject`) }] },
+          { hooks: [{ type: "command", command: g(`bash ${bin} load inject`) }] },
           { hooks: [{ type: "command", command: g(`bash ${bin} recommend inject`) }] },
         ],
         SessionStart: [

@@ -12,7 +12,8 @@
       { "hooks": [{ "type": "command", "command": "bash bin/harness prompt \"$CLAUDE_USER_PROMPT\"" }] },
       { "hooks": [{ "type": "command", "command": "bash bin/harness prefs inject" }] },
       { "hooks": [{ "type": "command", "command": "bash bin/harness recommend inject" }] },
-      { "hooks": [{ "type": "command", "command": "bash bin/harness easy inject" }] }
+      { "hooks": [{ "type": "command", "command": "bash bin/harness easy inject" }] },
+      { "hooks": [{ "type": "command", "command": "bash bin/harness load inject" }] }
     ],
     "SessionStart": [
       { "hooks": [{ "type": "command", "command": "bash bin/harness easy inject" }] },

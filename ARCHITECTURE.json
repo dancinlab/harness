@@ -294,6 +294,12 @@
                 "상세": "repo-root CLAUDE.md 를 매 UserPromptSubmit 마다 additionalContext 로 재주입 — commons inject 와 같은 운반 장치. CLAUDE.md 는 Claude Code 기본으로 SessionStart 1회만 들어가 대화가 길어지면 묻히는데, 매턴 재주입으로 프로젝트 규칙을 commons 급 salience 로 유지(MUST-FOLLOW 헤더 prepend). 선택적 `<!-- enforce:start/end -->` 블록이 있으면 그 hard-rules 섹션만 재주입(전체 맵 재전송 회피), 없으면 전체. 80KB 초과 절단. 부재 시 무음"
               },
               {
+                "이름": "load",
+                "역할": "매턴 macOS 자원 압박 readout 주입 (CPU+RAM+swap, ⚠️ on danger)",
+                "구분": "module",
+                "상세": "show|inject. 매 UserPromptSubmit 에 한 줄 readout 을 additionalContext 로 주입 — 답변 맨 위에 부하를 상주시켜 무거운 작업 전 자각시킴. 3축 신호등: CPU(load1÷cores · 🟢<0.7 🟡<1.0 🔴≥1.0) · RAM((active+wired+compressor) used% + kern.memorystatus_vm_pressure_level normal/warn/critical) · swap(vm.swapusage used · 🟢<2G 🟡<6G 🔴≥6G). 동기: 부하로 죽는 맥은 CPU 가 아니라 MEMORY(compressor+swap 폭증)로 죽으므로 CPU load 만으론 부족 — RAM 압박·swap 을 같이 본다. 어느 축이든 🔴 또는 pressure≥warn 이면 `⚠️ 부하` + 가드 노트(대량빌드·병렬agent·GPU 자제 권고). 비용안전: sysctl + vm_stat 만(즉답) — 전체 스캔으로 수초 걸리는 `memory_pressure` CLI 는 매턴 훅에 부적합이라 의도적 회피. 비-macOS 무음"
+              },
+              {
                 "이름": "toolkit",
                 "역할": "명령 카탈로그 — agent 가 전 명령을 인지·사용하도록 SessionStart 주입 (sidecar TOOLKIT 패리티)",
                 "구분": "module",

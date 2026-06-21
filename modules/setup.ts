@@ -37,6 +37,7 @@ function hookSpec(): Record<string, unknown[]> {
       entry("harness recommend inject"),
       entry("harness prefs inject"),
       entry("harness easy inject"),
+      entry("harness load inject"),
       entry("harness ing inject"),
     ],
     SessionStart: [

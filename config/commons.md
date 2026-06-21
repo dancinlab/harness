@@ -164,7 +164,11 @@ origin/base 로 ff-sync** 한다 — feature 브랜치에서 `git fetch origin <
   **hardware-dependent, 5070 에선 closed**(measured root-cause). 즉 research 는 게으른 프레임을 깨고
   미시도 레버를 드러내되, terminal 은 측정-falsify 후에만(남은 레버 = Ozaki-INT8 n≥8K). 진짜 천장도
   흔히 **양쪽이 같은 캡 공유** → "parity 도달, 너머는 구조 레버(fusion·결정성)" 가 정직한 종착이지
-  "미달"이 아니다.
+  "미달"이 아니다. **★ mechanism-family census (dry 의 정의)**: "N 레버 falsify → 🧱" 인데 그 N 개가
+  **같은 family** 면 dry 아님 — 직교 family 를 안 본 것이다(실증: TF32 "하드웨어 천장" 은 precision-emulation
+  family[FP16-split·INT8-split·scheduling]만 소진한 착각이었고, megakernel·Stream-K·sparsity·sub-cubic
+  family 가 미탐색 → reopen 후 두 벽이 parity/추월로 닫혔다). 그러니 dry 선언 전 **직교 매커니즘 family
+  를 enumerate(cite)** 하고 각 family 를 falsify 한다 — 한 family 소진은 reopen 대상이지 종착 아님.
 - **(e) 투자 부족** — 스케일업(compute/data). 무거운 작업은 c15 대로 pool/`hexa cloud` 로 분산.
 
 벽은 흔히 (1) 틀린 방법 (2) 틀린 방향 (3) 부족한 투자이지 진짜 천장이 아니다 — 표면 처방을 바꾸기
@@ -225,6 +229,20 @@ cross-repo 인계(`ing add --to <repo>`)는 **다른 세션/사람에게 진짜 
 짧은 간격 반복은 프롬프트 캐시(5분 TTL)를 매번 깨 비용·지연만 키운다. 진행건은 `harness ing pod`/ING(c6)에
 등록해두고, 폴링은 ≥30분 간격으로 **상태만** 확인한다. (CI·배포 큐처럼 분 단위로 빠르게 끝나는 건 예외 — 그건
 짧게.) 가능하면 폴링 자체를 **서브에이전트**(worktree 격리)에 맡겨 메인 세션을 비운다.
+
+**위임한 장수 agent 의 상태를 읽는 법 (재-ping 이 진행을 죽인다 · 실전 박제)**: 측정/빌드를 도는
+background Agent 는 **느린 게 멈춘 게 아니다** — 무거운 측정(large-n GEMM·전수 sweep·원격 빌드)은 수십 분이
+정상이고, Monitor-wait 재-arm 통지를 "stall/zombie" 로 오판해 죽이지 말 것. ⓐ **재-ping/resume/SendMessage
+금지**: live agent 를 건드리면 매번 resume = **진행 리셋 + "아직 warming up" 재보고** 의 무한루프 — 조급한
+ping 이 stall 의 *원인* 이 된다. 자연 완료를 기다린다. ⓑ **의심되면 ping 대신 ground-truth**: 막혔는지
+확인하려면 추정 말고 호스트에 직접 들어가 실측(`pool on <host> 'pgrep -af <job>; nvidia-smi; tail <log>'`) —
+"막힌 agent" 추정 대신 ps 한 번이 원인을 규명한다(실전: "8회 stall" 이 사실 CPU 99.9%/GPU 0% 의 bench
+설계결함이었다). ⓒ **"came to rest" ≠ 결과**: 빈/idle 출력으로 쉰 통지는 terminal 아님 — 산출(브랜치
+커밋·로그 수치)을 직접 회수하고, 수치 없는 landing 은 **미완**(c2, 다음 단계 전진 금지). ⓓ **stale 중복
+통지 검증**: 늦게 온 "came to rest" 는 이미 머지/superseded 일 수 있다 — **현재 main/SSOT 와 대조 후에만**
+행동(구 방향 브랜치 무검증 머지 = 방금 고친 걸 되돌림). ⓔ **체크포인트 = 재개 전제**: agent 산출은 죽기 전
+브랜치 push 로 보존돼야 "재시작" 아닌 "재개" 가 된다 — 재개는 좁은 범위(증명+수치 회수)로 재발사해
+throttle 회피.
 
 ## c20 — Pi5-Akida 는 anima 뉴로모픽 실험 전용 (공유자원 활용 금지)
 **Raspberry Pi 5 + Akida 뉴로모픽 칩**(`pi5-akida`) 하드웨어는 **anima 의 뉴로모픽 실험 전용**이다 — 그

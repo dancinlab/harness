@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## docs(commons): lift two fleet-full lessons to cross-project governance (c14·c19)
+
+The fleet-full runbook hardening was project-specific; two of the lessons are project-agnostic
+and belong in the always-on commons SSOT so every agent (not just fleet campaigns) inherits them:
+
+- **c14 (d) — mechanism-family census**: strengthened the lazy-ceiling rule. "N levers falsified
+  → 🧱" is NOT dry when the N levers are all one family — orthogonal families went unexplored.
+  Enumerate (cite) orthogonal mechanism families and falsify each before declaring a wall; one
+  family exhausted is a reopen target, not a terminus. (Empirical: a TF32 "hardware ceiling" was
+  precision-emulation-family tunnel vision; megakernel/Stream-K/sparsity families reopened it.)
+- **c19 — long-runner agent lifecycle**: added "how to read a delegated long-running agent's
+  state without killing it." Slow ≠ stalled; re-ping/resume of a live agent RESETS its progress
+  (the pinging causes the stall); when in doubt capture ground-truth on the host (`pgrep`/
+  `nvidia-smi`/`tail`) instead of guessing; "came to rest" with empty output ≠ a result; verify
+  a late notification against current main/SSOT before acting (may be stale/superseded);
+  checkpoint pushes are the precondition for resume-not-restart.
+
 ## docs(fleet-full): harden the runbook with 3 field-proven lessons from a long GPU campaign
 
 A multi-hour `fleet full` campaign (forge cuBLAS-independence on hexa-lang) surfaced three

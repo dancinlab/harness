@@ -1,5 +1,28 @@
 # CHANGELOG
 
+## feat(toolkit): agent-facing command catalog + SessionStart injection (sidecar TOOLKIT parity)
+
+Commands existed and worked, but an AI agent only learned of them REACTIVELY — via a
+keyword trigger — so commands without a trigger (`research`/`arxiv`, `secret`, `imagine`,
+`watch`…) were a discoverability blind spot: the agent didn't know to reach for them.
+
+🗂️ toolkit — "harness 명령 카탈로그"
+
+New `harness toolkit {list|inject|json|write|check}` (`modules/toolkit.ts`):
+- SSOT is the `HELP` text in `cli/index.ts` — toolkit PARSES it (read as text to avoid the
+  entry module's import side effects), so there is ONE source and zero drift. Each command
+  is enriched with its keyword triggers (from `keywords.json`) as `⟨triggers⟩`.
+- **inject** — SessionStart additionalContext: the WHOLE command surface as a compact
+  `id — use ⟨triggers⟩` catalog, so the agent proactively knows every command (matches
+  sidecar's once-per-session COMMANDS.md injection). Wired into `hooks.json` + `setup.ts`.
+- **write** — materializes `TOOLKIT.jsonl` (repo-root committed artifact, 59 entries).
+- **check** — regenerates from HELP and snapshot-diffs the committed file → exit 1 on drift.
+  `harness lint` surfaces drift as **TOOLKIT-DRIFT (warn)** — warn, not block, because the
+  inject regenerates live from HELP so the agent is always current; the file is the snapshot.
+
+Also closes the immediate gap surfaced while QAing `research arxiv` + `secret` (both verified
+working — arxiv keyless public API, secret resolves `~/.hx/bin/secret` with 20+ keys).
+
 ## fix(worktree): age backstop in gc — stop squash/no-push agent worktrees piling up
 
 `worktree gc` (and pr-cycle's sweep) reaped ONLY worktrees whose upstream is `[gone]`

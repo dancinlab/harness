@@ -1,5 +1,25 @@
 # CHANGELOG
 
+## feat(load): per-turn macOS resource readout — CPU load + RAM pressure + swap (⚠️ on danger)
+
+New `harness load {show|inject}` module wired into `UserPromptSubmit` so every reply opens with a
+one-line resource readout. Motivation: the user's Mac kept dying under load — and a Mac that dies
+fails on MEMORY (compressor + swap blowup), not CPU. So CPU load alone was insufficient; the line
+now carries three axes with traffic lights:
+
+- **CPU** = load1 / cores (🟢<0.7 · 🟡<1.0 · 🔴≥1.0)
+- **RAM** = (active+wired+compressor) used% + kernel pressure level (normal/warn/critical)
+- **swap** = used (🟢<2G · 🟡<6G · 🔴≥6G)
+
+When any axis is 🔴 or kernel pressure ≥ warn the line flips to `⚠️ 부하` and injects a guard note
+telling the agent to advise against heavy work (mass build · parallel agents · GPU). Cost-safe by
+design: reads only `sysctl` + `vm_stat` (instant) — deliberately NOT the `memory_pressure` CLI,
+which does a full system scan and would be too heavy for an every-prompt hook. Non-macOS → no-op.
+
+- `modules/load.ts` + `cli/index.ts` registration + help line
+- `hooks/hooks.json` UserPromptSubmit (+ mirrored in `modules/setup.ts`, `modules/init.ts`,
+  `.claude/settings.json`) · `commands/load.md` slash delegator (`/load`)
+
 ## docs(commons): lift two fleet-full lessons to cross-project governance (c14·c19)
 
 The fleet-full runbook hardening was project-specific; two of the lessons are project-agnostic

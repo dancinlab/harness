@@ -40,6 +40,7 @@ import { runWatch } from "../modules/watch.ts";
 import { runFolders } from "../modules/folders.ts";
 import { runPrefs } from "../modules/prefs.ts";
 import { runEasy } from "../modules/easy.ts";
+import { runLoad } from "../modules/load.ts";
 import { runRecommend } from "../modules/recommend.ts";
 import { runSbs } from "../modules/sbs.ts";
 import { runFanout } from "../modules/fanout.ts";
@@ -82,6 +83,7 @@ hook delegates (wire these into your agent's settings.json):
   toolkit {list|inject|json|write|check}   command catalog (SSOT = this HELP) — inject surfaces the WHOLE command surface at SessionStart so an agent knows every cmd; check gates TOOLKIT.jsonl drift
   prefs {show|code|docs|response <lang>|inject}   language prefs (3 axes) + UserPromptSubmit inject
   easy {show|inject}       inject the "easy" friendly-response style (lang from prefs.response)
+  load {show|inject}       per-turn macOS resource readout (CPU load + RAM pressure/used% + swap, ⚠️ on danger) — UserPromptSubmit inject
   recommend {inject|show|get-default|set-default <m> [--global]|clear-default [--global]|resolve-mode <a>}
                            4-axis rubric + default mode (repo .harness > global ~/.harness > present; fixed axis = auto-pick)
   sbs [auto[:<axis>]|manual] [<task>]   step-by-step plan-first runbook (mode via recommend resolve-mode)
@@ -215,6 +217,8 @@ async function main(): Promise<number> {
       return runPrefs(rest);
     case "easy":
       return runEasy(rest);
+    case "load":
+      return runLoad(rest);
     case "recommend":
       return runRecommend(rest);
     case "sbs":

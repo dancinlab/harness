@@ -15,7 +15,7 @@ import { info, ok, warn, nowIso } from "../lib/log.ts";
 import { readStdin, execArgs } from "../lib/exec.ts";
 import { config } from "../lib/config.ts";
 import { setLiveMarker, staleLongRunnerWarn } from "./heartbeat-guard.ts";
-import { ingStalenessWarn } from "./ing-staleness.ts";
+import { ingStalenessWarn, resetIngStaleness } from "./ing-staleness.ts";
 
 // live long-runner labels (ing-board pods) for the c21 heartbeat guard.
 export async function liveLongRunnerLabels(cwd: string = REPO_ROOT): Promise<string[]> {

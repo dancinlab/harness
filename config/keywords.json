@@ -38,6 +38,12 @@
       "hint": "각 소스 서브폴더에 CLAUDE.md(로컬 가이드)를 두면 AI 가 그 폴더만 읽어도 맥락을 잡는다. 누락 폴더 확인: `harness folders scan`, 템플릿 생성: `harness folders scaffold <dir>`."
     },
     {
+      "id": "pool-hosts",
+      "patterns": ["호스트 로스터", "host roster", "원격 실행", "원격에서 실행", "어느 머신", "어느 호스트", "남는 머신", "비는 머신", "유휴 머신", "idle host", "원격 머신", "다른 컴퓨터에서", "pool list", "pool status", "머신 목록", "호스트 목록", "서버 목록", "cpu 여유", "gpu 여유", "어디서 돌릴", "ssh 로 돌"],
+      "tool": "harness pool",
+      "hint": "로컬 외 소유 머신(LAN/ssh)에서 돌릴 땐 `harness pool` (전역 로스터 ~/.harness/pool.json): `pool list`(캐시 스펙 + 라이브 CPU/GPU 부하) · `pool status`(도달성) · `pool on <host> <cmd...>`(ssh 원격 실행) · `pool specs [host]`(코어/RAM/GPU 프로브) · add/rm/on. 임대 GPU 클라우드 pod 는 별개로 `hexa cloud`."
+    },
+    {
       "id": "gpu-cloud-hexa",
       "patterns": ["gpu", "GPU", "hexa cloud", "클라우드 실행", "클라우드에서 돌", "runpod", "vast", "vast.ai", "파인튜닝", "fine-tune", "fine tune", "finetune", "학습 돌려", "학습 돌리", "pod 띄", "pod 올려", "클라우드 학습", "cloud run", "원격 gpu"],
       "tool": "hexa cloud",

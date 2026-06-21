@@ -53,24 +53,43 @@ async function arxiv(args: string[]): Promise<number> {
     ? `id_list=${encodeURIComponent(q)}`
     : `search_query=${encodeURIComponent("all:" + q)}&sortBy=submittedDate&sortOrder=descending`;
   const url = `https://export.arxiv.org/api/query?${query}&max_results=${Math.max(1, Math.min(50, n))}`;
-  let xml: string;
-  try {
-    const r = await fetch(url, { headers: { "User-Agent": "harness-research/1.0" } });
-    xml = await r.text();
-  } catch (e) {
-    loudFail(`research arxiv: network error — ${String(e).slice(0, 120)}`);
+  // arXiv throttles bursts (>~1 req / 3s) with a bare "Rate exceeded." body — which
+  // is NOT an empty result set. Two-part handling so an AI agent recognizes + recovers:
+  //   1) auto-retry with backoff (3s, 6s) — a transient burst self-heals, and each
+  //      backoff EMITS a notice so the agent knows it's rate-limited, not stuck/broken.
+  //   2) if it persists, loudFail with a clear rate-limit error (exit 1) — never the
+  //      misleading "no results" (which reads as "the paper doesn't exist").
+  // @convergence state=ossified id=ARXIV_RATELIMIT_NOT_NORESULTS value="arXiv throttles a burst with EITHER a 'Rate exceeded.' text body OR an HTTP 503 page — both have 0 <entry> exactly like a genuine empty result. Detect throttle by status>=500 OR /rate exceeded/ OR a non-Atom body (no <feed/<entry); a real empty result IS a valid <feed> with totalResults 0. Auto-retry with backoff (notice each round so the agent recognizes a RATE problem), then loudFail with a rate-limit error; NEVER report 'no results' for a throttle" threshold="checked only the 'rate exceeded' string, so an HTTP-503 throttle slipped through and the command said 'no results' for a query with thousands of papers"
+  const sleep = (ms: number) => new Promise<void>((res) => setTimeout(res, ms));
+  // A throttle (text "Rate exceeded." OR a 5xx page) is NOT a valid Atom feed.
+  const isThrottle = (status: number, body: string): boolean =>
+    status >= 500 || /rate exceeded/i.test(body) || (!body.includes("<feed") && !body.includes("<entry"));
+  let xml = "";
+  let throttled = false;
+  for (let attempt = 0; attempt <= 2; attempt++) {
+    let status = 0;
+    try {
+      const r = await fetch(url, { headers: { "User-Agent": "harness-research/1.0" } });
+      status = r.status;
+      xml = await r.text();
+    } catch (e) {
+      loudFail(`research arxiv: network error — ${String(e).slice(0, 120)}`);
+      return 1;
+    }
+    throttled = isThrottle(status, xml);
+    if (!throttled) break; // valid Atom feed (possibly empty) — proceed
+    if (attempt < 2) {
+      const backoff = (attempt + 1) * 3;
+      info(`research arxiv: ⏳ arXiv rate-limited (burst${status ? " · HTTP " + status : ""}) — backing off ${backoff}s, auto-retry ${attempt + 1}/2 (keep calls ≤1 req/3s)`);
+      await sleep(backoff * 1000);
+    }
+  }
+  if (throttled) {
+    loudFail(`research arxiv: arXiv still rate-limiting after 2 retries — this is a RATE limit (not a missing paper / not a bug). Wait ~30s and retry; keep calls to ≤1 req/3s`);
     return 1;
   }
   const entries = xml.split("<entry>").slice(1).map((b) => b.split("</entry>")[0]);
   if (!entries.length) {
-    // arXiv throttles bursts (>~1 req / 3s) with a bare "Rate exceeded." body — which
-    // is NOT an empty result set. Reporting "no results" there hides the real cause
-    // (the user thinks the paper doesn't exist). Distinguish the two.
-    // @convergence state=ossified id=ARXIV_RATELIMIT_NOT_NORESULTS value="a 'Rate exceeded.' throttle body has 0 <entry> just like a genuine empty result — detect it and emit a rate-limit error (exit 1), never the misleading 'no results'" threshold="arXiv server-side throttle after a burst returned 0 entries; the command said 'no results for <id>' for a paper that exists"
-    if (/rate exceeded/i.test(xml)) {
-      loudFail(`research arxiv: arXiv rate-limited this request (burst — keep it ≤1 req/3s) — wait ~30s and retry`);
-      return 1;
-    }
     info(`research arxiv: no results for "${q}"`);
     return 0;
   }

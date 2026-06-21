@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## fix(ing): `resetIngStaleness` missing from import — `ing add`/`done` crashed with ReferenceError
+
+`modules/ing.ts` called `resetIngStaleness()` at two sites (after a board write — `add` and `done`,
+to clear the edits-since-update counter, c6) but its import line pulled in only `ingStalenessWarn`
+from `./ing-staleness.ts`. Because `tsx` runs transpile-only (no type-check), the missing binding
+was not caught at load — `harness ing help`/`show` passed, but any write path threw
+`ReferenceError: resetIngStaleness is not defined` at runtime, forcing manual git-plumbing
+fallbacks to register ING entries. Root cause was a split-import omission (the function was always
+exported from `ing-staleness.ts`); fix adds `resetIngStaleness` to the existing import. Verified:
+`ing add --stdin` now exits 0 and the entry shows in `ing show`.
+
 ## feat(load): per-turn macOS resource readout — CPU load + RAM pressure + swap (⚠️ on danger)
 
 New `harness load {show|inject}` module wired into `UserPromptSubmit` so every reply opens with a

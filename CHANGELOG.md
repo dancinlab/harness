@@ -1,5 +1,24 @@
 # CHANGELOG
 
+## fix(research): robust arXiv rate-limit handling — backoff retry + agent-recognizable notice
+
+Extends the prior rate-limit fix: arXiv throttles a burst with MULTIPLE signals —
+a `Rate exceeded.` text body, an HTTP 429, OR a 503 page — all with 0 `<entry>`, all
+looking like an empty result. The string-only check missed the 429/503 pages, so the
+command still said `no results` for queries with thousands of papers.
+
+Now `research arxiv`:
+- detects a throttle by `status >= 500` OR `/rate exceeded/` OR a non-Atom body (a real
+  empty result is a valid `<feed>` with totalResults 0 — that path is untouched);
+- **auto-retries with backoff** (3s, 6s) — a transient burst self-heals, and EACH backoff
+  emits a `⏳ arXiv rate-limited (burst · HTTP <code>) — auto-retry n/2` notice so an AI
+  agent recognizes a RATE problem (recoverable), not a stuck/broken command;
+- on persistence, `loudFail`s with `… this is a RATE limit (not a missing paper / not a
+  bug). Wait ~30s and retry` (exit 1) — never the misleading `no results`.
+
+Verified live while arXiv was actively throttling (HTTP 429): two backoff notices then the
+clear rate-limit error. `@convergence ARXIV_RATELIMIT_NOT_NORESULTS` (state updated).
+
 ## fix(research): distinguish arXiv rate-limit from genuine no-results
 
 QA of `research arxiv` surfaced a symptom-hides-cause bug (c1): arXiv throttles a

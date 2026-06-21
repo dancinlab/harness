@@ -3,16 +3,19 @@
 //   scan         classify every linked worktree (clean/dirty/unpushed/[gone]) and
 //                LOUDLY flag STRANDED ones — uncommitted or unpushed work left in a
 //                worktree. Exit 1 when any are stranded (usable as a gate).
-//   gc           eagerly sweep merged + dangling AGENT worktrees/branches: an
-//                upstream of [gone] (squash-safe merged signal) → git worktree
-//                remove + git branch -D. UNCONDITIONAL live-work guards skip a
-//                worktree that is dirty / recently touched (<1h) / locked, so an
+//   gc           eagerly sweep merged + dangling AGENT worktrees/branches. Reaps on
+//                EITHER [gone] upstream (squash-safe merged signal) OR HEAD-age >
+//                worktree.maxAgeDays (default 3) — the age backstop catches squash-
+//                merge / no-push agent worktrees that never get [gone] and used to
+//                pile up. An aged tip with un-pushed commits is first preserved under
+//                refs/reaped/<branch> (fully recoverable). UNCONDITIONAL live-work
+//                guards skip dirty / recently-touched (<1h) / locked worktrees, so an
 //                active task is NEVER wiped. Always exits 0 (non-blocking).
 //   guard <cmd>  advisory for `git worktree add`: if stranded work already exists,
 //                steer to finish/clean it BEFORE starting new work (principle 3);
 //                plus the branch-reuse stale-base warning.
 import { execShell } from "../lib/exec.ts";
-import { repoPath } from "../lib/config.ts";
+import { repoPath, config } from "../lib/config.ts";
 import { info, ok, warn, loudFail } from "../lib/log.ts";
 
 async function git(cmd: string, cwd?: string): Promise<{ code: number; out: string }> {
@@ -80,6 +83,13 @@ async function recentlyTouched(path: string): Promise<boolean> {
   return Date.now() / 1000 - ct < 3600; // HEAD commit < 1h ago
 }
 
+// Days since the worktree's HEAD commit (Infinity if unknown → treated as old).
+async function headAgeDays(path: string): Promise<number> {
+  const ct = parseInt((await git("git log -1 --format=%ct 2>/dev/null", path)).out || "0", 10);
+  if (!ct) return Infinity;
+  return (Date.now() / 1000 - ct) / 86400;
+}
+
 async function scan(): Promise<number> {
   const wts = await classify();
   const linked = wts.filter((w) => !w.isMain);
@@ -114,16 +124,27 @@ async function gc(): Promise<number> {
   const fresh = await classify();
   let swept = 0;
 
+  // @convergence state=ossified id=WORKTREE_GONE_ONLY_PILEUP value="gc/pr-cycle reaped ONLY [gone]-upstream worktrees; squash-merge + no-push AGENT worktrees never get [gone], so they were skipped forever and piled (67 wts / 84GB / 6 days). Fix: reap on [gone] OR HEAD-age > worktree.maxAgeDays, preserving the tip under refs/reaped/ first so aged work stays recoverable" threshold="agent worktree clean+unlocked+not-recent and older than maxAgeDays, or [gone] upstream"
+  const maxAgeDays = config().worktree?.maxAgeDays ?? 3;
   for (const w of fresh) {
     if (w.isMain || !w.isAgent) continue; // only agent worktrees, conservative
     if (w.locked) continue; // another live checkout
-    if (w.track !== "[gone]") continue; // only merged + deleted (squash-safe)
     if (w.dirty) { info(`  ⏭ skip (dirty): ${w.path}`); continue; }
     if (await recentlyTouched(w.path)) { info(`  ⏭ skip (recent <1h): ${w.path}`); continue; }
+    const gone = w.track === "[gone]"; // pushed + remote-deleted (squash-safe)
+    const aged = maxAgeDays > 0 && (await headAgeDays(w.path)) > maxAgeDays;
+    if (!gone && !aged) continue; // live/recent work → leave it
+    // Aged reap may carry un-pushed commits (the [gone] path is already merged).
+    // Preserve the tip under refs/reaped/ so the work stays fully recoverable.
+    if (aged && !gone && w.ahead > 0 && w.branch) {
+      const sha = (await git("git rev-parse --short HEAD", w.path)).out;
+      await git(`git update-ref refs/reaped/${w.branch} HEAD`, w.path);
+      info(`  🔖 preserved aged tip → refs/reaped/${w.branch} (${sha}, unpushed:${w.ahead})`);
+    }
     const rm = await git(`git worktree remove --force ${JSON.stringify(w.path)}`);
     if (rm.code === 0) {
       if (w.branch) await git(`git branch -D ${JSON.stringify(w.branch)}`);
-      info(`  🧹 swept merged worktree: ${w.path}`);
+      info(`  🧹 swept ${gone ? "merged[gone]" : `aged(>${maxAgeDays}d)`} worktree: ${w.path}`);
       swept++;
     }
   }

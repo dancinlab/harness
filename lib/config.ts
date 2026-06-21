@@ -134,6 +134,11 @@ export interface HarnessConfig {
   // ing staleness (c6) — warn at session Stop when ≥ `editThreshold` code files were
   // edited since the ing board was last touched (add/next/done). 0 disables the nudge.
   ing: { editThreshold: number };
+  // worktree gc — `[gone]` upstream only catches pushed+deleted branches; squash-merge /
+  // no-push agent worktrees never get it and pile up. `maxAgeDays` is the age backstop:
+  // a clean, unlocked, not-recently-touched AGENT worktree whose HEAD is older than this
+  // is reaped (its tip preserved under refs/reaped/ first, so work is recoverable). 0 disables.
+  worktree: { maxAgeDays: number };
   // danger-guard — code-level destructive-command blocks. rmRfRoot gates ONLY the
   // catastrophic `rm -rf /` · `~` · `$HOME` · `*` block; default false = NOT guarded
   // (the user opted out). no-verify / reset-hard / curl|sh remain always-on (code).
@@ -214,6 +219,7 @@ const DEFAULTS: HarnessConfig = {
   poll: { maxSilenceSec: 600 },
   ledger: { staleSec: 3600 },
   ing: { editThreshold: 5 },
+  worktree: { maxAgeDays: 3 },
   memGuard: { enabled: true, warnPct: 15, blockPct: 0, watchdogIntervalSec: 45 },
   dangerGuard: { rmRfRoot: false },
 };

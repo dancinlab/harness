@@ -62,6 +62,7 @@ harness/
 | `lint [all\|fast]` | staged-L0 + 신선도 + **CHANGELOG 누락** + 수렴 누락 체크 | commit 전 (git pre-commit hook) |
 | `ci [all\|fast\|list]` | config 의 검증 명령 병렬 실행 (실패 1개라도 → exit 1; 옛 이름 `verify` 별칭 유지, config 키도 `verify.checks`) | commit/push 전 |
 | `ci-track <pr\|branch> [--watch] [--merge-on-green] [-R owner/repo]` | 원격 PR/CI 체크 추적 — `gh pr checks --json` → pass/fail/pending 집계 + 🟢GREEN/🔴RED/🟡PENDING/⚪NONE verdict(exit 0/2/1/0). `--watch` = CLI-내부 폴링으로 terminal 까지 대기(손수 짠 `gh pr checks\|grep` + /tmp monitor sleep 루프 대체 · c19), `--merge-on-green` = 그린이면 자동 squash-merge | merge-on-green · CI 대기 시 |
+| `worktree {scan\|gc\|guard <cmd>}` | no-pileup 강제 — `scan`=stranded(미커밋/미푸시) 워크트리 적발(exit 1 게이트) · `gc`=agent 워크트리 자동 수거: `[gone]` 머지분 + **age 백스톱**(HEAD>`worktree.maxAgeDays` 기본 3일 → 미푸시 팁은 `refs/reaped/<br>` 보존 후 reap). dirty/locked/recent(<1h)는 절대 안 건드림. squash-merge·no-push 로 `[gone]` 안 뜨는 fleet 워크트리 누적을 막음 | SessionStart |
 | `errors {route\|list\|drain_check\|mark_fixed}` | 오류 severity 분류 + 큐 | 상시 |
 | `ledger {register\|complete\|list\|gc\|dup_check}` | 백그라운드 에이전트 작업 등록(중복 방지) | Agent 전/후 |
 | `bitter-gate audit [window]` | 규칙 히트 빈도 → dormant 규칙 폐기 검토 | 규칙 추가 전 |

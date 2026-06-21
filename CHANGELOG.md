@@ -1,5 +1,30 @@
 # CHANGELOG
 
+## fix(worktree): age backstop in gc — stop squash/no-push agent worktrees piling up
+
+`worktree gc` (and pr-cycle's sweep) reaped ONLY worktrees whose upstream is `[gone]`
+(pushed + remote-deleted). Fleet / sub-agent worktrees created with `isolation:worktree`
+are usually squash-merged and never individually pushed → their branch never gets
+`[gone]` → both sweeps skipped them forever. Result observed: 67 worktrees / 84GB / 6
+days of accumulation.
+
+🌳 age 백스톱 — "오래된 천막은 나이로 걷는다"
+
+- gc now reaps an AGENT worktree on EITHER `[gone]` upstream OR HEAD-commit age >
+  `worktree.maxAgeDays` (new config, default 3).
+- The unconditional live-work guards are unchanged: dirty / locked / recently-touched
+  (<1h) worktrees are NEVER wiped.
+- An aged worktree carrying un-pushed commits has its tip preserved under
+  `refs/reaped/<branch>` BEFORE removal — fully recoverable (`git worktree add <path> <sha>`),
+  while the working-tree disk is reclaimed.
+
+Verified in an isolated clone: a 6-day-old unpushed agent worktree → tip saved to
+`refs/reaped/agent-aged` then swept; a <1h worktree → skipped (protected).
+
+pr-cycle's own-branch `[gone]` sweep is unchanged (it correctly reaps the branch it just
+merged); the age backstop in the SessionStart `worktree gc` is what collects the orphaned
+fleet leftovers.
+
 ## feat(convergence): capture-token enforcement loop (emit → resolve → Stop nudge)
 
 The recurrence trigger no longer just prints an advisory hint — it now closes a

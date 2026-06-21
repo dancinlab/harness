@@ -128,7 +128,7 @@ reports:
                                add/rm mutate harness.config.json lockdown.files
   folders [scan|scaffold <dir>]   per-subfolder CLAUDE.md coverage + scaffolding
   end                          session-closure safety check (uncommitted·unpushed·stash·PRs·branches·worktrees)
-  worktree {scan|gc|guard <cmd>}   no-pileup/no-stranded enforcement — flag stranded worktrees · auto-sweep merged
+  worktree {scan|gc|guard <cmd>}   no-pileup/no-stranded enforcement — flag stranded worktrees · auto-sweep merged([gone]) + aged(>maxAgeDays, tip→refs/reaped)
                            (SessionStart-wire \`worktree gc\`; \`scan\` exit 1 gates new work on abandoned worktrees)
   ing [show|add [--to <repo>]|done|next|pod ...|inject]   in-progress board → ING.jsonl (작업·POD·next · done=scrub · SessionStart inject · --to <repo> = 타 프로젝트 ING 로 전달)
   verdict {record <id> <cmd>|list|show <id>}   verification evidence ledger → .verdicts/ (PASS/FAIL)

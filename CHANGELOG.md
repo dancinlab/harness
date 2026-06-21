@@ -1,5 +1,20 @@
 # CHANGELOG
 
+## fix(research): distinguish arXiv rate-limit from genuine no-results
+
+QA of `research arxiv` surfaced a symptom-hides-cause bug (c1): arXiv throttles a
+burst (>~1 req/3s) with a bare `Rate exceeded.` body, which has 0 `<entry>` elements
+— identical to a real empty result set — so the command reported `no results for
+"<id>"` for papers that DO exist. Now the empty-entry path checks for the throttle
+body and emits a clear rate-limit error (exit 1) instead. Verified live while the
+throttle was active: `research arxiv hep-th/9901001` → "arXiv rate-limited this
+request … wait ~30s and retry". `@convergence ARXIV_RATELIMIT_NOT_NORESULTS`.
+
+QA verdict (this session): research arxiv search ✅ · by-id ✅ ("Attention Is All You
+Need") · usage ✅ · no-results ✅ · rate-limit ✅ (now distinguished) · research yt ✅
+(3blue1brown, 286 transcript lines). arxiv needs no key (public API); secret resolves
+~/.hx/bin/secret with 20+ keys.
+
 ## feat(toolkit): agent-facing command catalog + SessionStart injection (sidecar TOOLKIT parity)
 
 Commands existed and worked, but an AI agent only learned of them REACTIVELY — via a

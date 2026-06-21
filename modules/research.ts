@@ -63,6 +63,14 @@ async function arxiv(args: string[]): Promise<number> {
   }
   const entries = xml.split("<entry>").slice(1).map((b) => b.split("</entry>")[0]);
   if (!entries.length) {
+    // arXiv throttles bursts (>~1 req / 3s) with a bare "Rate exceeded." body — which
+    // is NOT an empty result set. Reporting "no results" there hides the real cause
+    // (the user thinks the paper doesn't exist). Distinguish the two.
+    // @convergence state=ossified id=ARXIV_RATELIMIT_NOT_NORESULTS value="a 'Rate exceeded.' throttle body has 0 <entry> just like a genuine empty result — detect it and emit a rate-limit error (exit 1), never the misleading 'no results'" threshold="arXiv server-side throttle after a burst returned 0 entries; the command said 'no results for <id>' for a paper that exists"
+    if (/rate exceeded/i.test(xml)) {
+      loudFail(`research arxiv: arXiv rate-limited this request (burst — keep it ≤1 req/3s) — wait ~30s and retry`);
+      return 1;
+    }
     info(`research arxiv: no results for "${q}"`);
     return 0;
   }

@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## chore(prs): merge in 3 stranded PRs after review (c23 · c24 · ing worktree-aware) + retire superseded #125
+
+Reconciled the 4 abandoned PRs the reaper surfaced. All had rotted to CONFLICTING (the c25 naming
+rule landed in the same commons.md region), so rather than 4 fragile rebases each rule/fix was
+reviewed and re-applied to current main:
+
+- **c23** (was PR #80) — equivalent-reimplementation reads the reference white-box (intermediate-state
+  diff to first divergence), no black-box tune-to-green; parity is a springboard, not a terminus.
+- **c24** (was PR #82) — implementation is "done" only once wired into the production call path
+  (order: implement → wire → QA); unwired/bench-only code is labelled dead-until-wired, not "done".
+- **ing worktree-aware board root** (was PR #78) — `modules/ing.ts` resolves the board cwd via
+  `git rev-parse --show-toplevel` (`BOARD_ROOT`), falling back to `REPO_ROOT`, so `ing add/show/done`
+  in a linked worktree write to the correct repo ref instead of an ancestry-walked sibling.
+- **#125** (lazy-ceiling) — superseded: the content already lives in main's c14; closed, not merged.
+
+c23·c24 keep their original numbers (slot between c22 and the already-merged c25).
+
 ## feat(naming-guard): canonical-name discipline — warn on version/copy-suffixed file·folder names (commons c25)
 
 New cross-project rule + mechanical guard: file/dir names should be canonical native names, NOT

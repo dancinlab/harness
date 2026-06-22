@@ -111,6 +111,12 @@
             "상세": "c6 ing-staleness warn: 코드 ≥editThreshold(기본 5) 편집했는데 ing 보드 무변동이면 1회 경고 후 카운터 리셋. warn-only(강제 불가 — '이 편집이 ing 갱신 대상'의 ground truth 없음). + c1 convergence due-check: 재발 캡처-토큰 부채가 미해소(세션 중 재발 신호는 떴는데 @convergence 마커 미작성)면 1회 환기 후 reset. 둘 다 warn-only · stderr"
           },
           {
+            "이름": "PreCompact·PostCompact",
+            "역할": "자동 컴팩션 전/후 → 세션-스코프 inject 재주입(컴팩션 생존)",
+            "구분": "surface",
+            "상세": "매-턴 inject(commons·recommend·prefs·easy)는 UserPromptSubmit 라 컴팩션 후에도 복귀하지만, 세션-스코프 inject(architecture·git-context·toolkit·companions·ing)는 SessionStart 에서만 떠 컴팩션 시 증발 → 설계트리·명령카탈로그·ING 보드가 세션 중반 사라진다. PreCompact(요약기가 보도록)+PostCompact(새 윈도우 열린 직후 신선 재주입)에 그 6개를 다시 건다. sidecar `project-tape` 의 PreCompact+PostCompact 재주입과 동형. additionalContext 로 주입(`hookEventName` echo)"
+          },
+          {
             "이름": "체크포인트",
             "역할": "commit/세션 → lint / verify / ing",
             "구분": "surface",

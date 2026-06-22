@@ -20,6 +20,7 @@ import { detectRawCloudCli, detectHandrolledShardFanout } from "./cloud-guard.ts
 import { detectShortPollLoop } from "./poll-guard.ts";
 import { worktreeAddAdvisory } from "./worktree.ts";
 import { docWriteViolation } from "./docs.ts";
+import { descWriteViolation } from "./shadow.ts";
 import { isTmpPath, detectTmpBashWrite } from "./tmp-guard.ts";
 import { detectHandoffScatter } from "./handoff-guard.ts";
 import { detectVersionedName } from "./naming-guard.ts";
@@ -267,6 +268,16 @@ export async function preWrite(_args: string[]): Promise<number> {
       if (level === "block") return emitBlock(dv.rule, `${dv.msg} (docs.enforce=block)`);
       emitWarn(dv.rule, dv.msg);
     }
+  }
+
+  // skill/command description-recognition guard (sidecar `skill-desc-guard` s18,
+  // write-time). A commands/*.md or SKILL.md `description:` over the skill-listing
+  // cap gets truncated/dropped → recognition dies; hard-DENY before it lands.
+  // Missing Triggers clause → warn (lint 4f is the commit-time backstop).
+  const sd = descWriteViolation(filePath, content);
+  if (sd) {
+    if (sd.warn) emitWarn("SKILL-DESC-TRIGGERS", sd.warn);
+    if (sd.block) return emitBlock("SKILL-DESC-CAP", sd.block);
   }
 
   const cfg = loadConfig();

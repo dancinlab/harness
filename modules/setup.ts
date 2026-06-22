@@ -53,6 +53,29 @@ function hookSpec(): Record<string, unknown[]> {
       entry("harness ing inject"),
     ],
     Stop: [entry("harness ing staleness-check"), entry("harness convergence due-check")],
+    // Compaction survival — the per-turn injects (commons/recommend/prefs/easy) ride
+    // UserPromptSubmit so they always return, but the SESSION-scoped injects
+    // (architecture·git-context·toolkit·companions·ing) only fire at SessionStart and
+    // EVAPORATE on auto-compaction (the design tree / command catalog / ING board
+    // vanish mid-session). Re-inject them on PreCompact (so the summarizer still sees
+    // them) AND PostCompact (fresh after the new context window opens). Mirrors
+    // sidecar `project-tape` PreCompact+PostCompact re-injection.
+    PreCompact: [
+      entry("harness commons inject"),
+      entry("harness architecture inject"),
+      entry("harness git-context inject"),
+      entry("harness toolkit inject"),
+      entry("harness companions inject"),
+      entry("harness ing inject"),
+    ],
+    PostCompact: [
+      entry("harness commons inject"),
+      entry("harness architecture inject"),
+      entry("harness git-context inject"),
+      entry("harness toolkit inject"),
+      entry("harness companions inject"),
+      entry("harness ing inject"),
+    ],
   };
 }
 
@@ -121,7 +144,7 @@ function installHooks(args: string[]): number {
   mkdirSync(dirname(settingsPath), { recursive: true });
   writeFileSync(settingsPath, JSON.stringify(d, null, 2) + "\n", "utf8");
   ok(`install-hooks: harness hooks merged → ${settingsPath} (global)${envNote}. Needs \`harness\` on PATH.`);
-  info("  events: PreToolUse · PostToolUse · UserPromptSubmit · SessionStart · Stop (existing non-harness hooks preserved)");
+  info("  events: PreToolUse · PostToolUse · UserPromptSubmit · SessionStart · Stop · PreCompact · PostCompact (existing non-harness hooks preserved)");
   return 0;
 }
 

@@ -574,10 +574,10 @@
             "상세": "→ repo 규칙 append"
           },
           {
-            "이름": "4. hook 배선",
-            "역할": ".claude/settings.json에 pre/post/prompt delegate",
+            "이름": "4. hook 배선 (전역 1벌)",
+            "역할": "harness install — 전역 ~/.claude/settings.json 에만 배선",
             "구분": "step",
-            "상세": ""
+            "상세": "GLOBAL-ONLY: per-repo .claude/settings.json 금지(전역과 중복돼 컨텍스트 2~3중 주입되던 버그). init 은 repo settings 를 안 쓰고, install-hooks --repo 는 거부. 훅은 호스트당 한 번 harness install 로 전역 배선 → 모든 repo 발사. (@convergence INIT-INJECT-DUP)"
           },
           {
             "이름": "5. 검증",

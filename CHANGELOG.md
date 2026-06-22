@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## fix(hooks): 훅 배선 GLOBAL-ONLY — per-repo .claude/settings.json 금지 (중복 주입 근절)
+
+🪝 "한 스피커만 켜기"
+
+- 하는 일: 훅(가드+인젝트)을 까는 경로를 **전역 `~/.claude/settings.json` 1벌로 통일**한다. `harness init` 은 더 이상 per-repo `.claude/settings.json` 을 스캐폴드하지 않고(`--hooks` 플래그 제거), `harness install-hooks --repo` 는 차단(exit 1)된다. 훅 배선은 호스트당 한 번 `harness install` 로 끝낸다.
+- 비유: 같은 방송을 스피커 3대(전역 install + 플러그인 + per-repo init)가 동시에 틀던 걸, 스피커 하나만 남기는 것. 3대가 같이 틀면 commons·recommend·prefs·easy 가 매 턴 2~3중으로 쌓여 사용자의 짧은 입력(`sbs auto go` 등)이 묻혀 인식이 안 됐다.
+
+```
+전 (before)                          후 (after)
+─────────────────────────          ─────────────────────────
+ init --hooks → repo settings        init → repo settings 안 씀
+ + 전역 + 플러그인 = 2~3중 주입       전역 1벌만 = 1중 주입
+ 새 repo 마다 재발                    근원 차단 (init/install-hooks --repo)
+```
+
+- 근원/재발방지: `modules/init.ts` 에 `@convergence id=INIT-INJECT-DUP state=ossified` 마커. inject = host-wide 정책이라 전역 레이어가 소유하고 repo 레이어는 repo-고유(config·`.harness/*` 규칙)만 가진다.
+- 영향: `init.ts`(--hooks·snippet 제거) · `setup.ts`(install-hooks --repo 거부) · `update.ts`·`cli/index.ts`(help) · README·docs/languages.md 안내 갱신.
+
 ## feat(commons): c27 — 다수 동시 서브에이전트 fan-out 은 Workflow 로 (rate-limit 사망 방지)
 
 🚦 c27 — "동시 발사 신호등"

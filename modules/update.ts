@@ -64,6 +64,6 @@ export async function runUpdate(args: string[]): Promise<number> {
 
   info("");
   info("next: `git add .harness-engine` + commit to record the engine bump.");
-  if (!hooks) info("      (run `harness update --hooks` to also refresh git hooks; re-run `harness init --hooks` to refresh .claude/settings.json)");
+  if (!hooks) info("      (run `harness update --hooks` to also refresh git hooks; agent hooks are GLOBAL-ONLY → `harness install`)");
   return 0;
 }

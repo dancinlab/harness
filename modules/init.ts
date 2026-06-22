@@ -1,11 +1,13 @@
-// harness init [--force] [--hooks] [--dry-run]
+// harness init [--force] [--dry-run]
 // One-shot scaffold for a consuming repo:
 //   • harness.config.json     (project name auto-detected from repo dir)
 //   • .harness/{enforcement,keywords,severity-map}.json  (copied from bundled defaults)
 //   • .gitignore              (append log ignores)
 //   • scripts/harness         (thin wrapper)
-//   • prints the .claude/settings.json hook snippet (or writes it with --hooks)
-// Never overwrites existing files unless --force. With --dry-run, only reports.
+// Hooks are GLOBAL-ONLY — run `harness install` (once per host) to wire them for
+// every repo. init NEVER writes a per-repo .claude/settings.json (banned: it
+// duplicated the global install and double-injected context). Never overwrites
+// existing files unless --force. With --dry-run, only reports.
 import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync, statSync, readdirSync } from "node:fs";
 import { resolve, relative, basename, dirname } from "node:path";
 import { REPO_ROOT, HARNESS_ROOT, HARNESS_CONFIG_DIR } from "../lib/paths.ts";
@@ -13,52 +15,15 @@ import { info, ok, warn } from "../lib/log.ts";
 
 interface Flags {
   force: boolean;
-  hooks: boolean;
   dryRun: boolean;
 }
+
+// @convergence state=ossified id=INIT-INJECT-DUP value="init --hooks scaffolded the full host-wide inject set (commons/recommend/prefs/easy/load/architecture) into per-repo .claude/settings.json, duplicating the global install (~/.claude/settings.json) and/or the enabled plugin — same context injected 2-3x/turn, burying short user prompts" threshold="resolved: per-repo .claude/settings.json is BANNED — harness is global-only. init no longer scaffolds repo hooks (the --hooks flag is gone); hooks live solely in the global ~/.claude/settings.json via `harness install`. inject = host-wide policy, the global layer owns it"
 
 function enginePath(): string {
   // relative path from repo root to the harness engine (for wrappers/snippets)
   const rel = relative(REPO_ROOT, HARNESS_ROOT);
   return rel || ".";
-}
-
-function hookSnippet(engineRel: string): string {
-  const bin = `${engineRel}/bin/harness`;
-  // Guard every hook: if the engine binary isn't present (e.g. submodule not yet
-  // `git submodule update --init`-ed), exit 0 silently instead of erroring. This
-  // keeps a fresh clone quiet until the engine is initialized.
-  const g = (inner: string) => `[ -x ${bin} ] && ${inner} || true`;
-  return JSON.stringify(
-    {
-      hooks: {
-        PreToolUse: [
-          { matcher: "Bash", hooks: [{ type: "command", command: g(`CLAUDE_TOOL_INPUT="$CLAUDE_TOOL_INPUT" bash ${bin} pre bash`) }] },
-          { matcher: "Write|Edit", hooks: [{ type: "command", command: g(`CLAUDE_TOOL_INPUT="$CLAUDE_TOOL_INPUT" bash ${bin} pre write`) }] },
-          { matcher: "AskUserQuestion", hooks: [{ type: "command", command: g(`bash ${bin} pre askq`) }] },
-        ],
-        PostToolUse: [
-          { matcher: "Write|Edit", hooks: [{ type: "command", command: g(`bash ${bin} post edit "$CLAUDE_FILE_PATH"`) }] },
-        ],
-        UserPromptSubmit: [
-          { hooks: [{ type: "command", command: g(`bash ${bin} prompt "$CLAUDE_USER_PROMPT"`) }] },
-          { hooks: [{ type: "command", command: g(`bash ${bin} commons inject`) }] },
-          { hooks: [{ type: "command", command: g(`bash ${bin} prefs inject`) }] },
-          { hooks: [{ type: "command", command: g(`bash ${bin} easy inject`) }] },
-          { hooks: [{ type: "command", command: g(`bash ${bin} load inject`) }] },
-          { hooks: [{ type: "command", command: g(`bash ${bin} recommend inject`) }] },
-        ],
-        SessionStart: [
-          { hooks: [{ type: "command", command: g(`bash ${bin} easy inject`) }] },
-          { hooks: [{ type: "command", command: g(`bash ${bin} recommend inject`) }] },
-          { hooks: [{ type: "command", command: g(`bash ${bin} worktree gc`) }] },
-          { hooks: [{ type: "command", command: g(`bash ${bin} ing inject`) }] },
-        ],
-      },
-    },
-    null,
-    2
-  );
 }
 
 interface Check {
@@ -180,7 +145,6 @@ type Action = { path: string; how: "create" | "copy" | "append" | "skip" | "woul
 export async function runInit(args: string[]): Promise<number> {
   const flags: Flags = {
     force: args.includes("--force"),
-    hooks: args.includes("--hooks"),
     dryRun: args.includes("--dry-run"),
   };
   const actions: Action[] = [];
@@ -329,22 +293,9 @@ export async function runInit(args: string[]): Promise<number> {
     }
   }
 
-  // 6. agent hooks
-  let hooksNeedSnippet = false; // hooks mode but an existing settings.json blocked the auto-merge → print snippet to merge by hand
-  if (flags.hooks) {
-    const settingsPath = resolve(REPO_ROOT, ".claude", "settings.json");
-    if (existsSync(settingsPath) && !flags.force) {
-      actions.push({ path: ".claude/settings.json", how: "skip" });
-      warn(".claude/settings.json exists — not merging automatically. Snippet below:");
-      hooksNeedSnippet = true;
-    } else if (!flags.dryRun) {
-      mkdirSync(dirname(settingsPath), { recursive: true });
-      writeFileSync(settingsPath, hookSnippet(engineRel) + "\n", "utf8");
-      actions.push({ path: ".claude/settings.json", how: "create" });
-    } else {
-      actions.push({ path: ".claude/settings.json", how: "would" });
-    }
-  }
+  // 6. agent hooks — GLOBAL-ONLY. Per-repo .claude/settings.json is banned: it
+  // duplicated the global install and double-injected context. init scaffolds
+  // only repo config; hooks come solely from the global ~/.claude/settings.json.
 
   // report
   info(`harness init ${flags.dryRun ? "(dry-run) " : ""}— repo: ${REPO_ROOT}`);
@@ -354,11 +305,9 @@ export async function runInit(args: string[]): Promise<number> {
     info(`  ${mark} ${a.how.padEnd(6)} ${a.path}`);
   }
 
-  if (!flags.hooks || hooksNeedSnippet) {
-    info("");
-    info(hooksNeedSnippet ? "merge these hooks into your existing .claude/settings.json:" : "next: add these hooks to .claude/settings.json (or re-run with --hooks):");
-    process.stdout.write(hookSnippet(engineRel) + "\n");
-  }
+  info("");
+  info("hooks: GLOBAL-ONLY — run `harness install` once per host to wire guards/injects for EVERY repo.");
+  info("  (per-repo .claude/settings.json is not used — it duplicated the global install.)");
   info("");
   ok("done. edit harness.config.json → verify.checks, lockdown.files, then `harness audit`.");
   return 0;

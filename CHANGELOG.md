@@ -1,9 +1,21 @@
 # CHANGELOG
 
+## feat(inject): ARCHITECTURE·ING turn-close gate — update + report per turn, not on-request
+
+The every-turn ARCHITECTURE/ING injects told the model to keep the design tree and the in-progress
+board current, but the directive was buried in a parenthetical note *in front of* a huge JSON dump —
+so the model skimmed past it and only updated when the user explicitly asked. Two fixes:
+
+- **Move the directive to a turn-close gate AFTER the tree/board** (recency = most-attended) in both
+  `architecture inject` and `ing inject`. The gate fires per turn: if this turn changed
+  code/structure/data-flow → update the affected node in-place / `harness ing done|add|next` **now**.
+- **Mandate reporting**: when an update happened, the model must print `🏛️ ARCHITECTURE 갱신: …` /
+  `🔵 ING 갱신: …` one-liner so the user sees what changed — but stay silent (no false claim) when
+  nothing relevant changed. Pinned durably in commons c12 (turn-close section).
+
 ## docs(commons): c26 — 도구 능력·상태는 그 도구에 물어라 (바이너리 self-report = cross-repo 인지 SSOT)
 
 CLI 도구의 서브시스템·GPU·빌드변종·버전 상태는 stale 문서/기억이 아니라 `<tool> --help`/상태 서브커맨드로 확인하라는 cross-project 규칙 추가. 동기: hexa-lang 의 flame/forge/hexa-cuda 상태가 repo-내부 README/ARCHITECTURE 에만 있어 anima 등 타 repo 세션이 GPU parity/cuda_available/릴리스를 인지 못하고 추측 → stale-claim 반복. 바이너리 self-report(`hexa gpu`/`hexa --help`)는 어느 repo 에서든 그 설치본의 현재 진실을 보여 cross-repo 인지의 SSOT가 된다.
-
 
 ## chore(prs): merge in 3 stranded PRs after review (c23 · c24 · ing worktree-aware) + retire superseded #125
 

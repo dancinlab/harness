@@ -1,9 +1,11 @@
 // harness install-hooks [--global] | self-update
-//   install-hooks  — merge the harness hook block into ~/.claude/settings.json
-//                    (--global, default) so the guards/injects fire in EVERY
-//                    session/repo (like a global plugin), or into the repo's
-//                    .claude/settings.json (--repo). Existing non-harness hooks
-//                    are preserved; old harness entries are de-duped.
+//   install-hooks  — merge the harness hook block into the GLOBAL
+//                    ~/.claude/settings.json so the guards/injects fire in EVERY
+//                    session/repo (like a global plugin). GLOBAL-ONLY: --repo is
+//                    refused — per-repo .claude/settings.json is banned (it
+//                    duplicated the global install → double-injected context).
+//                    Existing non-harness hooks are preserved; old harness
+//                    entries are de-duped.
 //   self-update    — refresh the GLOBAL install clone (~/.harness/cli, what the
 //                    `harness` on PATH actually runs) to latest origin/main, and
 //                    print its path even when already current. ONLY ever touches the
@@ -13,7 +15,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { homedir } from "node:os";
-import { HARNESS_ROOT, REPO_ROOT } from "../lib/paths.ts";
+import { HARNESS_ROOT } from "../lib/paths.ts";
 import { execShell } from "../lib/exec.ts";
 import { info, ok, warn } from "../lib/log.ts";
 
@@ -63,11 +65,15 @@ function isHarness(e: unknown): boolean {
 }
 
 function installHooks(args: string[]): number {
-  const repo = args.includes("--repo");
+  // GLOBAL-ONLY: per-repo .claude/settings.json is banned (it duplicated the
+  // global install and double-injected context). --repo is refused.
+  if (args.includes("--repo")) {
+    warn("install-hooks --repo is disabled: per-repo .claude/settings.json is banned (duplicated the global install → double-inject).");
+    info("  harness is global-only — run `harness install-hooks` (global) or `harness install` once per host.");
+    return 1;
+  }
   const uninstall = args.includes("--uninstall");
-  const settingsPath = repo
-    ? resolve(REPO_ROOT, ".claude", "settings.json")
-    : resolve(homedir(), ".claude", "settings.json");
+  const settingsPath = resolve(homedir(), ".claude", "settings.json");
   if (uninstall) {
     if (!existsSync(settingsPath)) {
       info(`install-hooks --uninstall: ${settingsPath} absent (nothing to do)`);
@@ -114,7 +120,7 @@ function installHooks(args: string[]): number {
   }
   mkdirSync(dirname(settingsPath), { recursive: true });
   writeFileSync(settingsPath, JSON.stringify(d, null, 2) + "\n", "utf8");
-  ok(`install-hooks: harness hooks merged → ${settingsPath} (${repo ? "repo" : "global"})${envNote}. Needs \`harness\` on PATH.`);
+  ok(`install-hooks: harness hooks merged → ${settingsPath} (global)${envNote}. Needs \`harness\` on PATH.`);
   info("  events: PreToolUse · PostToolUse · UserPromptSubmit · SessionStart · Stop (existing non-harness hooks preserved)");
   return 0;
 }

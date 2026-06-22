@@ -61,11 +61,11 @@ setup:
   install [--no-hooks] [--ref main] [--dry-run]   COMMON/global setup — clone dancinlab/harness → ~/.harness/cli +
                                          a harness wrapper on ~/.local/bin + global hooks (idempotent). NOT a per-repo scaffold (that's init).
                                          curl one-liner: curl -fsSL https://raw.githubusercontent.com/dancinlab/harness/main/scripts/install.sh | bash
-  init [--force] [--hooks] [--dry-run]   scaffold THIS repo: config + .harness rules + gitignore + wrapper + hooks
+  init [--force] [--dry-run]   scaffold THIS repo: config + .harness rules + gitignore + wrapper (hooks are GLOBAL-ONLY → harness install)
                                          (strict by default: block-everything + branch protection + pre-push verify + single-doc scaffolds)
   uninstall [--dry-run] [--keep-logs]   remove harness-injected files (config/.harness/hooks/wrapper); keeps user content
   update [--hooks]         bump .harness-engine submodule to latest (adopt new engine features) + optional hook refresh
-  install-hooks [--global|--repo]   merge harness hooks into ~/.claude/settings.json (global, like a plugin) or repo .claude (needs harness on PATH)
+  install-hooks [--global]   merge harness hooks into the GLOBAL ~/.claude/settings.json (per-repo --repo is banned → double-inject)
   self-update              git-pull the harness CLI clone this binary runs from (e.g. ~/.harness/cli) to latest main
   shadow [plan|remove]     mirror harness's own commands/ into ~/.claude/commands/ as bare /cmd delegators (marker-tracked · regenerable)
   ship [--no-doc]          one-shot propagate to ALL surfaces: pr-cycle (verified merge) → self-update (global CLI) → shadow (slash mirror). Run after every implementation

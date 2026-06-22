@@ -141,7 +141,7 @@ git submodule add https://github.com/dancinlab/harness .harness-engine
 ### 2. 스캐폴딩 (한 방)
 
 ```bash
-bash .harness-engine/bin/harness init --hooks
+bash .harness-engine/bin/harness init
 ```
 
 이 한 줄이 만든다 (기존 파일은 보존, `--force` 만 예외 · `--dry-run` 으로 미리보기):
@@ -153,8 +153,9 @@ bash .harness-engine/bin/harness init --hooks
 ✓ .harness/severity-map.json
 ✓ .gitignore                   로그 무시 추가
 ✓ scripts/harness              얇은 래퍼
-✓ .claude/settings.json        hook 배선 (--hooks 일 때)
 ```
+
+> 🪝 **훅은 전역 1벌 전용 (global-only)**: per-repo `.claude/settings.json` 은 쓰지 않는다(전역 설치와 중복돼 컨텍스트가 2~3중 주입되던 버그). 훅 배선은 호스트당 한 번 `harness install`(또는 `harness install-hooks`) 로 끝낸다 — 그러면 모든 repo 에서 가드/인젝트가 발사된다.
 
 생성 후 `harness.config.json` 의 `verify.checks` · `lockdown.files` 만 repo 에 맞게 채우면 된다.
 

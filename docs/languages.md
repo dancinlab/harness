@@ -59,7 +59,7 @@
 ```bash
 cd my-rust-app
 git submodule add https://github.com/dancinlab/harness .harness-engine
-bash .harness-engine/bin/harness init --hooks
+bash .harness-engine/bin/harness init   # hooks: 전역 1벌 → harness install
 # → detected stack: rust
 #   verify.checks = cargo fmt/clippy/test, changelog trigger = \.(rs)$
 bash .harness-engine/bin/harness ci   # cargo 검증 병렬 실행
@@ -70,6 +70,6 @@ bash .harness-engine/bin/harness ci   # cargo 검증 병렬 실행
 ```bash
 cd MyApp
 git submodule add https://github.com/dancinlab/harness .harness-engine
-bash .harness-engine/bin/harness init --hooks   # → detected stack: swift
+bash .harness-engine/bin/harness init   # → detected stack: swift (hooks: 전역 → harness install)
 # .swiftlint 억제 마커, swift build/test 자동 등록
 ```

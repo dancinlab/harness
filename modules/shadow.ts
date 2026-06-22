@@ -89,6 +89,27 @@ export function lintCommandDescriptions(): { rule: string; file: string; msg: st
   return issues;
 }
 
+// Write-time variant of the s18 rule (PreToolUse, content not yet on disk) — for
+// any */commands/*.md or */SKILL.md with frontmatter `description:`. Mirrors
+// sidecar `skill-desc-guard`: over-cap is an objective Claude Code limit → caller
+// hard-DENIES; missing Triggers is harness opinion → caller WARNS. Returns the
+// reason strings; null fields = clean. Path-scoped by the caller.
+export function descWriteViolation(filePath: string, content: string): { block?: string; warn?: string } | null {
+  const isCmd = /(^|\/)commands\/[^/]+\.md$/.test(filePath) || /(^|\/)SKILL\.md$/.test(filePath);
+  if (!isCmd) return null;
+  const m = content.match(/^description:\s*(.*)$/m);
+  if (!m) return null; // no description: → not a recognizable command/skill entry
+  const desc = m[1].trim().replace(/^["']|["']$/g, "");
+  const out: { block?: string; warn?: string } = {};
+  if (desc.length > DESC_CAP) {
+    out.block = `description is ${desc.length} chars, ${desc.length - DESC_CAP} over the ${DESC_CAP}-char Claude Code skill-listing cap — over the cap this entry gets truncated/dropped from the listing and the model stops auto-recognizing it. Shrink it: lead with the trigger + the one verb it does; move flag tables / sub-verb catalogues into the body or \`--help\`.`;
+  }
+  if (!/Triggers|트리거/.test(desc)) {
+    out.warn = `description has no \`Triggers —\` clause — bare-text recognition of this command relies on the model guessing. Append \`Triggers — "…", "…"\` (KO+EN phrases the user would actually type).`;
+  }
+  return out.block || out.warn ? out : null;
+}
+
 export function runShadow(args: string[]): number {
   const force = args.includes("--force");
   const verb = args.find((a) => !a.startsWith("--")) ?? "apply";

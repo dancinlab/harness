@@ -1,5 +1,22 @@
 # CHANGELOG
 
+## feat(hooks): sidecar 참고 — 컴팩션 생존(PreCompact/PostCompact 재주입) + skill-desc write-time hard-deny
+
+🧠 "긴 대화 중간에 기억이 날아가도 다시 붙여준다"
+
+- 배경: `dancinlab/sidecar` 대비 harness 미달 2건을 닫는다(QA 후속). ① harness 의 매-턴 inject(commons·recommend·prefs·easy)는 UserPromptSubmit 라 자동 컴팩션 후에도 복귀하지만, **세션-스코프 inject(architecture·git-context·toolkit·companions·ing)는 SessionStart 에서만 떠 컴팩션 시 증발** — 긴 세션 중반에 설계트리·명령카탈로그·ING 보드가 사라져 "구조를 다시 추측" 하게 된다. ② 새 명령 description 이 1400자 skill-listing cap 을 넘기면 엔트리가 잘려 인지가 죽는데, 막을 게 커밋-시점 lint warn 뿐이었다.
+- 고침 ①(컴팩션 생존): `setup.ts:hookSpec()` 에 **PreCompact + PostCompact** 추가 — 세션-스코프 inject 6개(commons·architecture·git-context·toolkit·companions·ing)를 컴팩션 전(요약기가 보도록)+후(새 윈도우 직후 신선)에 재주입. sidecar `project-tape` 의 PreCompact+PostCompact 재주입과 동형. inject 명령은 `hookEventName` 을 echo 하므로 새 이벤트에 무수정 동작.
+- 고침 ②(skill-desc hard-deny): `pre write` 가 `commands/*.md`·`SKILL.md` write 직전 description 을 측정 — 1400자 cap 초과면 **PreToolUse deny(`SKILL-DESC-CAP`)로 쓰기 차단**(sidecar 충실 이식: cap=객관적 CC 한계라 deny), `Triggers —` 누락은 warn(`SKILL-DESC-TRIGGERS`). 커밋-시점 lint 4f(`SHADOW-DESC`)는 백스톱으로 유지 → 쓰기·커밋 2층 방어.
+
+```
+전 (before)                                  후 (after)
+─────────────────────────────────          ─────────────────────────────────
+ 컴팩션 후 architecture·ing·toolkit 증발     PreCompact+PostCompact 가 6개 재주입
+ cap초과 desc → 커밋 때 warn(이미 씀)         쓰는 순간 deny(애초에 못 씀)
+```
+
+- 영향: `modules/setup.ts`(PreCompact/PostCompact) · `modules/pre.ts`(SKILL-DESC deny) · `modules/shadow.ts`(`descWriteViolation`) · ARCHITECTURE.json·README.md. ⚙️ 적용: ship 후 `harness install-hooks` 재실행으로 전역 settings.json 에 새 이벤트 머지(setup SSOT 가 바뀌어도 기존 전역 settings 는 자동추적 안 됨 — install-hooks 가 동기화 경로).
+
 ## fix(shadow): 맨-명령 인지 복원 — `shadow --force` 로 마커-없는 stale shadow heal + sidecar s18 desc-lint 포팅
 
 🪞 "복사본이 원본보다 낡아 이름표가 떨어졌다"

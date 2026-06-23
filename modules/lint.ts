@@ -1,4 +1,4 @@
-// harness lint [all|fast|verbose] [--pre-commit] [--pre-push]
+// sidecar lint [all|fast|verbose] [--pre-commit] [--pre-push]
 // Repo-integrity checks, all driven by harness.config.json:
 //   • staged L0 files (git diff --cached) → flagged
 //   • freshness of tracked files (_updated field or mtime vs maxAgeDays)
@@ -159,7 +159,7 @@ export async function runLint(args: string[]): Promise<number> {
   // 4f. command description-recognition hygiene (sidecar s18 port) — each
   // commands/*.md `description:` must stay under the skill-listing cap AND carry
   // a `Triggers —` clause, else the bare /cmd silently stops being auto-recognized
-  // from natural language. warn-only (discoverability). Harness-repo-only (commands/).
+  // from natural language. warn-only (discoverability). Sidecar-repo-only (commands/).
   for (const it of lintCommandDescriptions()) {
     violations.push({ rule: it.rule, file: it.file, msg: it.msg });
   }

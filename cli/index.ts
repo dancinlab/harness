@@ -54,21 +54,21 @@ import { runArchitecture } from "../modules/architecture.ts";
 import { runGitContext } from "../modules/git-context.ts";
 import { runClaudemd } from "../modules/claudemd.ts";
 
-export const HELP = `dancinlab/harness — project-agnostic AI coding harness
+export const HELP = `dancinlab/sidecar — project-agnostic AI coding sidecar
 
-usage: harness <cmd> [args]
+usage: sidecar <cmd> [args]
 
 setup:
-  install [--no-hooks] [--ref main] [--dry-run]   COMMON/global setup — clone dancinlab/harness → ~/.harness/cli +
-                                         a harness wrapper on ~/.local/bin + global hooks (idempotent). NOT a per-repo scaffold (that's init).
-                                         curl one-liner: curl -fsSL https://raw.githubusercontent.com/dancinlab/harness/main/scripts/install.sh | bash
-  init [--force] [--dry-run]   scaffold THIS repo: config + .harness rules + gitignore + wrapper (hooks are GLOBAL-ONLY → harness install)
+  install [--no-hooks] [--ref main] [--dry-run]   COMMON/global setup — clone dancinlab/sidecar → ~/.sidecar/cli +
+                                         a sidecar wrapper on ~/.local/bin + global hooks (idempotent). NOT a per-repo scaffold (that's init).
+                                         curl one-liner: curl -fsSL https://raw.githubusercontent.com/dancinlab/sidecar/main/scripts/install.sh | bash
+  init [--force] [--dry-run]   scaffold THIS repo: config + .harness rules + gitignore + wrapper (hooks are GLOBAL-ONLY → sidecar install)
                                          (strict by default: block-everything + branch protection + pre-push verify + single-doc scaffolds)
-  uninstall [--dry-run] [--keep-logs]   remove harness-injected files (config/.harness/hooks/wrapper); keeps user content
+  uninstall [--dry-run] [--keep-logs]   remove sidecar-injected files (config/.harness/hooks/wrapper); keeps user content
   update [--hooks]         bump .harness-engine submodule to latest (adopt new engine features) + optional hook refresh
-  install-hooks [--global]   merge harness hooks into the GLOBAL ~/.claude/settings.json (per-repo --repo is banned → double-inject)
-  self-update              git-pull the harness CLI clone this binary runs from (e.g. ~/.harness/cli) to latest main
-  shadow [plan|remove|--force]  mirror harness's own commands/ into ~/.claude/commands/ as bare /cmd delegators (marker-tracked · regenerable · --force heals pre-marker stale shadows from source)
+  install-hooks [--global]   merge sidecar hooks into the GLOBAL ~/.claude/settings.json (per-repo --repo is banned → double-inject)
+  self-update              git-pull the sidecar CLI clone this binary runs from (e.g. ~/.sidecar/cli) to latest main
+  shadow [plan|remove|--force]  mirror sidecar's own commands/ into ~/.claude/commands/ as bare /cmd delegators (marker-tracked · regenerable · --force heals pre-marker stale shadows from source)
   ship [--no-doc]          one-shot propagate to ALL surfaces: pr-cycle (verified merge) → self-update (global CLI) → shadow (slash mirror). Run after every implementation
 
 hook delegates (wire these into your agent's settings.json):
@@ -83,12 +83,12 @@ hook delegates (wire these into your agent's settings.json):
   git-context {inject|show}   SessionStart: warn when HEAD is BEHIND origin/<default> (stale-branch trap — reading pre-merge code as current)
   claudemd {inject|show}   re-inject repo-root CLAUDE.md (project rules) EACH UserPromptSubmit so they stay enforced (optional <!-- enforce:start/end --> block)
   toolkit {list|inject|json|write|check}   command catalog (SSOT = this HELP) — inject surfaces the WHOLE command surface at SessionStart so an agent knows every cmd; check gates TOOLKIT.jsonl drift
-  companions {inject|list}   sibling-CLI command surface — inject runs each configured neighbour CLI's catalog (config \`companions\` + ~/.harness/companions.json · DOMAIN-AGNOSTIC, e.g. hexa) at SessionStart so the agent knows \`hexa cloud\` exists without probing
+  companions {inject|list}   sibling-CLI command surface — inject runs each configured neighbour CLI's catalog (config \`companions\` + ~/.sidecar/companions.json · DOMAIN-AGNOSTIC, e.g. hexa) at SessionStart so the agent knows \`hexa cloud\` exists without probing
   prefs {show|code|docs|response <lang>|inject}   language prefs (3 axes) + UserPromptSubmit inject
   easy {show|inject}       inject the "easy" friendly-response style (lang from prefs.response)
   load {show|inject}       per-turn macOS resource readout (CPU load + RAM pressure/used% + swap, ⚠️ on danger) — UserPromptSubmit inject
   recommend {inject|show|get-default|set-default <m> [--global]|clear-default [--global]|resolve-mode <a>}
-                           4-axis rubric + default mode (repo .harness > global ~/.harness > present; fixed axis = auto-pick)
+                           4-axis rubric + default mode (repo .harness > global ~/.sidecar > present; fixed axis = auto-pick)
   sbs [auto[:<axis>]|manual] [<task>]   step-by-step plan-first runbook (mode via recommend resolve-mode)
   abg [labels]             all-bg-go — fan out prior-turn branches as parallel background Agents (runbook)
   afg [labels]             all-fg-go — run prior-turn branches sequentially in-session (runbook)
@@ -107,7 +107,7 @@ hook delegates (wire these into your agent's settings.json):
   gap [full|list|<scope>]   multi-axis gap exploration — 40 breakthrough lenses (8 families) · triage→deepen runbook
   kick <seed…> | <flags>   wrap hexa kick --seed "<seed>" — hexa-lang gap-breakthrough/discovery engine (alias: drill; bare args→seed, leading flag→passthrough)
   poll [interval=1200] [target]   self-paced ≥10-min polling runbook (c19-sanctioned) — wake on a timer, check once, fire-on-arrival; interval clamped to ≥600s. NO bash sleep loop
-  pool {list|add|rm|on|status|specs}   host roster + remote exec + cores/mem/GPU probe (~/.harness/pool.json, global)
+  pool {list|add|rm|on|status|specs}   host roster + remote exec + cores/mem/GPU probe (~/.sidecar/pool.json, global)
   mem-guard {status|check|install|uninstall}   OOM prevention — free-RAM preflight before bg-spawn + opt-in launchd notify watchdog
   secret <verb> [args]     passthrough to the secret CLI (Keychain creds · get/set/rotate/list/init/backup/sync)
                            ⚠ \`get\` exposes the value in context — prefer inline \`\$(secret get <k>)\` for tool args
@@ -215,7 +215,7 @@ async function main(): Promise<number> {
     case "post":
       if (rest[0] === "bash") return postBash(rest.slice(1));
       if (rest[0] === "edit") return postEdit(rest.slice(1));
-      process.stderr.write("usage: harness post {bash|edit} ...\n");
+      process.stderr.write("usage: sidecar post {bash|edit} ...\n");
       return 1;
     case "prompt":
       return runPromptScan(rest);

@@ -58,7 +58,7 @@ export function ingStalenessWarn(threshold: number): string | null {
   write(0); // reset so we don't nag every Stop
   return (
     `이번 세션에 코드 ${edits}개 파일을 편집했는데 ing 보드는 한 번도 안 건드렸다 (c6) ` +
-    `— 작업 상태가 바뀌었으면 \`harness ing add/next/done\` 으로 보드를 현행화하라. ` +
+    `— 작업 상태가 바뀌었으면 \`sidecar ing add/next/done\` 으로 보드를 현행화하라. ` +
     `(끝난 작업은 done, 새 작업은 add — 방치하면 다음 세션 inject 가 낡은 상태를 띄운다.)`
   );
 }

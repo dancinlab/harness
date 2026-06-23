@@ -1,4 +1,4 @@
-// harness pod | demi | dojo | micro-exp — harness runbooks.
+// sidecar pod | demi | dojo | micro-exp — sidecar runbooks.
 //   pod       — GPU cloud pod dispatch runbook (preflight→fire→poll→harvest→down)
 //   demi      — design-architecture program runbook (7-verb spine)
 //   dojo      — cloud training-job scaffolder: prints runbook + (with a slug) emits
@@ -7,13 +7,13 @@
 //               exports/sweep/<batch_id>/{ledger,state}.json
 import { existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { HARNESS_ROOT, REPO_ROOT } from "../lib/paths.ts";
+import { SIDECAR_ROOT, REPO_ROOT } from "../lib/paths.ts";
 import { info, ok, warn } from "../lib/log.ts";
 import { config } from "../lib/config.ts";
 import { execArgs } from "../lib/exec.ts";
 
 function printTemplate(name: string): number {
-  const tpl = resolve(HARNESS_ROOT, "templates", `${name}.md`);
+  const tpl = resolve(SIDECAR_ROOT, "templates", `${name}.md`);
   if (!existsSync(tpl)) {
     info(`runbook missing: templates/${name}.md`);
     return 1;
@@ -43,7 +43,7 @@ export async function runDojo(args: string[]): Promise<number> {
   printTemplate("dojo");
   if (stack) info(`\n(default stack: ${stack}${dojoCfg.delegate ? ` · delegates to \`hexa dojo ${dojoCfg.delegate}\`` : ""})`);
   if (!slug) {
-    info("(scaffold: `harness dojo <slug> [--lang=hexa|py|both] [--force]`)");
+    info("(scaffold: `sidecar dojo <slug> [--lang=hexa|py|both] [--force]`)");
     return 0;
   }
 
@@ -68,7 +68,7 @@ export async function runDojo(args: string[]): Promise<number> {
   const hexaNative = lang === "hexa" || lang === "both";
   const drvExt = hexaNative ? "hexa" : "py";
   // run.sh glue calls the REAL canonical surfaces: `hexa cloud fire`/`fire-shards`
-  // for dispatch (NOT a hand-rolled launcher loop, NOT the non-existent `harness
+  // for dispatch (NOT a hand-rolled launcher loop, NOT the non-existent `sidecar
   // pod fire`), and — for the hexa-native stack — `hexa run` to drive the
   // flame/forge trainer.
   const driveCmd = hexaNative
@@ -137,7 +137,7 @@ export async function runMicroExp(args: string[]): Promise<number> {
   const force = args.includes("--force");
   printTemplate("micro-exp");
   if (!scope) {
-    info("\n(scaffold a batch: `harness micro-exp <scope|batch_id> [--force]`)");
+    info("\n(scaffold a batch: `sidecar micro-exp <scope|batch_id> [--force]`)");
     return 0;
   }
   // batch_id from the scope slug (caller appends a date in context if wanted)

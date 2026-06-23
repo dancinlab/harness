@@ -1,4 +1,4 @@
-// harness pr-cycle [--no-doc] [--no-reap] [extra gh flags]
+// sidecar pr-cycle [--no-doc] [--no-reap] [extra gh flags]
 // One-shot PR cycle: doc-update gate (CHANGELOG required, ARCHITECTURE advised;
 // --no-doc to skip) → push current branch → open PR → self-merge (admin · delete-
 // branch; squash→merge→rebase fallback if a method is disallowed; retries while
@@ -40,7 +40,7 @@ async function sweepMergedWorktrees(): Promise<void> {
   for (const b of blocks) {
     const wt = (b.match(/^worktree (.+)$/m) || [])[1];
     if (!wt || wt === main) continue;
-    if (!wt.includes("/.claude/worktrees/")) continue; // only harness agent worktrees
+    if (!wt.includes("/.claude/worktrees/")) continue; // only sidecar agent worktrees
     if (/^locked/m.test(b)) continue; // never another live checkout
     const br = (b.match(/^branch refs\/heads\/(.+)$/m) || [])[1];
     if (!br) continue;
@@ -131,7 +131,7 @@ export async function runPrCycle(args: string[]): Promise<number> {
     if (meaningful.length && !hasChangelog) missing.push("CHANGELOG.md (append)");
     if (meaningful.length && archDoc && !hasArch) missing.push(`${archDoc} (갱신형 SSOT 현행화)`);
     if (meaningful.length && readmeExists && !hasReadme) missing.push("README.md (현재상태 SSOT 현행화 · 이력 아님 = 제자리 덮어쓰기)");
-    if (meaningful.length && ingExists && !hasIng) missing.push("ING.jsonl (진행상황 현행화 · 완료분 harness ing done)");
+    if (meaningful.length && ingExists && !hasIng) missing.push("ING.jsonl (진행상황 현행화 · 완료분 sidecar ing done)");
     if (missing.length) {
       loudFail(`pr-cycle: 문서 업데이트 필수 — 이 사이클 변경(${meaningful.length}개)에 누락: ${missing.join(" · ")}`);
       info("   해당 문서를 갱신한 뒤 다시 실행하세요 (정말 문서 불필요하면 --no-doc).");

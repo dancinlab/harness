@@ -1,6 +1,6 @@
-// harness pool {list|add|rm|on|status|specs} — host roster + remote exec.
+// sidecar pool {list|add|rm|on|status|specs} — host roster + remote exec.
 // The host roster is machine-level, so it lives GLOBALLY at
-// ~/.harness/pool.json (shared across repos), not per-repo.
+// ~/.sidecar/pool.json (shared across repos), not per-repo.
 //   list                 show roster (cached cores/mem/GPU + LIVE CPU/GPU load)
 //   add <name> [target]  add host (target = ssh alias or user@host; default = name)
 //   rm <name>            remove host
@@ -50,9 +50,9 @@ function projectAllows(allow: string[] | undefined): boolean {
   return allow.some((a) => segs.has(a.toLowerCase()));
 }
 
-// Deliberate, loud escape hatch (never casual): HARNESS_POOL_ALLOW="akida ghost".
+// Deliberate, loud escape hatch (never casual): SIDECAR_POOL_ALLOW="akida ghost".
 function envOverrides(name: string): boolean {
-  const raw = process.env.HARNESS_POOL_ALLOW;
+  const raw = process.env.SIDECAR_POOL_ALLOW;
   if (!raw) return false;
   return raw.split(/[,\s]+/).filter(Boolean).includes(name);
 }
@@ -200,7 +200,7 @@ export async function runPool(args: string[]): Promise<number> {
 
   if (sub === "list") {
     if (!r.hosts.length) {
-      info("pool: no hosts. add one: harness pool add <name> [user@host]");
+      info("pool: no hosts. add one: sidecar pool add <name> [user@host]");
       return 0;
     }
     info(`pool hosts (${rosterPath()}):`);
@@ -229,13 +229,13 @@ export async function runPool(args: string[]): Promise<number> {
       const who = h.allow && h.allow.length ? ` · 허용: ${h.allow.join(", ")}` : " · 공용 아님";
       info(`  • ${h.name}  →  ${h.target}${spec}${load}   [${tag}${who}]${h.note ? `  — ${h.note}` : ""}`);
     }
-    if (!anyProbed) info("  (스펙 미수집 — `harness pool specs` 로 코어/메모리/GPU 프로브)");
+    if (!anyProbed) info("  (스펙 미수집 — `sidecar pool specs` 로 코어/메모리/GPU 프로브)");
     return 0;
   }
   if (sub === "add") {
     const name = args[1];
     if (!name) {
-      info("usage: harness pool add <name> [ssh-target]");
+      info("usage: sidecar pool add <name> [ssh-target]");
       return 1;
     }
     const target = args[2] ?? name;
@@ -258,7 +258,7 @@ export async function runPool(args: string[]): Promise<number> {
     const cmd = args.slice(2).join(" ");
     const h = r.hosts.find((x) => x.name === name);
     if (!h || !cmd) {
-      info("usage: harness pool on <name> <cmd...>");
+      info("usage: sidecar pool on <name> <cmd...>");
       return 1;
     }
     const g = guard(h);
@@ -268,7 +268,7 @@ export async function runPool(args: string[]): Promise<number> {
         `pool on ${name}: 차단됨 — '${name}' 은 공용 pool 컴퓨트가 아닙니다` +
           (h.note ? ` (${h.note})` : "") +
           `\n  허용 프로젝트: ${allowed}  ·  현재 위치: ${process.cwd()}` +
-          `\n  의도된 사용이면 해당 프로젝트(예: anima repo) 안에서 실행하거나, 일회성은 HARNESS_POOL_ALLOW=${name} 로 명시 override.`,
+          `\n  의도된 사용이면 해당 프로젝트(예: anima repo) 안에서 실행하거나, 일회성은 SIDECAR_POOL_ALLOW=${name} 로 명시 override.`,
       );
       return 1;
     }
@@ -347,6 +347,6 @@ export async function runPool(args: string[]): Promise<number> {
     }
     return 0;
   }
-  info("usage: harness pool {list|add <name> [target]|rm <name>|on <name> <cmd>|status|specs [name]}");
+  info("usage: sidecar pool {list|add <name> [target]|rm <name>|on <name> <cmd>|status|specs [name]}");
   return 1;
 }

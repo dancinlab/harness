@@ -1,6 +1,6 @@
-// harness update [--hooks]
-// Pull the latest harness engine into THIS repo. The engine is vendored as the
-// `.harness-engine` git submodule pinned to a branch (harness-hardcore); a new
+// sidecar update [--hooks]
+// Pull the latest sidecar engine into THIS repo. The engine is vendored as the
+// `.harness-engine` git submodule pinned to a branch (sidecar-hardcore); a new
 // engine feature lands there, and each consuming repo adopts it by bumping the
 // submodule. This command does that bump (+ optionally re-syncs the git hooks).
 //   - bumps `.harness-engine` to its tracked-branch tip (git submodule --remote)
@@ -26,7 +26,7 @@ export async function runUpdate(args: string[]): Promise<number> {
   if (!existsSync(resolve(REPO_ROOT, ".gitmodules")) || !existsSync(eng)) {
     info("update: no .harness-engine submodule here.");
     info("  • if the engine IS this repo (self-hosted) → `git pull`.");
-    info("  • else add it: `git submodule add -b harness-hardcore https://github.com/dancinlab/harness .harness-engine`");
+    info("  • else add it: `git submodule add -b sidecar-hardcore https://github.com/dancinlab/sidecar .harness-engine`");
     return 0;
   }
 
@@ -55,7 +55,7 @@ export async function runUpdate(args: string[]): Promise<number> {
     const gitDir = resolve(REPO_ROOT, ".git");
     if (existsSync(gitDir) && statSync(gitDir).isDirectory()) {
       const pc = resolve(gitDir, "hooks", "pre-commit");
-      const body = `#!/usr/bin/env bash\n# installed by 'harness init/update' — block commits that fail harness lint gates\nW="$(git rev-parse --show-toplevel)/scripts/harness"\n[ -x "$W" ] || exit 0\nexec bash "$W" lint\n`;
+      const body = `#!/usr/bin/env bash\n# installed by 'sidecar init/update' — block commits that fail sidecar lint gates\nW="$(git rev-parse --show-toplevel)/scripts/sidecar"\n[ -x "$W" ] || exit 0\nexec bash "$W" lint\n`;
       mkdirSync(dirname(pc), { recursive: true });
       writeFileSync(pc, body, { mode: 0o755 });
       info("  refreshed .git/hooks/pre-commit");
@@ -64,6 +64,6 @@ export async function runUpdate(args: string[]): Promise<number> {
 
   info("");
   info("next: `git add .harness-engine` + commit to record the engine bump.");
-  if (!hooks) info("      (run `harness update --hooks` to also refresh git hooks; agent hooks are GLOBAL-ONLY → `harness install`)");
+  if (!hooks) info("      (run `sidecar update --hooks` to also refresh git hooks; agent hooks are GLOBAL-ONLY → `sidecar install`)");
   return 0;
 }

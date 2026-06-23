@@ -1,5 +1,5 @@
 {
-  "_doc": "severity map — fallback escalated to block, low unknown_threshold. Installed by `harness init`.",
+  "_doc": "severity map — fallback escalated to block, low unknown_threshold. Installed by `sidecar init`.",
   "fallback": "block",
   "unknown_threshold": 5,
   "rules": {

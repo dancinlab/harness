@@ -4,4 +4,4 @@ argument-hint: "<prompt-file> <out.png> [-s size] [-b fal|openai] [-m model] | l
 allowed-tools: Bash
 ---
 
-!`command -v harness >/dev/null 2>&1 && harness imagine $ARGUMENTS || echo "harness CLI not found — install dancinlab/harness (~/.harness/cli + ~/.local/bin/harness on PATH)"`
+!`command -v sidecar >/dev/null 2>&1 && sidecar imagine $ARGUMENTS || echo "sidecar CLI not found — install dancinlab/sidecar (~/.sidecar/cli + ~/.local/bin/sidecar on PATH)"`

@@ -12,7 +12,7 @@ Watch slow, long-running external state (background lanes · fleet · pods · CI
 ```
 
 1. **check once** — one cheap snapshot of the watched state (e.g. `git fetch -q && git log`,
-   `harness ci-track <pr>`, `harness ing show`, a pod/lane status read). No loop, no `sleep`.
+   `sidecar ci-track <pr>`, `sidecar ing show`, a pod/lane status read). No loop, no `sleep`.
 2. **fire-on-arrival** — if something finished/changed, handle THAT now (merge, advance the lane,
    record a verdict). If nothing changed, say so in one line and move on.
 3. **report** — a single status line (🌐), not a re-summary of the whole plan.
@@ -26,14 +26,14 @@ Watch slow, long-running external state (background lanes · fleet · pods · CI
   - CI run you expect in ~8 min → one ~270s wake keeps cache warm, or just wait 600s once.
   - genuinely idle / minutes-to-change work → **1200–1800s** (20–30 min) is the default; cheaper, and
     the user can always interrupt sooner.
-- Do NOT poll a thing the harness already notifies you about (a tracked background Agent/Task re-invokes
+- Do NOT poll a thing the sidecar already notifies you about (a tracked background Agent/Task re-invokes
   you on completion — polling it is pure waste). Use this loop only for state nothing will notify you of.
 
 ## how to actually wait (no bash sleep — c19)
 
 - In Claude Code: use the loop/scheduling mechanism (a `ScheduleWakeup` at `delaySeconds ≥ 600`, or
   `/loop` dynamic mode) — the runtime re-invokes you after the delay. One check per wake.
-- For PR/CI specifically, prefer `harness ci-track <pr> --watch` (it polls inside the CLI to terminal,
+- For PR/CI specifically, prefer `sidecar ci-track <pr> --watch` (it polls inside the CLI to terminal,
   no agent turns at all) and only fall back to this loop for non-CI state.
 - NEVER `while …; do …; sleep <600; done` in Bash — the poll-interval guard (c19) blocks sub-30-min
   hand-rolled loops; this runbook is the sanctioned alternative.

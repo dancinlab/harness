@@ -1,5 +1,5 @@
 {
-  "project": "harness",
+  "project": "sidecar",
   "_note": "self-dogfooding \u2014 \uc5d4\uc9c4=repo \uc790\uc2e0(submodule \uc5c6\uc74c). protectedBranches \ubbf8\uc124\uc815\uc73c\ub85c \uc790\uae30 \uac1c\ubc1c \ud750\ub984(main \uc9c1\uc811 push) \ubcf4\uc874. \ubc88\ub4e4 config/*.json \uc744 \uc9c1\uc811 \uaddc\uce59\uc73c\ub85c \uc0ac\uc6a9.",
   "lockdown": {
     "files": [
@@ -10,7 +10,7 @@
       "modules/pre.ts"
     ],
     "fromMarkdown": "README.md",
-    "onEditReminder": "harness \ucf54\uc5b4 \ud3b8\uc9d1 \u2014 CHANGELOG.md \ub3d9\uc2dc \uac31\uc2e0 + \uc784\uc2dc repo \uc2a4\ubaa8\ud06c \ud14c\uc2a4\ud2b8."
+    "onEditReminder": "sidecar \ucf54\uc5b4 \ud3b8\uc9d1 \u2014 CHANGELOG.md \ub3d9\uc2dc \uac31\uc2e0 + \uc784\uc2dc repo \uc2a4\ubaa8\ud06c \ud14c\uc2a4\ud2b8."
   },
   "enforcementFile": "config/enforcement.json",
   "keywordsFile": "config/keywords.json",

@@ -7,8 +7,8 @@
 //       (cycle-all / all-bg-go / fleet) spike that piles up N detached `claude`
 //       agents and trips macOS jetsam is the documented root cause on a 16GB Mac.
 //
-//   (2) launchd watchdog (OPT-IN via `harness mem-guard install`): a LaunchAgent
-//       runs `harness mem-guard tick` every intervalSec; when available RAM drops
+//   (2) launchd watchdog (OPT-IN via `sidecar mem-guard install`): a LaunchAgent
+//       runs `sidecar mem-guard tick` every intervalSec; when available RAM drops
 //       below warnPct it posts a macOS notification. NOTIFY-ONLY — it never kills a
 //       process or changes a system setting. This is the only layer that sees
 //       ACROSS separate Claude sessions (each session's PreToolUse guard is blind
@@ -102,7 +102,7 @@ export function memPreflight(cmd: string): { action: "warn" | "block"; reason: s
   const m = memInfo();
   if (!m || m.pressure === "normal") return null;
   const head = `system RAM is low — available ${m.availablePct.toFixed(0)}% (${m.availableMB.toFixed(0)}MB of ${(m.totalMB / 1024).toFixed(0)}GB)${m.swapUsedMB > 0 ? `, swap ${m.swapUsedMB.toFixed(0)}MB in use` : ""}`;
-  const tail = `launching another detached process (\`&\`/nohup) now risks an OOM jetsam kill (macOS force-quits apps when memory runs out). Throttle the fan-out: run fewer parallel agents, await the in-flight ones, or close idle Claude/browser windows first. (\`harness mem-guard status\` for the snapshot.)`;
+  const tail = `launching another detached process (\`&\`/nohup) now risks an OOM jetsam kill (macOS force-quits apps when memory runs out). Throttle the fan-out: run fewer parallel agents, await the in-flight ones, or close idle Claude/browser windows first. (\`sidecar mem-guard status\` for the snapshot.)`;
   return { action: m.pressure === "critical" ? "block" : "warn", reason: `${head} — ${tail}` };
 }
 
@@ -199,11 +199,11 @@ function plistBody(harnessBin: string): string {
 function install(): number {
   let harnessBin = "";
   try {
-    harnessBin = execSync("command -v harness").toString().trim();
+    harnessBin = execSync("command -v sidecar").toString().trim();
   } catch { /* fall through */ }
-  if (!harnessBin) harnessBin = resolve(homedir(), ".local", "bin", "harness");
+  if (!harnessBin) harnessBin = resolve(homedir(), ".local", "bin", "sidecar");
   if (!existsSync(harnessBin)) {
-    warn(`mem-guard install: \`harness\` binary not found at ${harnessBin}. Run \`harness install\` first.`);
+    warn(`mem-guard install: \`sidecar\` binary not found at ${harnessBin}. Run \`sidecar install\` first.`);
     return 1;
   }
   mkdirSync(resolve(homedir(), "Library", "LaunchAgents"), { recursive: true });
@@ -256,7 +256,7 @@ export async function runMemGuard(args: string[]): Promise<number> {
     case "uninstall":
       return uninstall();
     default:
-      info("usage: harness mem-guard {status|check|tick|install|uninstall}");
+      info("usage: sidecar mem-guard {status|check|tick|install|uninstall}");
       return 1;
   }
 }

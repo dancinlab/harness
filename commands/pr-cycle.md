@@ -4,4 +4,4 @@ argument-hint: "[--no-reap] [gh flags]"
 allowed-tools: Bash
 ---
 
-!`command -v harness >/dev/null 2>&1 && harness pr-cycle $ARGUMENTS || echo "harness CLI not found — install dancinlab/harness (~/.harness/cli + ~/.local/bin/harness on PATH)"`
+!`command -v sidecar >/dev/null 2>&1 && sidecar pr-cycle $ARGUMENTS || echo "sidecar CLI not found — install dancinlab/sidecar (~/.sidecar/cli + ~/.local/bin/sidecar on PATH)"`

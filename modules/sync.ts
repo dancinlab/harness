@@ -1,4 +1,4 @@
-// harness sync {run|diff}
+// sidecar sync {run|diff}
 // Thin wrapper to run a repo's own shared-file sync script (if configured).
 // Generic: it just executes the configured shell script and logs the outcome.
 import { LOGS } from "../lib/paths.ts";

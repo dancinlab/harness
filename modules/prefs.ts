@@ -1,4 +1,4 @@
-// harness prefs {show|code <lang>|docs <lang>|response <lang>|inject}
+// sidecar prefs {show|code <lang>|docs <lang>|response <lang>|inject}
 // Language preferences on 3 axes:
 //   code authoring · doc authoring · response-to-user.
 // Stored per-repo at .harness/prefs.json. `inject` emits a UserPromptSubmit
@@ -81,7 +81,7 @@ export async function runPrefs(args: string[]): Promise<number> {
   if (sub === "code" || sub === "docs" || sub === "response") {
     const lang = args[1];
     if (!lang) {
-      info(`usage: harness prefs ${sub} <lang>`);
+      info(`usage: sidecar prefs ${sub} <lang>`);
       return 1;
     }
     const next: Prefs = { ...p, [sub]: lang };
@@ -90,6 +90,6 @@ export async function runPrefs(args: string[]): Promise<number> {
     info(`prefs.${sub} = ${lang}`);
     return 0;
   }
-  info("usage: harness prefs {show|code <lang>|docs <lang>|response <lang>|inject}");
+  info("usage: sidecar prefs {show|code <lang>|docs <lang>|response <lang>|inject}");
   return 1;
 }

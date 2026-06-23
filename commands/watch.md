@@ -4,4 +4,4 @@ argument-hint: "<url|path> [question] [flags]"
 allowed-tools: Bash
 ---
 
-!`command -v harness >/dev/null 2>&1 && harness watch $ARGUMENTS || echo "harness CLI not found — install dancinlab/harness (~/.harness/cli + ~/.local/bin/harness on PATH)"`
+!`command -v sidecar >/dev/null 2>&1 && sidecar watch $ARGUMENTS || echo "sidecar CLI not found — install dancinlab/sidecar (~/.sidecar/cli + ~/.local/bin/sidecar on PATH)"`

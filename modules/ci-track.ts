@@ -1,4 +1,4 @@
-// harness ci-track <pr|branch|url> [--watch] [--interval=N] [--timeout=M] [--merge-on-green] [-R owner/repo]
+// sidecar ci-track <pr|branch|url> [--watch] [--interval=N] [--timeout=M] [--merge-on-green] [-R owner/repo]
 //
 // Remote CI / PR-check tracker — the sanctioned replacement for hand-rolled
 // `gh pr checks … | grep` polling and ad-hoc `/tmp/pr_mon.sh` watch loops (the
@@ -11,7 +11,7 @@
 //   any fail/cancel → 🔴 RED (exit 2) · any pending → 🟡 PENDING (exit 1)
 //   all pass/skipping → 🟢 GREEN (exit 0) · no checks → ⚪ NONE (exit 0)
 //
-// @convergence state=ossified id=CI_TRACK_NATIVE value="PR CI status is tracked by `harness ci-track` (gh pr checks --json → aggregate + verdict + optional --watch/--merge-on-green), not by hand-rolled `gh pr checks|grep` + /tmp monitor sleep loops" threshold="merge-on-green campaigns repeatedly re-implemented CI polling inline (e.g. /tmp/pr3688_mon.sh) — no harness command tracked remote CI; this centralizes it (c19-compatible: the poll runs inside the CLI, not a bash sleep loop)"
+// @convergence state=ossified id=CI_TRACK_NATIVE value="PR CI status is tracked by `sidecar ci-track` (gh pr checks --json → aggregate + verdict + optional --watch/--merge-on-green), not by hand-rolled `gh pr checks|grep` + /tmp monitor sleep loops" threshold="merge-on-green campaigns repeatedly re-implemented CI polling inline (e.g. /tmp/pr3688_mon.sh) — no sidecar command tracked remote CI; this centralizes it (c19-compatible: the poll runs inside the CLI, not a bash sleep loop)"
 import { execShell } from "../lib/exec.ts";
 import { info, ok, warn, loudFail } from "../lib/log.ts";
 
@@ -106,7 +106,7 @@ export async function runCiTrack(args: string[]): Promise<number> {
   const positional = args.filter((a) => !a.startsWith("-"));
   const ref = positional[0];
   if (!ref) {
-    info("usage: harness ci-track <pr#|branch|url> [--watch] [--interval=60] [--timeout=1800] [--merge-on-green] [-R owner/repo]");
+    info("usage: sidecar ci-track <pr#|branch|url> [--watch] [--interval=60] [--timeout=1800] [--merge-on-green] [-R owner/repo]");
     return 0;
   }
   const repoIdx = args.findIndex((a) => a === "-R" || a === "--repo");

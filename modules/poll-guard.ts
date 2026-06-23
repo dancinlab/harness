@@ -1,6 +1,6 @@
 // poll-guard — built-in code-level enforcement of c19 (poll external long-runners
 // at ≥30min). The main session can't have its ScheduleWakeup interval intercepted
-// by harness (it's a runtime tool, not a bash command), but the OTHER way sessions
+// by sidecar (it's a runtime tool, not a bash command), but the OTHER way sessions
 // poll — a bash `while …; do <status>; sleep <N>; done` loop — IS a bash command,
 // so it's caught here. A short-interval (<1800s) poll LOOP over an EXTERNAL
 // long-runner (pod / r2 / cloud / training job) busts the prompt cache and racks

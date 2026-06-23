@@ -1,4 +1,4 @@
-// harness email send --to <a[,b]> --subject <s> [--from <a>] [--text <file>|-m <inline>]
+// sidecar email send --to <a[,b]> --subject <s> [--from <a>] [--text <file>|-m <inline>]
 //                    [--html <file>] [--cc <a>] [--bcc <a>] [--reply-to <a>] [--tag <t>]
 //                    [--stream <id>] [--attach <file>]... [--dry]
 //              | history [--count N] [--offset N] [--tag t] [--json] | list | help
@@ -25,7 +25,7 @@ const DEFAULT_STREAM = "outbound";
 
 let _tmpSeq = 0;
 function tmp(content: string): string {
-  const p = resolve(tmpdir(), `harness-email-${process.pid}-${_tmpSeq++}`);
+  const p = resolve(tmpdir(), `sidecar-email-${process.pid}-${_tmpSeq++}`);
   writeFileSync(p, content, "utf8");
   return p;
 }
@@ -77,7 +77,7 @@ function recordEmail(e: Record<string, unknown>): void {
 }
 
 function usage(): void {
-  info("harness email send --to <a[,b]> --subject <s> [--from <a>] [--text <file>|-m <inline>] [--html <file>]");
+  info("sidecar email send --to <a[,b]> --subject <s> [--from <a>] [--text <file>|-m <inline>] [--html <file>]");
   info("                   [--cc <a[,b]>] [--bcc <a[,b]>] [--reply-to <a>] [--tag <t>] [--stream <id>] [--attach <file>]... [--dry]");
   info("  history [--count N] [--offset N] [--tag <t>] [--json]   Postmark outbound messages API");
   info("  list                                                    show config (token presence · default From · stream)");
@@ -108,7 +108,7 @@ async function send(args: string[]): Promise<number> {
     else if (a === "--attach" || a === "-a") attach.push(next());
     else if (a === "--dry" || a === "--dry-run") dry = true;
     else {
-      loudFail(`email: unknown flag '${a}' (run 'harness email help')`);
+      loudFail(`email: unknown flag '${a}' (run 'sidecar email help')`);
       return 1;
     }
   }

@@ -11,7 +11,7 @@ ING.jsonl
 ING.jsonl.bak
 ING.jsonl.tmp.*
 
-# agent worktrees (transient · harness Agent isolation)
+# agent worktrees (transient · sidecar Agent isolation)
 .claude/worktrees/
 # npm lockfile (regenerable)
 package-lock.json

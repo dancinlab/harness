@@ -1,4 +1,4 @@
-// harness load {show|inject}
+// sidecar load {show|inject}
 // Per-turn macOS resource pressure readout, injected as a UserPromptSubmit
 // additionalContext line so the agent surfaces it every reply.
 //
@@ -119,7 +119,7 @@ function body(s: Snapshot): string {
     line(s) + "\n" +
     "- CPU = load1/cores (🟢<0.7 🟡<1.0 🔴≥1.0) · RAM = active+wired+compressor used% + kernel pressure(normal/warn/critical) · swap used (🟢<2G 🟡<6G 🔴≥6G).\n" +
     "- A Mac that dies under load fails on MEMORY (compressor+swap), not CPU — when RAM/swap light is 🔴 or pressure≥warn, say so loudly.\n" +
-    "- wt = extra git worktrees (main excluded · 🟢0-2 🟡3-9 🔴≥10) — 누적되면 `harness worktree gc` 로 정리." +
+    "- wt = extra git worktrees (main excluded · 🟢0-2 🟡3-9 🔴≥10) — 누적되면 `sidecar worktree gc` 로 정리." +
     warn + "\n"
   );
 }
@@ -153,6 +153,6 @@ export async function runLoad(args: string[]): Promise<number> {
     info(line(snap));
     return 0;
   }
-  info("usage: harness load {show|inject}");
+  info("usage: sidecar load {show|inject}");
   return 1;
 }

@@ -1,11 +1,11 @@
-// harness upstream [list | fix <name|repo>]
+// sidecar upstream [list | fix <name|repo>]
 // In-session upstream-fix driver. When downstream work surfaces an upstream
 // (e.g. hexa-lang) bug/improvement, fix it AT SOURCE in this session instead of
 // deferring to an inbox memo. `list` shows declared upstreams (config.upstreams);
 // `fix <name>` resolves the repo and prints the in-session fix runbook.
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { HARNESS_ROOT } from "../lib/paths.ts";
+import { SIDECAR_ROOT } from "../lib/paths.ts";
 import { config } from "../lib/config.ts";
 import { info } from "../lib/log.ts";
 
@@ -28,17 +28,17 @@ export async function runUpstream(args: string[]): Promise<number> {
     const u = ups.find((x) => x.name === key || x.repo === key || x.repo.endsWith("/" + (key ?? "")));
     const repo = u?.repo ?? key;
     if (!repo) {
-      info("usage: harness upstream fix <name|owner/repo>");
+      info("usage: sidecar upstream fix <name|owner/repo>");
       return 1;
     }
     process.stdout.write(`# /upstream fix — ${repo}\n\n`);
-    const tpl = resolve(HARNESS_ROOT, "templates", "upstream.md");
+    const tpl = resolve(SIDECAR_ROOT, "templates", "upstream.md");
     if (existsSync(tpl)) process.stdout.write(readFileSync(tpl, "utf8"));
     process.stdout.write(`\n---\ntarget: ${repo}${u?.branch ? " @" + u.branch : ""}\n`);
     process.stdout.write(`clone: gh repo clone ${repo} /tmp/${repo.split("/").pop()} && cd $_ && git checkout -B fix/<slug> origin/main\n`);
     return 0;
   }
 
-  info("usage: harness upstream {list | fix <name|owner/repo>}");
+  info("usage: sidecar upstream {list | fix <name|owner/repo>}");
   return 1;
 }

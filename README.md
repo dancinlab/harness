@@ -1,4 +1,4 @@
-# harness
+# sidecar
 
 > 프로젝트 무관(project-agnostic) **AI 코딩 하네스** — 어느 repo 에든 드롭인.
 > 실행·파일·프롬프트 단계에 끼어들어 규칙을 강제하고, 모든 결과를 append-only JSONL 로 남긴다.
@@ -34,9 +34,9 @@
 ## 구조
 
 ```
-harness/
-├── bin/harness          실행 입구 (bash — tsx 런타임 자동탐색)
-├── cli/index.ts         디스패처 (harness lint → lint.ts)
+sidecar/
+├── bin/sidecar          실행 입구 (bash — tsx 런타임 자동탐색)
+├── cli/index.ts         디스패처 (sidecar lint → lint.ts)
 ├── lib/                 공용 부품
 │   ├── paths.ts         repo-root 자동탐색 (harness.config.json / .git 상향 탐색)
 │   ├── config.ts        harness.config.json 로드 + 기본값 머지
@@ -62,7 +62,7 @@ harness/
 | `architecture {inject\|show}` | repo-root `ARCHITECTURE.json`(우선)/`.md` 를 컨텍스트로 주입 — CLAUDE.md 처럼 설계 SSOT 상주 (80KB 초과 시 절단, 부재 시 무음). 트리 **뒤**에 턴-마감 게이트: 이번 턴 변경 시 노드 제자리 갱신 + `🏛️ ARCHITECTURE 갱신: …` 보고 의무화(`ing` 도 동형 `🔵 ING 갱신`) | SessionStart + 매 UserPromptSubmit |
 | `claudemd {inject\|show}` | repo-root `CLAUDE.md`(프로젝트 규칙)를 **매 턴** 재주입 — commons 처럼 salience 유지해 규칙이 묻히지 않게 (선택적 `<!-- enforce:start/end -->` 블록만, 80KB 절단, 부재 시 무음) | UserPromptSubmit |
 | `toolkit {list\|inject\|json\|write\|check}` | **명령 카탈로그** — agent 가 전 명령을 인지·사용하게 SessionStart 에 `id — use ⟨triggers⟩` compact 주입(키워드 반응형 사각지대 보완). SSOT=`HELP`(파싱) → `write`=`TOOLKIT.jsonl` 산출, `check`=전 dispatch 명령 카탈로그 수록 **커버리지** + HELP↔파일 drift(`lint` 가 `TOOLKIT-DRIFT` warn) | SessionStart |
-| `companions {inject\|list}` | **이웃 CLI 명령 surface** — toolkit 의 자매(toolkit=harness 자신, companions=이웃 CLI). DOMAIN-AGNOSTIC: 띄울 CLI 는 데이터(repo `harness.config.json` 의 `companions` + host-wide `~/.harness/companions.json`, cmd union·repo 우선)라 엔진엔 hexa 미하드코딩 → 전역 1곳으로 모든 repo 가 `hexa cloud` 존재를 더듬지 않고 인지. 각 companion 의 카탈로그 명령(default `--help`)을 실행·절단해 주입, 부재/실패면 skip·전부 없으면 무음 | SessionStart |
+| `companions {inject\|list}` | **이웃 CLI 명령 surface** — toolkit 의 자매(toolkit=sidecar 자신, companions=이웃 CLI). DOMAIN-AGNOSTIC: 띄울 CLI 는 데이터(repo `harness.config.json` 의 `companions` + host-wide `~/.sidecar/companions.json`, cmd union·repo 우선)라 엔진엔 hexa 미하드코딩 → 전역 1곳으로 모든 repo 가 `hexa cloud` 존재를 더듬지 않고 인지. 각 companion 의 카탈로그 명령(default `--help`)을 실행·절단해 주입, 부재/실패면 skip·전부 없으면 무음 | SessionStart |
 | `load {inject\|show}` | **매턴 자원 readout** — 답변 맨 위에 macOS 부하 한 줄 주입: CPU(load÷cores) · RAM(used%+커널 압박레벨) · swap · wt(추가 worktree 수) 신호등. 어느 축이든 🔴/pressure≥warn 이면 `⚠️` + 무거운 작업 자제 가드. 부하로 죽는 맥은 CPU 아닌 MEMORY(compressor+swap)로 죽으므로 RAM·swap 동시 표시 · worktree 는 격리 agent stranded 누적 가시화(🟢0-2 🟡3-9 🔴≥10). `sysctl`+`vm_stat`+`git worktree list`만(가벼움), 비-macOS 무음 | UserPromptSubmit |
 | `lint [all\|fast]` | staged-L0 + 신선도 + **CHANGELOG 누락** + 수렴 누락 + **명령 desc 인지**(`SHADOW-DESC` warn — commands/*.md 가 ≤1400자 cap + `Triggers —` 절 보유) 체크 | commit 전 (git pre-commit hook) |
 | `ci [all\|fast\|list]` | config 의 검증 명령 병렬 실행 (실패 1개라도 → exit 1; 옛 이름 `verify` 별칭 유지, config 키도 `verify.checks`) | commit/push 전 |
@@ -74,7 +74,7 @@ harness/
 | `audit [full\|summary\|json]` | 6축 자가 스코어카드 (/60) | 주기적 |
 | `gc [scan\|drift]` | 가이드 마크다운의 깨진 링크 탐지 | 주기적 |
 | `folders [scan\|scaffold <dir>]` | 서브폴더별 CLAUDE.md 누락 탐지 + 템플릿 생성 (편집 시 자동 넛지) | 주기적/작업 중 |
-| `convergence {status\|recompute\|by-category\|scan\|due-check}` | incident 수렴 추적 + **`scan`** = 인라인 `@convergence` 재발방지 마커(c1) 검증(필수키 state·id + state enum) — `harness lint` 가 호출해 불량을 `CONVERGENCE-MALFORMED`(block)로 커밋 차단. 재발 신호(재발·stale·regression·again…)는 keyword 트리거가 `⟦CONVERGENCE-DUE id=…⟧` **캡처 토큰**+부채 출력 → well-formed 마커 작성 시 post-edit 자동 해소, 미해소면 **`due-check`** 가 Stop 에서 1회 환기(warn-only) | 버그 수정 후 · commit |
+| `convergence {status\|recompute\|by-category\|scan\|due-check}` | incident 수렴 추적 + **`scan`** = 인라인 `@convergence` 재발방지 마커(c1) 검증(필수키 state·id + state enum) — `sidecar lint` 가 호출해 불량을 `CONVERGENCE-MALFORMED`(block)로 커밋 차단. 재발 신호(재발·stale·regression·again…)는 keyword 트리거가 `⟦CONVERGENCE-DUE id=…⟧` **캡처 토큰**+부채 출력 → well-formed 마커 작성 시 post-edit 자동 해소, 미해소면 **`due-check`** 가 Stop 에서 1회 환기(warn-only) | 버그 수정 후 · commit |
 | `sync {run\|diff}` | (선택) repo 자체 공유파일 sync 스크립트 실행 | 공유파일 변경 후 |
 | `pool {list\|add\|rm\|on <h> <cmd>\|status\|specs [h]}` | 호스트 로스터 + 원격 실행. `shared:false` 호스트는 **제한 호스트** — `allow` 프로젝트 컨텍스트 밖에선 `on` 차단(공용 컴퓨트로 못 씀). `on` 은 ssh 를 직접 spawn(argv)해 `cmd` 의 `$`/`$(...)` 가 로컬이 아니라 **원격 셸**에서 전개됨. `specs` 는 호스트별 코어/메모리/GPU 를 ssh 프로브해 로스터에 캐시(`list`·`status` 에 `〈12c · 30G · GPU:…〉` 인라인 표기) — 제한 호스트는 프로브하지 않음 | 원격 실행 · 자원 확인 시 |
 | `mem-guard {status\|check\|install\|uninstall}` | OOM(메모리부족 강제종료) 예방. **PreToolUse 프리플라이트**(상시): background-spawn(`… &`/nohup/disown/setsid) 직전 시스템 free RAM 을 `vm_stat` 로 읽어 `warnPct`(기본 15%) 이하 warn · `blockPct`(기본 0=off) 이하 spawn block — 병렬 fan-out 누적이 macOS jetsam 을 트리거하는 근본원인 차단. **launchd 워치독**(`install` 로 opt-in): `watchdogIntervalSec`(45s)마다 메모리 폴링 → 낮으면 macOS 알림(5분 throttle). **알림 전용 · 프로세스 kill 없음** · 다중 Claude 세션 누적을 보는 유일한 층 | 맥이 자꾸 죽을 때 · OOM 예방 |
@@ -89,65 +89,65 @@ harness/
 ## 슬래시 명령 (플러그인 · 공용셋)
 
 `commands/*.md` — 전체 사용자-대면 명령이 **bare `/cmd` 슬래시 명령**으로 노출된다(`/paper`·`/imagine`·
-`/pr-cycle`·`/ship`·`/sbs`·`/fleet`·`/fleet-lab`·`/fleet-abstract`·`/fleet-full`·`/ing`·`/ci`·`/kick`·`/poll` …). 일부는 이웃 CLI **`hexa` 위임자**다(`/hexa`·`/cloud`=`hexa cloud`·`/dojo`=`hexa dojo`·`/deck`=`hexa deck`·`/verify`·`/atlas` — hexa 부재 시 graceful echo; harness 자체 훈련잡 스캐폴더는 `/hdojo`). 각 `.md` 는 프런트매터(`description` +
-**Triggers** 자연어구 + `argument-hint` + `allowed-tools: Bash`)와 `!`harness <cmd> $ARGUMENTS`` 본문의 얇은
+`/pr-cycle`·`/ship`·`/sbs`·`/fleet`·`/fleet-lab`·`/fleet-abstract`·`/fleet-full`·`/ing`·`/ci`·`/kick`·`/poll` …). 일부는 이웃 CLI **`hexa` 위임자**다(`/hexa`·`/cloud`=`hexa cloud`·`/dojo`=`hexa dojo`·`/deck`=`hexa deck`·`/verify`·`/atlas` — hexa 부재 시 graceful echo; sidecar 자체 훈련잡 스캐폴더는 `/hdojo`). 각 `.md` 는 프런트매터(`description` +
+**Triggers** 자연어구 + `argument-hint` + `allowed-tools: Bash`)와 `!`sidecar <cmd> $ARGUMENTS`` 본문의 얇은
 위임자 — Claude Code 가 description/Triggers 로 인지한다(한국어·영어 트리거 양쪽).
 
-**노출 경로 = `harness shadow` (bare · user-scope)**: Claude Code 는 플러그인 명령을 **무조건 `/plugin:cmd`**
-네임스페이스로 띄우므로, 그대로 두면 `harness shadow` 의 bare `/fleet` 와 플러그인 `/harness:fleet` 가 picker 에
+**노출 경로 = `sidecar shadow` (bare · user-scope)**: Claude Code 는 플러그인 명령을 **무조건 `/plugin:cmd`**
+네임스페이스로 띄우므로, 그대로 두면 `sidecar shadow` 의 bare `/fleet` 와 플러그인 `/sidecar:fleet` 가 picker 에
 **2줄로 중복**된다. 그래서 `.claude-plugin/plugin.json` 이 **`commands: []`** (기본 `commands/` 스캔을 빈 목록으로
-대체)로 플러그인 명령 등록을 끄고, 슬래시 노출은 `harness shadow` 가 `commands/*.md` 를 `~/.claude/commands/` 에
+대체)로 플러그인 명령 등록을 끄고, 슬래시 노출은 `sidecar shadow` 가 `commands/*.md` 를 `~/.claude/commands/` 에
 bare `/cmd` 위임자로 미러하는 단일 경로만 쓴다(마커 추적 · 손수 작성한 동명 파일은 보존 · `shadow remove` 로 정리)
 → picker 에 bare 1줄. SHADOW_MARKER 추적 주석은 frontmatter 닫는 `---` **뒤**에 삽입한다 — Claude Code 는 `---` 가
 1행일 때만 `description:` 을 읽으므로, 앞에 붙이면 picker 가 마커 주석을 설명으로 표시한다. **`shadow --force`** 는
 마커-없는 충돌(마커 도입 *전* 생성된 stale shadow)도 source 로 덮어써 heal 한다 — 옛 shadow 가 손수작성으로 오판돼
-skip 되면 source 의 `Triggers —` 줄을 잃어 맨-텍스트 명령 인지가 죽기 때문(`harness lint` 4f `SHADOW-DESC` 가
+skip 되면 source 의 `Triggers —` 줄을 잃어 맨-텍스트 명령 인지가 죽기 때문(`sidecar lint` 4f `SHADOW-DESC` 가
 desc 의 cap·Triggers 보유를 warn 으로 게이트).
 
 **자기완결(self-contained) 플러그인 · 프로젝트 무관**: marketplace `source: "."` 라 **repo 루트가 곧 플러그인** —
-훅뿐 아니라 `harness` CLI 본체(`bin/`·`cli/`·`lib/`·`modules/`·`config/`·`commands/`)까지 한 덩어리로 실린다
+훅뿐 아니라 `sidecar` CLI 본체(`bin/`·`cli/`·`lib/`·`modules/`·`config/`·`commands/`)까지 한 덩어리로 실린다
 (`commands/` 는 shadow 가 미러하는 SOURCE 로 실릴 뿐, 플러그인 명령으로 로드되진 않는다). 훅은
-`${CLAUDE_PLUGIN_ROOT}/bin/harness`(플러그인 자기 번들)를 실행하므로, **`/plugin update` + 리로드 한 번에
-CLI·hooks 가 최신화**된다 — 프로젝트마다 복사·갱신도, 별도 `harness self-update` 도 불필요(슬래시는 갱신 후
-`harness shadow` 재실행으로 반영). (전역 `harness` on PATH 는 폴백.) 재생성기 = `_tools/gen_commands.py`.
+`${CLAUDE_PLUGIN_ROOT}/bin/sidecar`(플러그인 자기 번들)를 실행하므로, **`/plugin update` + 리로드 한 번에
+CLI·hooks 가 최신화**된다 — 프로젝트마다 복사·갱신도, 별도 `sidecar self-update` 도 불필요(슬래시는 갱신 후
+`sidecar shadow` 재실행으로 반영). (전역 `sidecar` on PATH 는 폴백.) 재생성기 = `_tools/gen_commands.py`.
 hook-내부 전용(`pre`/`post`/`prompt`)은 슬래시로 노출하지 않는다.
 >
-> `ing add` 자유텍스트에 셸 특수문자(괄호·따옴표·`$`·`→`)가 있으면 슬래시 `$ARGUMENTS` 무인용 확장이 깨진다 — `printf '%s' "<text>" \| harness ing add --stdin` (STDIN 경로)로 안전하게 등록한다(`--to <repo>` 와도 호환).
+> `ing add` 자유텍스트에 셸 특수문자(괄호·따옴표·`$`·`→`)가 있으면 슬래시 `$ARGUMENTS` 무인용 확장이 깨진다 — `printf '%s' "<text>" \| sidecar ing add --stdin` (STDIN 경로)로 안전하게 등록한다(`--to <repo>` 와도 호환).
 
 ---
 
 ## 빠른 시작
 
-### 0. 공용(전역) 설치 — `harness install` (한 줄)
+### 0. 공용(전역) 설치 — `sidecar install` (한 줄)
 
 머신에 하네스를 **공용 명령**으로 깔고 전역 훅까지 한 방에 배선한다(특정 repo 단독 세팅 아님). 부트스트랩 one-liner:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/dancinlab/harness/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dancinlab/sidecar/main/scripts/install.sh | bash
 ```
 
 하는 일(멱등 — 재실행 = 최신으로 갱신):
 
 ```
-⬇ clone   dancinlab/harness → ~/.harness/cli
-🔗 link    harness 래퍼 → ~/.local/bin/harness   (PATH 안내)
-🪝 hooks   harness install-hooks --global          (모든 Claude Code 세션에 가드/주입)
+⬇ clone   dancinlab/sidecar → ~/.sidecar/cli
+🔗 link    sidecar 래퍼 → ~/.local/bin/sidecar   (PATH 안내)
+🪝 hooks   sidecar install-hooks --global          (모든 Claude Code 세션에 가드/주입)
 ```
 
-이후 갱신은 `harness self-update`, 이미 하네스가 깔려 있으면 `harness install` 로도 동일 동작. 훅 없이 깔려면 `--no-hooks`, 미리보기는 `--dry-run`. 그다음 특정 repo 에 적용하려면 아래 1·2 단계(또는 `harness init`).
+이후 갱신은 `sidecar self-update`, 이미 하네스가 깔려 있으면 `sidecar install` 로도 동일 동작. 훅 없이 깔려면 `--no-hooks`, 미리보기는 `--dry-run`. 그다음 특정 repo 에 적용하려면 아래 1·2 단계(또는 `sidecar init`).
 
 ### 1. (per-repo) 하네스를 repo 에 둔다 (submodule 권장)
 
 ```bash
 cd your-repo
-git submodule add https://github.com/dancinlab/harness .harness-engine
+git submodule add https://github.com/dancinlab/sidecar .harness-engine
 # 또는 그냥 clone / vendor 해도 됨
 ```
 
 ### 2. 스캐폴딩 (한 방)
 
 ```bash
-bash .harness-engine/bin/harness init
+bash .harness-engine/bin/sidecar init
 ```
 
 이 한 줄이 만든다 (기존 파일은 보존, `--force` 만 예외 · `--dry-run` 으로 미리보기):
@@ -158,22 +158,22 @@ bash .harness-engine/bin/harness init
 ✓ .harness/keywords.json
 ✓ .harness/severity-map.json
 ✓ .gitignore                   로그 무시 추가
-✓ scripts/harness              얇은 래퍼
+✓ scripts/sidecar              얇은 래퍼
 ```
 
-> 🪝 **훅은 전역 1벌 전용 (global-only)**: per-repo `.claude/settings.json` 은 쓰지 않는다(전역 설치와 중복돼 컨텍스트가 2~3중 주입되던 버그). 훅 배선은 호스트당 한 번 `harness install`(또는 `harness install-hooks`) 로 끝낸다 — 그러면 모든 repo 에서 가드/인젝트가 발사된다.
+> 🪝 **훅은 전역 1벌 전용 (global-only)**: per-repo `.claude/settings.json` 은 쓰지 않는다(전역 설치와 중복돼 컨텍스트가 2~3중 주입되던 버그). 훅 배선은 호스트당 한 번 `sidecar install`(또는 `sidecar install-hooks`) 로 끝낸다 — 그러면 모든 repo 에서 가드/인젝트가 발사된다.
 
 생성 후 `harness.config.json` 의 `verify.checks` · `lockdown.files` 만 repo 에 맞게 채우면 된다.
 
 > 수동 설정도 가능: `.harness/*.json` 을 두지 않으면 번들 기본 규칙(`config/*.json`)이 자동 적용된다.
 >
-> 제거: `harness uninstall` (주입물만 제거, 사용자 콘텐츠 보존 · `--dry-run` 미리보기). 상세 [docs/install.md](docs/install.md#제거-uninstall).
+> 제거: `sidecar uninstall` (주입물만 제거, 사용자 콘텐츠 보존 · `--dry-run` 미리보기). 상세 [docs/install.md](docs/install.md#제거-uninstall).
 
 ### 3. 동작 확인
 
 ```bash
-bash .harness-engine/bin/harness audit
-bash .harness-engine/bin/harness ci list
+bash .harness-engine/bin/sidecar audit
+bash .harness-engine/bin/sidecar ci list
 ```
 
 ### 4. 에이전트 hook 배선 (Claude Code 예시)
@@ -184,14 +184,14 @@ bash .harness-engine/bin/harness ci list
 {
   "hooks": {
     "PreToolUse": [
-      { "matcher": "Bash",       "hooks": [{ "type": "command", "command": "CLAUDE_TOOL_INPUT=\"$CLAUDE_TOOL_INPUT\" bash .harness-engine/bin/harness pre bash" }] },
-      { "matcher": "Write|Edit", "hooks": [{ "type": "command", "command": "CLAUDE_TOOL_INPUT=\"$CLAUDE_TOOL_INPUT\" bash .harness-engine/bin/harness pre write" }] }
+      { "matcher": "Bash",       "hooks": [{ "type": "command", "command": "CLAUDE_TOOL_INPUT=\"$CLAUDE_TOOL_INPUT\" bash .harness-engine/bin/sidecar pre bash" }] },
+      { "matcher": "Write|Edit", "hooks": [{ "type": "command", "command": "CLAUDE_TOOL_INPUT=\"$CLAUDE_TOOL_INPUT\" bash .harness-engine/bin/sidecar pre write" }] }
     ],
     "PostToolUse": [
-      { "matcher": "Write|Edit", "hooks": [{ "type": "command", "command": "bash .harness-engine/bin/harness post edit \"$CLAUDE_FILE_PATH\"" }] }
+      { "matcher": "Write|Edit", "hooks": [{ "type": "command", "command": "bash .harness-engine/bin/sidecar post edit \"$CLAUDE_FILE_PATH\"" }] }
     ],
     "UserPromptSubmit": [
-      { "hooks": [{ "type": "command", "command": "bash .harness-engine/bin/harness prompt \"$CLAUDE_USER_PROMPT\"" }] }
+      { "hooks": [{ "type": "command", "command": "bash .harness-engine/bin/sidecar prompt \"$CLAUDE_USER_PROMPT\"" }] }
     ]
   }
 }
@@ -199,7 +199,7 @@ bash .harness-engine/bin/harness ci list
 
 > 환경변수 이름(`CLAUDE_TOOL_INPUT` 등)은 런타임 버전에 따라 다를 수 있다. 하네스는 `CLAUDE_TOOL_INPUT` 와 `CODEX_TOOL_INPUT` 둘 다 읽는다. JSON 형식: `{"command":"...","file_path":"...","content":"..."}`.
 
-> 💡 `harness install-hooks [--global|--repo]` 는 hook 배선과 함께 `settings.json` 의 `env` 에 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 도 세팅한다 — 백그라운드 subagent 에 `SendMessage`(agent-teams)를 기본 활성화. 이미 그 키가 있으면 사용자 값을 보존한다(덮어쓰지 않음). 끄려면 그 키를 `"0"` 으로 두면 된다.
+> 💡 `sidecar install-hooks [--global|--repo]` 는 hook 배선과 함께 `settings.json` 의 `env` 에 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 도 세팅한다 — 백그라운드 subagent 에 `SendMessage`(agent-teams)를 기본 활성화. 이미 그 키가 있으면 사용자 값을 보존한다(덮어쓰지 않음). 끄려면 그 키를 `"0"` 으로 두면 된다.
 
 ---
 
@@ -230,21 +230,21 @@ bash .harness-engine/bin/harness ci list
 
 ## self-hosted
 
-이 repo 자체가 하네스를 쓴다(dogfooding) — `harness.config.json` + `.claude/settings.json` self hooks + pre-commit `bin/harness lint`. 코어(`.ts`) 변경 시 CHANGELOG 동시 갱신이 강제되고, 번들 enforcement(root-cause·secret·force-push)가 자기 코드에도 적용된다. 단 `protectedBranches` 미설정으로 자기 개발 흐름(main 직접 push)은 막지 않는다.
+이 repo 자체가 하네스를 쓴다(dogfooding) — `harness.config.json` + `.claude/settings.json` self hooks + pre-commit `bin/sidecar lint`. 코어(`.ts`) 변경 시 CHANGELOG 동시 갱신이 강제되고, 번들 enforcement(root-cause·secret·force-push)가 자기 코드에도 적용된다. 단 `protectedBranches` 미설정으로 자기 개발 흐름(main 직접 push)은 막지 않는다.
 
-매 사이클(`harness pr-cycle`)의 doc-gate 는 의미있는 변경에 대해 **CHANGELOG.md(append) + (존재 시) ARCHITECTURE.md·README.md 현행화**를 요구한다 — 셋 중 미갱신이 있으면 머지를 거부한다(`--no-doc` 는 진짜 문서 불필요할 때만). 이 README 도 그 대상이므로 매 사이클 최신 상태로 유지된다. (commons `cycle-docs-pr`)
+매 사이클(`sidecar pr-cycle`)의 doc-gate 는 의미있는 변경에 대해 **CHANGELOG.md(append) + (존재 시) ARCHITECTURE.md·README.md 현행화**를 요구한다 — 셋 중 미갱신이 있으면 머지를 거부한다(`--no-doc` 는 진짜 문서 불필요할 때만). 이 README 도 그 대상이므로 매 사이클 최신 상태로 유지된다. (commons `cycle-docs-pr`)
 
 > 📌 **README = 현재상태 SSOT, 이력 로그 아님** (ARCHITECTURE 와 동급 규율 · commons `single-doc`). README 현행화는 *지금의* 기능·사용법·구조를 **제자리 덮어쓰기(update-in-place)** 하는 것이지, 변경이력을 덧붙이는 게 아니다. README 에 버전 로그·날짜·`이전엔…`/`deprecated`/"v0.x 에서 추가" 식 누적 금지 — 이력은 **CHANGELOG.md + git** 이 SSOT.
 
-`harness pr-cycle` 은 검증된 머지 직후 **로컬 base(main) 를 origin/base 로 ff-sync** 한다(feature 브랜치에서 `git fetch origin <base>:<base>` — checkout 전환 없이 로컬 main 뒤처짐 방지, non-ff 거부=안전). origin 만 갱신하고 로컬 main 을 방치하지 않으므로, 다음 작업 브랜치는 항상 최신 base 에서 분기된다. (commons `cycle-docs-pr`)
+`sidecar pr-cycle` 은 검증된 머지 직후 **로컬 base(main) 를 origin/base 로 ff-sync** 한다(feature 브랜치에서 `git fetch origin <base>:<base>` — checkout 전환 없이 로컬 main 뒤처짐 방지, non-ff 거부=안전). origin 만 갱신하고 로컬 main 을 방치하지 않으므로, 다음 작업 브랜치는 항상 최신 base 에서 분기된다. (commons `cycle-docs-pr`)
 
 루트 `CLAUDE.md` 는 **진입 포인터**(프로젝트 설명 + SSOT 포인터 + 작업규칙)다 — 디렉토리·모듈 **트리는 `ARCHITECTURE.json` 단일 SSOT** 라 CLAUDE.md 에 중복하지 않는다(`docs.ts` 의 CLAUDE-MD-NO-TREE 검사는 구조 SSOT 존재 시 면제 · 트리 drift 방지).
 
-거버넌스 SSOT `config/commons.md` 는 **slug 키 do/dont 형식**이다 — 각 규칙은 `## <slug> — <title>` + `- do:`/`- dont:` 두 줄(번호 ID 없음 · 순서 무관). 메커니즘·실증은 코드 hook + CHANGELOG·git 이 담고, commons 는 do/dont 핵심만 운반한다. 형식은 **2층으로 강제**된다(sidecar 동형): ① **write-time** — `pre write` 가 commons.md 전체-문서 Write 가 do/dont-only 아니면 **즉시 `permissionDecision: deny`**(산문 섹션이면 쓰기 자체가 안 됨, 커밋까지 안 감) · ② **commit-time** — `harness lint` 4g(COMMONS-PROSE/COMMONS-NO-DODONT · block)가 backstop. 둘이 `commons.ts:lintCommonsText` 코어를 공유한다.
+거버넌스 SSOT `config/commons.md` 는 **slug 키 do/dont 형식**이다 — 각 규칙은 `## <slug> — <title>` + `- do:`/`- dont:` 두 줄(번호 ID 없음 · 순서 무관). 메커니즘·실증은 코드 hook + CHANGELOG·git 이 담고, commons 는 do/dont 핵심만 운반한다. 형식은 **2층으로 강제**된다(sidecar 동형): ① **write-time** — `pre write` 가 commons.md 전체-문서 Write 가 do/dont-only 아니면 **즉시 `permissionDecision: deny`**(산문 섹션이면 쓰기 자체가 안 됨, 커밋까지 안 감) · ② **commit-time** — `sidecar lint` 4g(COMMONS-PROSE/COMMONS-NO-DODONT · block)가 backstop. 둘이 `commons.ts:lintCommonsText` 코어를 공유한다.
 
 이어서 **stale-PR reaper** 가 돈다 — pr-cycle 은 원래 *자기 브랜치 PR* 만 다뤄, 한 번 중단·실패한 머지는 PR 이 열린 채 영구 방치되고 시간이 지나면 머지가능하던 것도 충돌로 썩었다. reaper 는 검증 머지 직후 **내 다른 열린 PR 을 전수 점검**해 머지가능(MERGEABLE)은 자동 squash-머지(자기 PR · admin · delete-branch — 메인 흐름과 동일 신뢰모델), 기계가 안전하게 못 닿는 것(CONFLICTING/blocked)은 다음 조치(rebase 또는 `gh pr close`)와 함께 **큰소리로 보고**한다. 즉 만들어졌지만 안 머지된 PR 은 매 사이클 **반드시 처리되거나 경보**되어 조용히 잊히지 않는다. `--no-reap` 으로 끈다.
 
-같은 doc-gate 가 **pre-commit `harness lint` 에서도 발화한다** — pr-cycle 을 거치지 않는 작업이라도, 의미있는 코드 변경이 staged 인데 CHANGELOG / (존재 시) ARCHITECTURE·README 가 같이 staged 안 됐으면 **commit 을 차단**한다(`CHANGELOG-MISSING`·`ARCHITECTURE-MISSING`·`README-MISSING`, 모두 block). 즉 "모든 작업 이후" 문서 현행화가 강제된다. 진짜 문서 불필요한 변경만 `git commit --no-verify`.
+같은 doc-gate 가 **pre-commit `sidecar lint` 에서도 발화한다** — pr-cycle 을 거치지 않는 작업이라도, 의미있는 코드 변경이 staged 인데 CHANGELOG / (존재 시) ARCHITECTURE·README 가 같이 staged 안 됐으면 **commit 을 차단**한다(`CHANGELOG-MISSING`·`ARCHITECTURE-MISSING`·`README-MISSING`, 모두 block). 즉 "모든 작업 이후" 문서 현행화가 강제된다. 진짜 문서 불필요한 변경만 `git commit --no-verify`.
 
 ## 라이선스
 

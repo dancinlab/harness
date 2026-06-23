@@ -2,28 +2,28 @@
 
 > 📍 SSOT: 설계 [ARCHITECTURE.json](../ARCHITECTURE.json) · 이력 [CHANGELOG.md](../CHANGELOG.md). 본 문서는 보조 설치 가이드.
 
-## 공용(전역) 설치 — `harness install`
+## 공용(전역) 설치 — `sidecar install`
 
-머신 전역에 하네스를 깔아 **어느 repo 에서든** `harness` 명령을 쓰고, 모든 Claude Code 세션에 가드/주입 훅을 배선한다 (per-repo 스캐폴드인 `init` 과 별개 — 이쪽은 머신 1벌 공용 세팅).
+머신 전역에 하네스를 깔아 **어느 repo 에서든** `sidecar` 명령을 쓰고, 모든 Claude Code 세션에 가드/주입 훅을 배선한다 (per-repo 스캐폴드인 `init` 과 별개 — 이쪽은 머신 1벌 공용 세팅).
 
 ```bash
 # 하네스가 아직 없을 때 (curl 부트스트랩)
-curl -fsSL https://raw.githubusercontent.com/dancinlab/harness/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dancinlab/sidecar/main/scripts/install.sh | bash
 
 # 이미 하네스가 깔려 있으면 동일 동작
-harness install
+sidecar install
 ```
 
 | 단계 | 한 일 | 기본 경로 |
 |------|-------|-----------|
-| clone | `dancinlab/harness` 클론(있으면 ff 갱신) | `~/.harness/cli` (`--dir`/`HARNESS_DIR`) |
-| link | `harness` 실행 래퍼 작성 (심볼릭 아님 — 런처 dir 오인 방지) | `~/.local/bin/harness` (`--bin`/`HARNESS_BIN`) |
-| hooks | `harness install-hooks --global` (모든 세션 가드/주입) | `~/.claude/settings.json` |
+| clone | `dancinlab/sidecar` 클론(있으면 ff 갱신) | `~/.sidecar/cli` (`--dir`/`SIDECAR_DIR`) |
+| link | `sidecar` 실행 래퍼 작성 (심볼릭 아님 — 런처 dir 오인 방지) | `~/.local/bin/sidecar` (`--bin`/`SIDECAR_BIN`) |
+| hooks | `sidecar install-hooks --global` (모든 세션 가드/주입) | `~/.claude/settings.json` |
 
 - 멱등 — 재실행하면 클론을 최신으로 fast-forward + 래퍼/훅 재확인.
 - 플래그: `--no-hooks`(클론·래퍼만) · `--ref=<branch|tag>`(기본 main) · `--dir=`/`--bin=` · `--dry-run`.
 - `~/.local/bin` 이 PATH 에 없으면 안내 줄을 출력한다 (`export PATH="$HOME/.local/bin:$PATH"`).
-- 갱신: `harness self-update` (또는 `harness install` 재실행). SSOT 부트스트랩: [`scripts/install.sh`](../scripts/install.sh) — `harness install` 이 이를 위임 실행.
+- 갱신: `sidecar self-update` (또는 `sidecar install` 재실행). SSOT 부트스트랩: [`scripts/install.sh`](../scripts/install.sh) — `sidecar install` 이 이를 위임 실행.
 
 ## 배치 옵션 (per-repo — 엔진 벤더링)
 
@@ -33,8 +33,8 @@ harness install
 
 ```bash
 cd your-repo
-git submodule add https://github.com/dancinlab/harness .harness-engine
-git commit -m "chore: add harness engine"
+git submodule add https://github.com/dancinlab/sidecar .harness-engine
+git commit -m "chore: add sidecar engine"
 # 업데이트: cd .harness-engine && git pull && cd .. && git add .harness-engine
 ```
 
@@ -42,20 +42,20 @@ git commit -m "chore: add harness engine"
 
 ```bash
 cd your-repo
-git clone --depth 1 https://github.com/dancinlab/harness .harness-engine
+git clone --depth 1 https://github.com/dancinlab/sidecar .harness-engine
 rm -rf .harness-engine/.git
 ```
 
 ### C. 중앙 1벌 + 심볼릭링크 (멀티 repo, 로컬)
 
 ```bash
-git clone https://github.com/dancinlab/harness ~/tools/harness
-ln -s ~/tools/harness your-repo/.harness-engine
+git clone https://github.com/dancinlab/sidecar ~/tools/sidecar
+ln -s ~/tools/sidecar your-repo/.harness-engine
 ```
 
 ## 런타임 (tsx)
 
-`bin/harness` 가 `tsx` 를 자동 탐색한다:
+`bin/sidecar` 가 `tsx` 를 자동 탐색한다:
 
 ```
 1. $PWD 에서 위로 올라가며 node_modules/.bin/tsx
@@ -72,17 +72,17 @@ cd .harness-engine && pnpm install
 
 ## 편의 래퍼 (선택)
 
-매번 `bash .harness-engine/bin/harness` 치기 번거로우면 repo 에 얇은 래퍼를 둔다:
+매번 `bash .harness-engine/bin/sidecar` 치기 번거로우면 repo 에 얇은 래퍼를 둔다:
 
 ```bash
-# scripts/harness
+# scripts/sidecar
 #!/usr/bin/env bash
-exec bash "$(dirname "$0")/../.harness-engine/bin/harness" "$@"
+exec bash "$(dirname "$0")/../.harness-engine/bin/sidecar" "$@"
 ```
 
 ```bash
-chmod +x scripts/harness
-bash scripts/harness audit
+chmod +x scripts/sidecar
+bash scripts/sidecar audit
 ```
 
 ## 멀티 repo 운영
@@ -95,7 +95,7 @@ bash scripts/harness audit
 ~/work/foo/    harness.config.json · .harness/logs/   ┘
 ```
 
-repo 간 공유 파일(예: 공통 규칙 라이브러리)을 동기화하려면 각 repo 의 `sync.script` 에 그 절차를 적고 `harness sync run` 으로 돌린다 — 엔진은 동기화 "방법"을 강제하지 않고 실행만 한다.
+repo 간 공유 파일(예: 공통 규칙 라이브러리)을 동기화하려면 각 repo 의 `sync.script` 에 그 절차를 적고 `sidecar sync run` 으로 돌린다 — 엔진은 동기화 "방법"을 강제하지 않고 실행만 한다.
 
 ## .gitignore
 
@@ -112,26 +112,26 @@ repo 의 `.gitignore` 에 로그 디렉토리를 추가한다:
 하네스가 repo 에 **주입한 것만** 되돌린다 — 사용자 콘텐츠는 보존.
 
 ```bash
-bash .harness-engine/bin/harness uninstall --dry-run   # 무엇을 지울지 미리보기
-bash .harness-engine/bin/harness uninstall             # 실제 제거
-bash .harness-engine/bin/harness uninstall --keep-logs # 로그만 남김
+bash .harness-engine/bin/sidecar uninstall --dry-run   # 무엇을 지울지 미리보기
+bash .harness-engine/bin/sidecar uninstall             # 실제 제거
+bash .harness-engine/bin/sidecar uninstall --keep-logs # 로그만 남김
 ```
 
 | 제거 | 보존 (절대 안 건드림) |
 |------|----------------------|
 | `harness.config.json` · `.harness/`(규칙·prefs·logs) | `ARCHITECTURE.md` · `CHANGELOG.md` · `CLAUDE.md` |
-| `scripts/harness` 래퍼 (시그니처 확인된 것만) | `scripts/scratch/` · 소스 코드 |
-| `.git/hooks/pre-commit`·`pre-push` (harness 설치분만) | 사용자 커스텀 git hook |
-| `.gitignore` 의 harness 추가 2줄 | |
-| `.claude/settings.json` (전부 harness hook 일 때만 삭제, 섞이면 보존+안내) | |
+| `scripts/sidecar` 래퍼 (시그니처 확인된 것만) | `scripts/scratch/` · 소스 코드 |
+| `.git/hooks/pre-commit`·`pre-push` (sidecar 설치분만) | 사용자 커스텀 git hook |
+| `.gitignore` 의 sidecar 추가 2줄 | |
+| `.claude/settings.json` (전부 sidecar hook 일 때만 삭제, 섞이면 보존+안내) | |
 
 엔진 자체(submodule/vendor 디렉토리)는 건드리지 않는다 — `git submodule deinit` 등으로 별도 제거.
 
 ## 점검
 
 ```bash
-bash .harness-engine/bin/harness            # 도움말
-bash .harness-engine/bin/harness audit      # 6축 스코어
-bash .harness-engine/bin/harness ci list
-bash .harness-engine/bin/harness lint
+bash .harness-engine/bin/sidecar            # 도움말
+bash .harness-engine/bin/sidecar audit      # 6축 스코어
+bash .harness-engine/bin/sidecar ci list
+bash .harness-engine/bin/sidecar lint
 ```

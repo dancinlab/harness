@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, resolve } from "node:path";
-import { REPO_ROOT, HARNESS_CONFIG_DIR } from "./paths.ts";
+import { REPO_ROOT, SIDECAR_CONFIG_DIR } from "./paths.ts";
 
 // harness.config.json (at REPO_ROOT) declares everything project-specific.
 // Anything omitted falls back to the bundled defaults below, so a repo with
@@ -29,7 +29,7 @@ export interface HarnessConfig {
     onEditReminder?: string;
   };
   // Filenames (repo-relative) of the rule configs. If the repo file is absent,
-  // the bundled default under HARNESS_CONFIG_DIR is used.
+  // the bundled default under SIDECAR_CONFIG_DIR is used.
   enforcementFile: string;
   keywordsFile: string;
   severityMapFile: string;
@@ -49,7 +49,7 @@ export interface HarnessConfig {
   // optional shared-file sync: a shell script the repo runs to fan files out
   sync?: { script: string };
   // upstream dependencies to fix IN-SESSION (not defer to an inbox memo) when a
-  // downstream task surfaces an upstream bug/improvement. `harness upstream`.
+  // downstream task surfaces an upstream bug/improvement. `sidecar upstream`.
   upstreams: { name: string; repo: string; branch?: string }[];
   // markdown guides whose relative links `gc` checks for drift
   guides: string[];
@@ -102,7 +102,7 @@ export interface HarnessConfig {
   tmpGuard: boolean;
   // handoffGuard BLOCKS scattered hand-off markdown (HANDOFF.md / INBOX.md /
   // inbox/*.md at any depth) on Write/Edit — hand-offs route through the
-  // repo-root ING.jsonl board (`harness ing add [--to <repo>]`), not ad-hoc files.
+  // repo-root ING.jsonl board (`sidecar ing add [--to <repo>]`), not ad-hoc files.
   handoffGuard: boolean;
   // namingGuard WARNS (pre write) when a new file/dir name carries a version/copy
   // suffix (`_v2` · `_final` · `_copy` · `_old` · `foo 2` …) instead of a canonical
@@ -113,13 +113,13 @@ export interface HarnessConfig {
   // the agent to ask in plain CHAT text instead (options inline, mark the
   // recommended one, accept a free-form answer). A FORM redirect, not anti-punt.
   askqText: boolean;
-  // dojo scaffolder defaults. The harness engine is DOMAIN-AGNOSTIC, so the
+  // dojo scaffolder defaults. The sidecar engine is DOMAIN-AGNOSTIC, so the
   // preferred training/kernel stack is carried HERE (per-repo config), never
   // hardcoded in the engine. Absent → the generic py stub (back-compat).
   //   defaultLang — driver language when `--lang` is not passed (default "py").
   //   stack       — human label surfaced in the scaffold + pod/dojo runbook
   //                 (e.g. "flame+forge+hexa-cuda" for the hexa-native GPU path).
-  //   delegate    — when set AND the `hexa` binary is on PATH, `harness dojo
+  //   delegate    — when set AND the `hexa` binary is on PATH, `sidecar dojo
   //                 <slug>` shells out to `hexa dojo <delegate> <slug>` to emit
   //                 the REAL domain artifacts (e.g. flame_forge → train.hexa over
   //                 the flame/forge substrate; hexa_cuda → nvptx kernel) instead
@@ -150,21 +150,21 @@ export interface HarnessConfig {
   dangerGuard: { rmRfRoot: boolean };
   // mem-guard — OOM prevention. PreToolUse preflight warns (warnPct) / blocks
   // (blockPct) a background-spawn (`&`/nohup) when system available RAM is low; the
-  // opt-in launchd watchdog (`harness mem-guard install`) notifies every
+  // opt-in launchd watchdog (`sidecar mem-guard install`) notifies every
   // watchdogIntervalSec. blockPct=0 = warn-only (never block). enabled=false off.
   memGuard: { enabled: boolean; warnPct: number; blockPct: number; watchdogIntervalSec: number };
-  // companions — sibling-CLI command catalogs surfaced at SessionStart (`harness
+  // companions — sibling-CLI command catalogs surfaced at SessionStart (`sidecar
   // companions inject`). DOMAIN-AGNOSTIC engine: this lists adjacent project CLIs
   // (e.g. `hexa`) by DATA, never hardcoded, so an agent knows their command surface
   // without re-probing. Each entry: a bare cmd name (probed via `--help`) or
-  // { cmd, args, label, lines }. Merged with host-wide ~/.harness/companions.json.
+  // { cmd, args, label, lines }. Merged with host-wide ~/.sidecar/companions.json.
   companions?: (string | { cmd: string; args?: string[]; label?: string; lines?: number })[];
 }
 
 const DEFAULTS: HarnessConfig = {
   project: "unknown",
   // L0 is OPT-IN: empty by default — there is NO L0 until a repo explicitly
-  // designates files (via `harness lockdown add` → harness.config.json, or by
+  // designates files (via `sidecar lockdown add` → harness.config.json, or by
   // setting lockdown.fromMarkdown to a guide that carries a 🔴 L0 block).
   lockdown: {
     files: [],
@@ -272,7 +272,7 @@ export function config(): HarnessConfig {
 export function resolveRuleFile(repoRelOrAbs: string, bundledName: string): string {
   const candidate = isAbsolute(repoRelOrAbs) ? repoRelOrAbs : resolve(REPO_ROOT, repoRelOrAbs);
   if (existsSync(candidate)) return candidate;
-  return resolve(HARNESS_CONFIG_DIR, bundledName);
+  return resolve(SIDECAR_CONFIG_DIR, bundledName);
 }
 
 export function repoPath(rel: string): string {

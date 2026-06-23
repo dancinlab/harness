@@ -1,4 +1,4 @@
-// harness end — session-closure safety check. Read-only
+// sidecar end — session-closure safety check. Read-only
 // dashboard of dangling residue in the current repo with per-item ✓/⚠/○ marks +
 // recommended actions, and a closing ✅/⚠ verdict. Never mutates anything.
 import { execShell } from "../lib/exec.ts";
@@ -10,7 +10,7 @@ async function git(cmd: string): Promise<string> {
 const out = (s: string) => process.stdout.write(s + "\n");
 
 export async function runEnd(_args: string[]): Promise<number> {
-  out("═══ harness end — closure safety check ═══\n");
+  out("═══ sidecar end — closure safety check ═══\n");
   let warn = 0;
 
   // 1. uncommitted
@@ -20,7 +20,7 @@ export async function runEnd(_args: string[]): Promise<number> {
     warn++;
     out(`⚠ uncommitted     ${unc.length} file(s)`);
     out(unc.slice(0, 8).map((l) => "    " + l).join("\n"));
-    out('  → harness pr-cycle  ·  or git stash push -m "<msg>"');
+    out('  → sidecar pr-cycle  ·  or git stash push -m "<msg>"');
   }
 
   // 2. unpushed

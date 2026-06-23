@@ -1,4 +1,4 @@
-// harness fleet [lab|abstract|full] [name:goal,...|go|stop|status]
+// sidecar fleet [lab|abstract|full] [name:goal,...|go|stop|status]
 // Perpetual multi-lane orchestrator runbook. Manages a lane roster under
 // .harness/fleet/ and prints the runbook the agent follows (fire-on-arrival:
 // each lane relaunches its next round the moment it lands).
@@ -10,7 +10,7 @@
 //   full      — full-stack campaign             (.harness/fleet/full · research→implement→abstract→falsify, auto-phase)
 import { existsSync, readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { resolve, dirname } from "node:path";
-import { HARNESS_ROOT, REPO_ROOT } from "../lib/paths.ts";
+import { SIDECAR_ROOT, REPO_ROOT } from "../lib/paths.ts";
 import { info, ok } from "../lib/log.ts";
 
 type Mode = "fleet" | "lab" | "abstract" | "full";
@@ -76,7 +76,7 @@ export async function runFleet(args: string[]): Promise<number> {
   }
 
   process.stdout.write(`# /${cfg.label} — engage (mode: ${arg === "go" ? "continue" : "open"})\n\n`);
-  const tpl = resolve(HARNESS_ROOT, "templates", cfg.tpl);
+  const tpl = resolve(SIDECAR_ROOT, "templates", cfg.tpl);
   if (existsSync(tpl)) process.stdout.write(readFileSync(tpl, "utf8"));
   return 0;
 }

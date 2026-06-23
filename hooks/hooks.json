@@ -1,5 +1,5 @@
 {
-  "_note": "harness governance hooks — SELF-CONTAINED: every hook runs the plugin's OWN bundled harness CLI via hooks/run.sh (resolves ${CLAUDE_PLUGIN_ROOT}/bin/harness, falls back to a global `harness` on PATH, silent if neither). A `/plugin update` + reload refreshes the CLI together with hooks/commands — no separate `harness self-update`. Mirrors `harness install-hooks` (modules/setup.ts), which keeps the bare-`harness` form for the settings.json install path.",
+  "_note": "sidecar governance hooks — SELF-CONTAINED: every hook runs the plugin's OWN bundled sidecar CLI via hooks/run.sh (resolves ${CLAUDE_PLUGIN_ROOT}/bin/sidecar, falls back to a global `sidecar` on PATH, silent if neither). A `/plugin update` + reload refreshes the CLI together with hooks/commands — no separate `sidecar self-update`. Mirrors `sidecar install-hooks` (modules/setup.ts), which keeps the bare-`sidecar` form for the settings.json install path.",
   "hooks": {
     "PreToolUse": [
       { "matcher": "Bash", "hooks": [{ "type": "command", "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" pre bash" }] },

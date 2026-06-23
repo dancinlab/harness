@@ -29,9 +29,9 @@ Stage 1.5 auto-detects YES/PARTIAL/NO and HALTs with a steer when infra is missi
    - Derive `batch_id` from active-domain + date → ledger at `exports/sweep/<batch_id>/`.
    - Declare a **budget BEFORE dispatch**: `pod_concurrent_max` (+ `usd_max_per_week` if known),
      or `local_hours_max` for local-pool mode. Default safe (e.g. 4 pods) or ask in ONE line.
-   - **Local-pool adapter** — if `harness pool list` shows an ON host fit for the kind AND the
+   - **Local-pool adapter** — if `sidecar pool list` shows an ON host fit for the kind AND the
      kind is observation-only (a measured number, not a closed-form identity): switch to
-     local-pool mode — `harness pool on <host>` instead of renting, `scp` instead of cloud
+     local-pool mode — `sidecar pool on <host>` instead of renting, `scp` instead of cloud
      copy, keep monitor+parse+ledger, SKIP atlas (persist verbatim verdict only). State on
      entry: `local-pool mode: host=<host> kind=<kind> budget=<hours>`.
    - **No-signal fallback** — if context yields no defensible matrix and local-pool doesn't
@@ -53,7 +53,7 @@ Stage 1.5 auto-detects YES/PARTIAL/NO and HALTs with a steer when infra is missi
      required first (build before fire)` + per-candidate table. STOP; do not advance.
    - if all ready → `✅ infra check: M/M ready · proceeding` → Stage 2.
 
-2. **Pre-flight** — current pod count (`harness pod` / `hexa cloud list`) vs `pod_concurrent_max`.
+2. **Pre-flight** — current pod count (`sidecar pod` / `hexa cloud list`) vs `pod_concurrent_max`.
    `wave_size = min(budget_remaining, candidates_pending)`. Print `wave 1: M / N · remaining K`.
 
 3. **Plan table (print BEFORE dispatch)**:
@@ -63,7 +63,7 @@ Stage 1.5 auto-detects YES/PARTIAL/NO and HALTs with a steer when infra is missi
    wave-1 rows marked; queued rows marked `queued`. Cite `exports/sweep/<batch_id>/`.
 
 4. **Dispatch** (parallel where inputs allow, ≤ budget):
-   1. rent (`harness pod` runbook / `hexa cloud rent`) or `harness pool on <host>` → record
+   1. rent (`sidecar pod` runbook / `hexa cloud rent`) or `sidecar pool on <host>` → record
       `pod_id`/host in `exports/sweep/<batch_id>/state.json` (state: `dispatched`).
    2. copy inputs into the pod/host workdir (`hexa cloud copy-to` / `scp`).
    3. run detached (`SAVE_POD=1` sticky so an SSH drop survives).
@@ -72,8 +72,8 @@ Stage 1.5 auto-detects YES/PARTIAL/NO and HALTs with a steer when infra is missi
       marker; web `pgrep curl` + HTTP status). On completion → tar + copy-from + `down`.
    5. on JOB-DONE → dispatch a **parse Agent** (`run_in_background: true`, `isolation: worktree`)
       with the inferred `parser_template` + harvested tgz. Contract: extract → parse →
-      - closed-form-atom kind: `harness verdict record <slug>/<id> -- <verify-cmd>` →
-        on PASS `harness atlas add/link` (absorb).
+      - closed-form-atom kind: `sidecar verdict record <slug>/<id> -- <verify-cmd>` →
+        on PASS `sidecar atlas add/link` (absorb).
       - observation-only kind: persist verbatim to `.verdicts/<slug>/<id>.txt` (no atlas).
       Write `exports/sweep/<batch_id>/<candidate_id>.json` (mirror the domain's JSON schema).
 
@@ -84,7 +84,7 @@ Stage 1.5 auto-detects YES/PARTIAL/NO and HALTs with a steer when infra is missi
    ```
    Wave M complete · N absorbed · K queued.
    Ledger: exports/sweep/<batch_id>/ledger.json
-   Next: harness micro-exp  (next wave)  ·  harness verdict list  (inspect)
+   Next: sidecar micro-exp  (next wave)  ·  sidecar verdict list  (inspect)
    ```
 
 ## Honest constraints

@@ -1,16 +1,16 @@
-// harness init [--force] [--dry-run]
+// sidecar init [--force] [--dry-run]
 // One-shot scaffold for a consuming repo:
 //   • harness.config.json     (project name auto-detected from repo dir)
 //   • .harness/{enforcement,keywords,severity-map}.json  (copied from bundled defaults)
 //   • .gitignore              (append log ignores)
-//   • scripts/harness         (thin wrapper)
-// Hooks are GLOBAL-ONLY — run `harness install` (once per host) to wire them for
+//   • scripts/sidecar         (thin wrapper)
+// Hooks are GLOBAL-ONLY — run `sidecar install` (once per host) to wire them for
 // every repo. init NEVER writes a per-repo .claude/settings.json (banned: it
 // duplicated the global install and double-injected context). Never overwrites
 // existing files unless --force. With --dry-run, only reports.
 import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync, statSync, readdirSync } from "node:fs";
 import { resolve, relative, basename, dirname } from "node:path";
-import { REPO_ROOT, HARNESS_ROOT, HARNESS_CONFIG_DIR } from "../lib/paths.ts";
+import { REPO_ROOT, SIDECAR_ROOT, SIDECAR_CONFIG_DIR } from "../lib/paths.ts";
 import { info, ok, warn } from "../lib/log.ts";
 
 interface Flags {
@@ -18,11 +18,11 @@ interface Flags {
   dryRun: boolean;
 }
 
-// @convergence state=ossified id=INIT-INJECT-DUP value="init --hooks scaffolded the full host-wide inject set (commons/recommend/prefs/easy/load/architecture) into per-repo .claude/settings.json, duplicating the global install (~/.claude/settings.json) and/or the enabled plugin — same context injected 2-3x/turn, burying short user prompts" threshold="resolved: per-repo .claude/settings.json is BANNED — harness is global-only. init no longer scaffolds repo hooks (the --hooks flag is gone); hooks live solely in the global ~/.claude/settings.json via `harness install`. inject = host-wide policy, the global layer owns it"
+// @convergence state=ossified id=INIT-INJECT-DUP value="init --hooks scaffolded the full host-wide inject set (commons/recommend/prefs/easy/load/architecture) into per-repo .claude/settings.json, duplicating the global install (~/.claude/settings.json) and/or the enabled plugin — same context injected 2-3x/turn, burying short user prompts" threshold="resolved: per-repo .claude/settings.json is BANNED — sidecar is global-only. init no longer scaffolds repo hooks (the --hooks flag is gone); hooks live solely in the global ~/.claude/settings.json via `sidecar install`. inject = host-wide policy, the global layer owns it"
 
 function enginePath(): string {
-  // relative path from repo root to the harness engine (for wrappers/snippets)
-  const rel = relative(REPO_ROOT, HARNESS_ROOT);
+  // relative path from repo root to the sidecar engine (for wrappers/snippets)
+  const rel = relative(REPO_ROOT, SIDECAR_ROOT);
   return rel || ".";
 }
 
@@ -171,7 +171,7 @@ export async function runInit(args: string[]): Promise<number> {
   // 2. .harness/*.json (copy bundled defaults)
   for (const name of ["enforcement.json", "keywords.json", "severity-map.json"]) {
     const dst = resolve(REPO_ROOT, ".harness", name);
-    const src = resolve(HARNESS_CONFIG_DIR, name);
+    const src = resolve(SIDECAR_CONFIG_DIR, name);
     if (existsSync(dst) && !flags.force) {
       actions.push({ path: `.harness/${name}`, how: "skip" });
       continue;
@@ -245,27 +245,27 @@ export async function runInit(args: string[]): Promise<number> {
     actions.push({ path: ".gitignore", how: "skip" });
   }
 
-  // 4. scripts/harness wrapper — resolve repo root (one level up from scripts/)
+  // 4. scripts/sidecar wrapper — resolve repo root (one level up from scripts/)
   // then append the engine path relative to repo root (e.g. .harness-engine).
-  const wrapper = `#!/usr/bin/env bash\nROOT="$(cd "$(dirname "$0")/.." && pwd)"\nexec bash "$ROOT/${engineRel}/bin/harness" "$@"\n`;
-  const wrapPath = resolve(REPO_ROOT, "scripts", "harness");
+  const wrapper = `#!/usr/bin/env bash\nROOT="$(cd "$(dirname "$0")/.." && pwd)"\nexec bash "$ROOT/${engineRel}/bin/sidecar" "$@"\n`;
+  const wrapPath = resolve(REPO_ROOT, "scripts", "sidecar");
   if (existsSync(wrapPath) && !flags.force) {
-    actions.push({ path: "scripts/harness", how: "skip" });
+    actions.push({ path: "scripts/sidecar", how: "skip" });
   } else if (flags.dryRun) {
-    actions.push({ path: "scripts/harness", how: "would" });
+    actions.push({ path: "scripts/sidecar", how: "would" });
   } else {
     mkdirSync(dirname(wrapPath), { recursive: true });
     writeFileSync(wrapPath, wrapper, { mode: 0o755 });
-    actions.push({ path: "scripts/harness", how: "create" });
+    actions.push({ path: "scripts/sidecar", how: "create" });
   }
 
-  // 5. git pre-commit hook → runs `harness lint` (the actual "강제" for lint gates)
+  // 5. git pre-commit hook → runs `sidecar lint` (the actual "강제" for lint gates)
   const gitDir = resolve(REPO_ROOT, ".git");
   if (existsSync(gitDir) && statSync(gitDir).isDirectory()) {
     const preCommit = resolve(gitDir, "hooks", "pre-commit");
-    // route via the repo's own scripts/harness wrapper (single source of truth
+    // route via the repo's own scripts/sidecar wrapper (single source of truth
     // for the engine location), resolved from the repo top-level at hook time.
-    const body = `#!/usr/bin/env bash\n# installed by 'harness init' — block commits that fail harness lint gates\nW="$(git rev-parse --show-toplevel)/scripts/harness"\n[ -x "$W" ] || exit 0   # engine/wrapper absent (submodule not init'd) → skip\nexec bash "$W" lint\n`;
+    const body = `#!/usr/bin/env bash\n# installed by 'sidecar init' — block commits that fail sidecar lint gates\nW="$(git rev-parse --show-toplevel)/scripts/sidecar"\n[ -x "$W" ] || exit 0   # engine/wrapper absent (submodule not init'd) → skip\nexec bash "$W" lint\n`;
     if (existsSync(preCommit) && !flags.force) {
       actions.push({ path: ".git/hooks/pre-commit", how: "skip" });
     } else if (flags.dryRun) {
@@ -281,7 +281,7 @@ export async function runInit(args: string[]): Promise<number> {
   if (existsSync(gitDir) && statSync(gitDir).isDirectory()) {
     const prePush = resolve(gitDir, "hooks", "pre-push");
     const body =
-      `#!/usr/bin/env bash\n# installed by 'harness init' — block pushes that fail verify / have open errors\nROOT="$(git rev-parse --show-toplevel)"\n[ -x "$ROOT/scripts/harness" ] || exit 0   # engine/wrapper absent → skip\nbash "$ROOT/scripts/harness" verify || exit 1\nbash "$ROOT/scripts/harness" errors drain_check 1 || exit 1\n`;
+      `#!/usr/bin/env bash\n# installed by 'sidecar init' — block pushes that fail verify / have open errors\nROOT="$(git rev-parse --show-toplevel)"\n[ -x "$ROOT/scripts/sidecar" ] || exit 0   # engine/wrapper absent → skip\nbash "$ROOT/scripts/sidecar" verify || exit 1\nbash "$ROOT/scripts/sidecar" errors drain_check 1 || exit 1\n`;
     if (existsSync(prePush) && !flags.force) {
       actions.push({ path: ".git/hooks/pre-push", how: "skip" });
     } else if (flags.dryRun) {
@@ -298,7 +298,7 @@ export async function runInit(args: string[]): Promise<number> {
   // only repo config; hooks come solely from the global ~/.claude/settings.json.
 
   // report
-  info(`harness init ${flags.dryRun ? "(dry-run) " : ""}— repo: ${REPO_ROOT}`);
+  info(`sidecar init ${flags.dryRun ? "(dry-run) " : ""}— repo: ${REPO_ROOT}`);
   info(`  detected stack: ${stack.ids.length ? stack.ids.join(", ") : "none (generic — fill verify.checks manually)"}`);
   for (const a of actions) {
     const mark = a.how === "skip" ? "·" : a.how === "would" ? "?" : "✓";
@@ -306,9 +306,9 @@ export async function runInit(args: string[]): Promise<number> {
   }
 
   info("");
-  info("hooks: GLOBAL-ONLY — run `harness install` once per host to wire guards/injects for EVERY repo.");
+  info("hooks: GLOBAL-ONLY — run `sidecar install` once per host to wire guards/injects for EVERY repo.");
   info("  (per-repo .claude/settings.json is not used — it duplicated the global install.)");
   info("");
-  ok("done. edit harness.config.json → verify.checks, lockdown.files, then `harness audit`.");
+  ok("done. edit harness.config.json → verify.checks, lockdown.files, then `sidecar audit`.");
   return 0;
 }

@@ -1,6 +1,6 @@
-// harness audit [full|summary|json]
+// sidecar audit [full|summary|json]
 // A 6-axis self-scorecard (each 0-10, total /60) derived from the JSONL logs +
-// config, so you can watch the harness's own health trend over time.
+// config, so you can watch the sidecar's own health trend over time.
 import { existsSync } from "node:fs";
 import { LOGS } from "../lib/paths.ts";
 import { appendJsonl, info } from "../lib/log.ts";
@@ -53,7 +53,7 @@ export async function runAudit(args: string[]): Promise<number> {
     info(`audit: ${result.total}/${result.max}`);
     return 0;
   }
-  info(`harness audit — ${result.total}/${result.max}`);
+  info(`sidecar audit — ${result.total}/${result.max}`);
   for (const [k, v] of Object.entries(result.scores)) {
     info(`  ${k.padEnd(14)} ${String(v).padStart(2)}/10  ${"▓".repeat(v)}${"░".repeat(10 - v)}`);
   }

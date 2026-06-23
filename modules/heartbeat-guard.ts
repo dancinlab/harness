@@ -30,7 +30,7 @@ const AUTO_RUNNER_TTL_SEC = 7200;
 
 // status-check commands that count as "checking a long-runner" → reset the heartbeat.
 const POLL_ACTIVITY =
-  /(^|[\s;&|(])(hexa\s+cloud\s+(poll|tail|list|status|alive|probe|watch|pods)|harness\s+ing\b|harness\s+ledger\s+(list|status)|harness\s+(check|lab|system)\b|gh\s+run\s+(watch|view)|squeue|sacct)\b/i;
+  /(^|[\s;&|(])(hexa\s+cloud\s+(poll|tail|list|status|alive|probe|watch|pods)|sidecar\s+ing\b|sidecar\s+ledger\s+(list|status)|sidecar\s+(check|lab|system)\b|gh\s+run\s+(watch|view)|squeue|sacct)\b/i;
 
 // Stamp the heartbeat when the command is a status-check of a long-runner. Best-effort.
 export function markPollActivity(cmd: string): void {
@@ -173,7 +173,7 @@ export function staleLongRunnerWarn(podLabels: string[], maxSilenceSec: number, 
   return (
     `live 장기-진행건 ${live.length}개 [${live.join(" · ")}] 를 ${when} 확인 안 함 ` +
     `— 최소 ${floorMin}분마다는 상태를 봐야 한다 (c21): ` +
-    `\`hexa cloud poll/tail <host>\` · \`harness ing show\` · \`harness check\` 로 확인하거나, ` +
-    `끝났으면 \`hexa cloud down\` / \`harness ing done\` 으로 닫아라. (방치 = idle-burn + 결과 미회수)`
+    `\`hexa cloud poll/tail <host>\` · \`sidecar ing show\` · \`sidecar check\` 로 확인하거나, ` +
+    `끝났으면 \`hexa cloud down\` / \`sidecar ing done\` 으로 닫아라. (방치 = idle-burn + 결과 미회수)`
   );
 }

@@ -1,4 +1,4 @@
-// harness architecture {inject|show} — design-SSOT carrier. On SessionStart it
+// sidecar architecture {inject|show} — design-SSOT carrier. On SessionStart it
 // surfaces the repo-root ARCHITECTURE.json (preferred) or ARCHITECTURE.md as
 // additionalContext, so the final-architecture SSOT is in context from the
 // first turn — just like CLAUDE.md — without anyone having to open the file.
@@ -96,7 +96,7 @@ export async function runArchitecture(args: string[]): Promise<number> {
     return args.includes("--strict") ? 1 : 0;
   }
 
-  process.stdout.write("usage: harness architecture {inject|show|lint [--strict]}\n");
+  process.stdout.write("usage: sidecar architecture {inject|show|lint [--strict]}\n");
   return 1;
 }
 

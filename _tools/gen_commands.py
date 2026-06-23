@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Generate harness plugin slash-command .md files (sidecar pattern).
+"""Generate sidecar plugin slash-command .md files (sidecar pattern).
 
-Each command is a thin delegator to the global `harness` CLI, with a rich
+Each command is a thin delegator to the global `sidecar` CLI, with a rich
 frontmatter description carrying **Triggers** so Claude Code recognizes when to
 invoke it — exactly like sidecar's commands/*.md. Living in plugin/commands/
-makes this a SHARED/GLOBAL set: installed once via the harness plugin, available
-in every project, updated centrally (harness self-update) — never per-project.
+makes this a SHARED/GLOBAL set: installed once via the sidecar plugin, available
+in every project, updated centrally (sidecar self-update) — never per-project.
 """
 import os
 
-OUT = os.path.expanduser("~/.harness/cli/plugin/commands")
+OUT = os.path.expanduser("~/.sidecar/cli/plugin/commands")
 os.makedirs(OUT, exist_ok=True)
 
 # (name, argument-hint, description-tail, triggers)
@@ -85,7 +85,7 @@ CMDS = [
      "tier-rubric claim verification — colored g5 badges, no LLM self-judge (sidecar parity).",
      '"검증", "claim 검증", "verify claim", "tier 판정", "/verify", "팩트체크"'),
     ("audit", "[full|summary|json]",
-     "6-axis harness self-scorecard (/60).",
+     "6-axis sidecar self-scorecard (/60).",
      '"감사", "스코어카드", "audit", "self-score", "/audit"'),
     ("gc", "[scan|drift]",
      "broken-markdown-link detection across guide docs.",
@@ -133,7 +133,7 @@ CMDS = [
      "manage the L0 lockdown set (opt-in core-file edit guard).",
      '"잠금 파일", "lockdown add", "L0 보호", "/lockdown"'),
     ("pool", "{list|add|rm|on <h> <cmd>|status|specs [h]}",
-     "host roster + remote exec + cores/mem/GPU probe (~/.harness/pool.json, global).",
+     "host roster + remote exec + cores/mem/GPU probe (~/.sidecar/pool.json, global).",
      '"풀 호스트", "pool status", "원격 실행", "호스트 목록", "/pool"'),
     # ── config / inject (user-facing verbs) ──
     ("recommend", "{inject|show|get-default|set-default <m> [--global]|clear-default [--global]|resolve-mode <a>}",
@@ -156,24 +156,24 @@ CMDS = [
      '"CLAUDE.md 주입", "claudemd show", "/claudemd"'),
     # ── setup ──
     ("init", "[--force] [--hooks] [--dry-run]",
-     "scaffold harness into a repo — config + .harness rules + gitignore + wrapper + hooks (strict by default).",
-     '"하네스 설치", "harness init", "repo 에 하네스", "scaffold harness", "/init"'),
+     "scaffold sidecar into a repo — config + .harness rules + gitignore + wrapper + hooks (strict by default).",
+     '"하네스 설치", "sidecar init", "repo 에 하네스", "scaffold sidecar", "/init"'),
     ("install-hooks", "[--global|--repo]",
-     "merge harness hooks into ~/.claude/settings.json (global) or repo .claude.",
+     "merge sidecar hooks into ~/.claude/settings.json (global) or repo .claude.",
      '"훅 설치", "install hooks", "/install-hooks"'),
     ("update", "[--hooks]",
      "bump the .harness-engine submodule to latest + optional hook refresh.",
-     '"하네스 업데이트", "harness update", "/update"'),
+     '"하네스 업데이트", "sidecar update", "/update"'),
     ("self-update", "",
-     "git-pull the harness CLI clone this binary runs from (~/.harness/cli) to latest main.",
-     '"하네스 자체 업데이트", "self-update", "harness 최신화", "/self-update"'),
+     "git-pull the sidecar CLI clone this binary runs from (~/.sidecar/cli) to latest main.",
+     '"하네스 자체 업데이트", "self-update", "sidecar 최신화", "/self-update"'),
     ("uninstall", "[--dry-run] [--keep-logs]",
-     "remove harness-injected files (config/.harness/hooks/wrapper); keeps user content.",
-     '"하네스 제거", "uninstall harness", "/uninstall"'),
+     "remove sidecar-injected files (config/.harness/hooks/wrapper); keeps user content.",
+     '"하네스 제거", "uninstall sidecar", "/uninstall"'),
 ]
 
-BODY = ('!`command -v harness >/dev/null 2>&1 && harness {name} $ARGUMENTS '
-        '|| echo "harness CLI not found — install dancinlab/harness (~/.harness/cli + ~/.local/bin/harness on PATH)"`')
+BODY = ('!`command -v sidecar >/dev/null 2>&1 && sidecar {name} $ARGUMENTS '
+        '|| echo "sidecar CLI not found — install dancinlab/sidecar (~/.sidecar/cli + ~/.local/bin/sidecar on PATH)"`')
 
 def desc_line(name, hint, tail, triggers):
     head = f"/{name}" + (f" {hint}" if hint else "")

@@ -1,5 +1,5 @@
-// harness post bash <exit> [cmd]  — record bash outcome; route non-zero exits
-// harness post edit <file>        — flag L0 edits after a Write/Edit
+// sidecar post bash <exit> [cmd]  — record bash outcome; route non-zero exits
+// sidecar post edit <file>        — flag L0 edits after a Write/Edit
 import { appendJsonl } from "../lib/log.ts";
 import { LOGS } from "../lib/paths.ts";
 import { routeError } from "./errors.ts";
@@ -48,7 +48,7 @@ export async function postBash(args: string[]): Promise<number> {
     const pods = await liveLongRunnerLabels().catch(() => [] as string[]);
     const warnMsg = staleLongRunnerWarn(pods, config().poll.maxSilenceSec, Date.now());
     if (warnMsg) {
-      process.stderr.write(`[harness warn POLL-HEARTBEAT] ${warnMsg}\n`);
+      process.stderr.write(`[sidecar warn POLL-HEARTBEAT] ${warnMsg}\n`);
       appendJsonl(LOGS.observations, { kind: "pre_warn", rule_id: "POLL-HEARTBEAT" });
     }
   }

@@ -1,4 +1,4 @@
-// harness docs {status|check|scratch [name]}
+// sidecar docs {status|check|scratch [name]}
 // Single-document discipline: keep AI output in two canonical files —
 //   architecture (UPDATE-in-place SSOT) + log (APPEND-only) — instead of
 // scattering *-report.md / *-summary.md / dated notes. Any document that must

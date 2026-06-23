@@ -3,7 +3,7 @@ import { dirname, resolve } from "node:path";
 import { existsSync, realpathSync } from "node:fs";
 
 // Canonicalize (resolves symlinks, e.g. macOS /var → /private/var) so REPO_ROOT
-// and HARNESS_ROOT live in the same namespace and `relative()` between them works.
+// and SIDECAR_ROOT live in the same namespace and `relative()` between them works.
 function rp(p: string): string {
   try {
     return realpathSync(p);
@@ -12,13 +12,13 @@ function rp(p: string): string {
   }
 }
 
-// The harness can be installed ANYWHERE inside (or beside) a consuming repo.
+// The sidecar can be installed ANYWHERE inside (or beside) a consuming repo.
 // Two roots matter:
-//   HARNESS_ROOT  — where this code lives (bundled config / defaults)
+//   SIDECAR_ROOT  — where this code lives (bundled config / defaults)
 //   REPO_ROOT     — the consuming project whose rules/logs we operate on
 //
 // REPO_ROOT discovery order:
-//   1. $HARNESS_REPO_ROOT env override (tests / non-standard layouts)
+//   1. $SIDECAR_REPO_ROOT env override (tests / non-standard layouts)
 //   2. nearest ancestor of $PWD that has a `harness.config.json`
 //   3. nearest ancestor that has a `.git` directory
 //   4. $PWD fallback
@@ -26,11 +26,11 @@ function rp(p: string): string {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-export const HARNESS_ROOT = rp(resolve(__dirname, ".."));
-export const HARNESS_CONFIG_DIR = resolve(HARNESS_ROOT, "config");
+export const SIDECAR_ROOT = rp(resolve(__dirname, ".."));
+export const SIDECAR_CONFIG_DIR = resolve(SIDECAR_ROOT, "config");
 
 function findRepoRoot(): string {
-  if (process.env.HARNESS_REPO_ROOT) return resolve(process.env.HARNESS_REPO_ROOT);
+  if (process.env.SIDECAR_REPO_ROOT) return resolve(process.env.SIDECAR_REPO_ROOT);
   let d = process.env.PWD ? resolve(process.env.PWD) : process.cwd();
   let firstGit = "";
   while (true) {
@@ -47,8 +47,8 @@ function findRepoRoot(): string {
 export const REPO_ROOT = rp(findRepoRoot());
 
 // Logs live inside the consuming repo (gitignore `.harness/`), per-repo.
-export const LOG_DIR = process.env.HARNESS_LOG_DIR
-  ? resolve(process.env.HARNESS_LOG_DIR)
+export const LOG_DIR = process.env.SIDECAR_LOG_DIR
+  ? resolve(process.env.SIDECAR_LOG_DIR)
   : resolve(REPO_ROOT, ".harness", "logs");
 
 

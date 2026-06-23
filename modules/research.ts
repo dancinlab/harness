@@ -1,4 +1,4 @@
-// harness research {arxiv <query|id> [--n N] [--sort relevance|date|updated] | yt <url|id> [lang]}
+// sidecar research {arxiv <query|id> [--n N] [--sort relevance|date|updated] | yt <url|id> [lang]}
 // Fetch external research material, no API key:
 //   arxiv  search the official arXiv API by free-text (relevance-ranked, per-term AND),
 //          or fetch by id — returns title / authors / date / categories / pdf / abstract.
@@ -56,7 +56,7 @@ async function arxiv(args: string[]): Promise<number> {
   }
   const q = rest.join(" ").trim();
   if (!q) {
-    info("usage: harness research arxiv <query | arxiv-id> [--n N] [--sort relevance|date|updated]");
+    info("usage: sidecar research arxiv <query | arxiv-id> [--n N] [--sort relevance|date|updated]");
     return 1;
   }
   let query: string;
@@ -88,7 +88,7 @@ async function arxiv(args: string[]): Promise<number> {
   for (let attempt = 0; attempt <= 2; attempt++) {
     let status = 0;
     try {
-      const r = await fetch(url, { headers: { "User-Agent": "harness-research/1.0" } });
+      const r = await fetch(url, { headers: { "User-Agent": "sidecar-research/1.0" } });
       status = r.status;
       xml = await r.text();
     } catch (e) {
@@ -144,7 +144,7 @@ async function yt(args: string[]): Promise<number> {
   const src = args[0];
   const lang = args[1] ?? "";
   if (!src) {
-    info("usage: harness research yt <youtube-url-or-id> [lang]");
+    info("usage: sidecar research yt <youtube-url-or-id> [lang]");
     return 1;
   }
   const vid = videoId(src);
@@ -211,6 +211,6 @@ export async function runResearch(args: string[]): Promise<number> {
   const sub = args[0];
   if (sub === "arxiv") return arxiv(args.slice(1));
   if (sub === "yt" || sub === "youtube") return yt(args.slice(1));
-  info("usage: harness research {arxiv <query|id> [--n N] [--sort relevance|date|updated] | yt <url|id> [lang]}");
+  info("usage: sidecar research {arxiv <query|id> [--n N] [--sort relevance|date|updated] | yt <url|id> [lang]}");
   return 1;
 }

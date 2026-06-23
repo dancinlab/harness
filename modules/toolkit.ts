@@ -1,5 +1,5 @@
-// harness toolkit {list|inject|json|write|check}
-// A machine-readable catalog of every harness command, so an AI agent KNOWS what
+// sidecar toolkit {list|inject|json|write|check}
+// A machine-readable catalog of every sidecar command, so an AI agent KNOWS what
 // commands exist and WHEN to reach for them (sidecar-parity: its TOOLKIT.jsonl +
 // SessionStart command-catalog injection). The catalog SSOT is the `HELP` text in
 // cli/index.ts — toolkit PARSES it (read as text to avoid importing the entry
@@ -9,7 +9,7 @@
 //           agent sees the whole command surface once per session (not just on
 //           a reactive keyword hit)
 //   json    emit the catalog as JSONL (one object per command) to stdout
-//   write   materialize TOOLKIT.jsonl at the harness repo root (committed artifact)
+//   write   materialize TOOLKIT.jsonl at the sidecar repo root (committed artifact)
 //   check   regenerate from HELP and diff the committed TOOLKIT.jsonl — exit 1 on
 //           drift (mechanical sync guard: edit HELP → must `toolkit write`)
 //
@@ -81,7 +81,7 @@ function triggerMap(): Map<string, string[]> {
   const map = new Map<string, string[]>();
   for (const r of cfg.rules ?? []) {
     const tool = r.tool ?? "";
-    const m = tool.match(/^harness\s+(\S+)/);
+    const m = tool.match(/^sidecar\s+(\S+)/);
     if (!m) continue;
     const id = m[1];
     map.set(id, [...(map.get(id) ?? []), ...r.patterns]);
@@ -141,8 +141,8 @@ export function toolkitDrift(): string | null {
     const committed = existsSync(TOOLKIT_FILE) ? readFileSync(TOOLKIT_FILE, "utf8") : "";
     if (committed === generated) return null;
     return committed
-      ? "TOOLKIT.jsonl differs from HELP — run 'harness toolkit write'"
-      : "TOOLKIT.jsonl missing — run 'harness toolkit write'";
+      ? "TOOLKIT.jsonl differs from HELP — run 'sidecar toolkit write'"
+      : "TOOLKIT.jsonl missing — run 'sidecar toolkit write'";
   } catch {
     return null;
   }
@@ -154,10 +154,10 @@ function renderInject(entries: ToolkitEntry[]): string {
     command: "commands", gate: "gates & ledgers", report: "reports", hook: "hook delegates", setup: "setup",
   };
   const out: string[] = [
-    "# toolkit — harness command catalog (so you KNOW what `harness <cmd>` can do)",
+    "# toolkit — sidecar command catalog (so you KNOW what `sidecar <cmd>` can do)",
     "",
-    "Proactive surface of every harness command. Reach for one by NAME when its job fits —",
-    "don't reinvent it inline. `harness <cmd>` (or `harness help` for full flags).",
+    "Proactive surface of every sidecar command. Reach for one by NAME when its job fits —",
+    "don't reinvent it inline. `sidecar <cmd>` (or `sidecar help` for full flags).",
     "",
   ];
   for (const k of order) {
@@ -205,8 +205,8 @@ export async function runToolkit(args: string[]): Promise<number> {
       ok(`toolkit: ${entries.length} entries — TOOLKIT.jsonl in sync with HELP · all dispatch commands catalogued`);
       return 0;
     }
-    if (!committed) loudFail("toolkit: TOOLKIT.jsonl missing — run 'harness toolkit write'");
-    else loudFail(`toolkit: TOOLKIT.jsonl DRIFTED from HELP (${entries.length} entries) — run 'harness toolkit write'`);
+    if (!committed) loudFail("toolkit: TOOLKIT.jsonl missing — run 'sidecar toolkit write'");
+    else loudFail(`toolkit: TOOLKIT.jsonl DRIFTED from HELP (${entries.length} entries) — run 'sidecar toolkit write'`);
     return 1;
   }
   // list (default) — human render

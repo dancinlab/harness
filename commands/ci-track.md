@@ -4,4 +4,4 @@ argument-hint: "<pr#|branch|url> [--watch] [--merge-on-green]"
 allowed-tools: Bash
 ---
 
-!`command -v harness >/dev/null 2>&1 && harness ci-track $ARGUMENTS || echo "harness CLI not found"`
+!`command -v sidecar >/dev/null 2>&1 && sidecar ci-track $ARGUMENTS || echo "sidecar CLI not found"`

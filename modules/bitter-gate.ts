@@ -1,4 +1,4 @@
-// harness bitter-gate audit [window]
+// sidecar bitter-gate audit [window]
 // Before adding a NEW rule, retire DORMANT ones. This reports rule-hit frequency
 // from the error queue so you can see which rules earn their keep (H3).
 import { LOGS } from "../lib/paths.ts";
@@ -13,7 +13,7 @@ interface ErrRow {
 
 export async function runBitterGate(args: string[]): Promise<number> {
   if (args[0] !== "audit") {
-    info("usage: harness bitter-gate audit [window]");
+    info("usage: sidecar bitter-gate audit [window]");
     return 1;
   }
   const window = parseInt(args[1] ?? "500", 10);

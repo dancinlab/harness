@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## chore(rebrand): harness → sidecar — full command + repo + global-install rename
+
+🪪 "harness 라는 이름을 sidecar 로 — 명령어·repo·전역 설치까지 전부"
+
+- 동기: canonical 이름을 `sidecar` 로 확정. 기존 GitHub `dancinlab/sidecar`(구 0.4.x harness 격 프로젝트)는 `archive_sidecar` 로 rename + **private** 처리해 이름을 비우고, 현재 프로젝트가 그 이름을 승계.
+- 치환 범위: CLI 명령 `harness`→`sidecar`(`bin/harness`→`bin/sidecar`) · `HARNESS_*` env→`SIDECAR_*` · `@dancinlab/harness`→`@dancinlab/sidecar` · 플러그인/마켓플레이스 name · 전역 홈 `~/.harness/cli`→`~/.sidecar/cli` · `dancinlab/harness`→`dancinlab/sidecar` · 산문/타이틀. 155 파일 sweep.
+- **의도적 유지**(교차 20 repo 공유 관례 + 진행중 클린업 충돌 회피): per-repo 런타임 디렉토리 `.harness/` 와 설정 파일 `harness.config.json` 은 그대로 — `sidecar` CLI 가 계속 읽음. 관례 rename 은 ING follow-on 으로 분리.
+- 이력 보존: `CHANGELOG.md` 의 과거 엔트리는 당시 이름(harness) 그대로 둠(이력 = 사실 기록, canonical-naming).
+- 검증: `tsx cli/index.ts help` 로드 OK · `toolkit check` 71 entries in-sync · `lint fast` ok.
+- 후속(글로벌 재배선): `~/.harness/cli`→`~/.sidecar/cli` 이동 · `~/.local/bin/sidecar` 래퍼 · `~/.claude/settings.json` 36 hook `harness`→`sidecar` · shadow 66 재생성 · 로컬 dir rename.
+
 ## fix(load): worktree 표기 다른 축과 동일화 — 나무 이모지 제거 + 신호등 + ≥10 빨강
 
 🚦 "worktree 도 CPU/RAM 처럼 `wt N 🟢` 한 형식으로"

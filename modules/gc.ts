@@ -1,4 +1,4 @@
-// harness gc [scan|drift]
+// sidecar gc [scan|drift]
 // Detect rot: markdown guides (CLAUDE.md etc.) that link to files which no
 // longer exist. Report only — never auto-deletes (H2).
 import { existsSync, readFileSync } from "node:fs";
@@ -32,7 +32,7 @@ function scanGuide(rel: string): Drift[] {
 export async function runGc(args: string[]): Promise<number> {
   const sub = args[0] ?? "scan";
   if (sub !== "scan" && sub !== "drift") {
-    info("usage: harness gc [scan|drift]");
+    info("usage: sidecar gc [scan|drift]");
     return 1;
   }
   const drifts: Drift[] = [];

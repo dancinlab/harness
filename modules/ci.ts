@@ -1,4 +1,4 @@
-// harness ci [all|fast|list]   (was `verify` — renamed; `verify` is now the
+// sidecar ci [all|fast|list]   (was `verify` — renamed; `verify` is now the
 // tier-rubric claim verifier. Config key stays `verify.checks`.)
 // Run the project's verification checks (from harness.config.json) in parallel.
 // `fast` skips checks marked slow:true. Any failure → exit 1 (mandatory-pass).

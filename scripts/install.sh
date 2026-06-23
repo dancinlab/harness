@@ -1,30 +1,30 @@
 #!/usr/bin/env bash
-# dancinlab/harness — global bootstrap installer.
+# dancinlab/sidecar — global bootstrap installer.
 #
-# Clones (or updates) the harness CLI to ~/.harness/cli and drops a `harness`
-# wrapper on PATH (~/.local/bin/harness). Idempotent — safe to re-run; a second
-# run just fast-forwards the clone. This is the SSOT for `harness install`
+# Clones (or updates) the sidecar CLI to ~/.sidecar/cli and drops a `sidecar`
+# wrapper on PATH (~/.local/bin/sidecar). Idempotent — safe to re-run; a second
+# run just fast-forwards the clone. This is the SSOT for `sidecar install`
 # (the CLI verb delegates here).
 #
-# One-liner (no harness needed yet):
-#   curl -fsSL https://raw.githubusercontent.com/dancinlab/harness/main/scripts/install.sh | bash
+# One-liner (no sidecar needed yet):
+#   curl -fsSL https://raw.githubusercontent.com/dancinlab/sidecar/main/scripts/install.sh | bash
 #
-# By default this also wires the harness hooks GLOBALLY (install-hooks --global)
+# By default this also wires the sidecar hooks GLOBALLY (install-hooks --global)
 # so guards/injects fire in every Claude Code session — a one-shot common setup,
-# NOT a per-repo scaffold (that's `harness init`).
+# NOT a per-repo scaffold (that's `sidecar init`).
 #
 # Env / flag overrides:
-#   HARNESS_DIR / --dir=<path>   install dir   (default ~/.harness/cli)
-#   HARNESS_BIN / --bin=<path>   wrapper path  (default ~/.local/bin/harness)
-#   HARNESS_REF / --ref=<ref>    branch/tag    (default main)
+#   SIDECAR_DIR / --dir=<path>   install dir   (default ~/.sidecar/cli)
+#   SIDECAR_BIN / --bin=<path>   wrapper path  (default ~/.local/bin/sidecar)
+#   SIDECAR_REF / --ref=<ref>    branch/tag    (default main)
 #   --no-hooks                   skip the global hook wiring (clone + wrapper only)
 #   --dry-run                    print actions, change nothing
 set -euo pipefail
 
-REPO="https://github.com/dancinlab/harness"
-DIR="${HARNESS_DIR:-$HOME/.harness/cli}"
-BIN="${HARNESS_BIN:-$HOME/.local/bin/harness}"
-REF="${HARNESS_REF:-main}"
+REPO="https://github.com/dancinlab/sidecar"
+DIR="${SIDECAR_DIR:-$HOME/.sidecar/cli}"
+BIN="${SIDECAR_BIN:-$HOME/.local/bin/sidecar}"
+REF="${SIDECAR_REF:-main}"
 DRY=0
 HOOKS=1
 for a in "$@"; do
@@ -56,17 +56,17 @@ else
   run git clone -q --branch "$REF" "$REPO" "$DIR"
 fi
 
-# 2. wrapper on PATH — a SCRIPT, not a symlink: bin/harness resolves its own dir
+# 2. wrapper on PATH — a SCRIPT, not a symlink: bin/sidecar resolves its own dir
 #    via BASH_SOURCE without readlink, so a symlink at $BIN would mis-resolve the
 #    install dir. A thin exec-wrapper always points at the real launcher.
-say "🔗 linking $BIN → $DIR/bin/harness"
+say "🔗 linking $BIN → $DIR/bin/sidecar"
 if [ "$DRY" = 1 ]; then
   say "  would: write exec-wrapper to $BIN"
 else
   mkdir -p "$(dirname "$BIN")"
   cat > "$BIN" <<EOF
 #!/usr/bin/env bash
-exec bash "$DIR/bin/harness" "\$@"
+exec bash "$DIR/bin/sidecar" "\$@"
 EOF
   chmod +x "$BIN"
 fi
@@ -79,27 +79,27 @@ case ":${PATH:-}:" in
      say "    export PATH=\"$BINDIR:\$PATH\"" ;;
 esac
 
-# 4. smoke (best-effort; needs a tsx/npx runtime — bin/harness auto-resolves it)
+# 4. smoke (best-effort; needs a tsx/npx runtime — bin/sidecar auto-resolves it)
 if [ "$DRY" = 0 ]; then
-  if bash "$DIR/bin/harness" help >/dev/null 2>&1; then
-    say "✓ harness runs"
+  if bash "$DIR/bin/sidecar" help >/dev/null 2>&1; then
+    say "✓ sidecar runs"
   else
     say "⚠ installed, but the 'help' smoke did not pass — likely a tsx/npx runtime hiccup."
-    say "  check: bash $DIR/bin/harness help"
+    say "  check: bash $DIR/bin/sidecar help"
   fi
 fi
 
 # 5. global hook wiring — the "common setup" step (skip with --no-hooks)
 if [ "$HOOKS" = 1 ]; then
-  say "🪝 wiring harness hooks globally (~/.claude/settings.json)"
+  say "🪝 wiring sidecar hooks globally (~/.claude/settings.json)"
   if [ "$DRY" = 1 ]; then
-    say "  would: harness install-hooks --global"
+    say "  would: sidecar install-hooks --global"
   else
-    bash "$DIR/bin/harness" install-hooks --global || say "⚠ hook wiring failed — run later: harness install-hooks --global"
+    bash "$DIR/bin/sidecar" install-hooks --global || say "⚠ hook wiring failed — run later: sidecar install-hooks --global"
   fi
 fi
 
 say ""
-say "✅ harness installed → $DIR  (common/global setup$([ "$HOOKS" = 1 ] && echo ' + hooks' || echo ''))"
-say "   per-repo scaffold (optional): cd <repo> && harness init"
-say "   update later:                 harness self-update"
+say "✅ sidecar installed → $DIR  (common/global setup$([ "$HOOKS" = 1 ] && echo ' + hooks' || echo ''))"
+say "   per-repo scaffold (optional): cd <repo> && sidecar init"
+say "   update later:                 sidecar self-update"

@@ -1,4 +1,4 @@
-// harness imagine <prompt-file> <out.{png|mp4}> [-s size] [-b backend] [-m model] [-i image]
+// sidecar imagine <prompt-file> <out.{png|mp4}> [-s size] [-b backend] [-m model] [-i image]
 //                  | list | help | history
 // Generic AI image+video generator. Defaults:
 //   IMAGE (out=.png/.jpg/…)        → fal queue · openai/gpt-image-2 ("image2", pinned)
@@ -43,7 +43,7 @@ const isVideoOut = (out: string): boolean => VIDEO_EXT.test(out);
 
 let _tmpSeq = 0;
 function tmp(content: string): string {
-  const p = resolve(tmpdir(), `harness-imagine-${process.pid}-${_tmpSeq++}`);
+  const p = resolve(tmpdir(), `sidecar-imagine-${process.pid}-${_tmpSeq++}`);
   writeFileSync(p, content, "utf8");
   return p;
 }
@@ -328,7 +328,7 @@ async function history(args: string[]): Promise<number> {
 }
 
 function usage(): void {
-  info("harness imagine <prompt-file> <out.{png|mp4}> [-s size] [-b backend] [-m model] [-i image]");
+  info("sidecar imagine <prompt-file> <out.{png|mp4}> [-s size] [-b backend] [-m model] [-i image]");
   info("  list · help");
   info("  history [-b fal|openai] [-m endpoint_id,…] [--start <iso>] [--limit N] [--status success|error] [--local] [--json]");
   info("          fal: provider request history w/ prompts (GET /v1/models/requests/by-endpoint) · openai/--local: local ledger");
@@ -388,7 +388,7 @@ export async function runImagine(args: string[]): Promise<number> {
     return 1;
   }
   if (!BACKENDS[backend]) {
-    loudFail(`imagine: unknown backend '${backend}' — one of: ${Object.keys(BACKENDS).join(" · ")} (run 'harness imagine list')`);
+    loudFail(`imagine: unknown backend '${backend}' — one of: ${Object.keys(BACKENDS).join(" · ")} (run 'sidecar imagine list')`);
     return 1;
   }
   if (!(await secretBin())) {

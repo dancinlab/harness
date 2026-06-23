@@ -1,4 +1,4 @@
-// harness ing {show|add <text> [--to <repo>]|done <id|match>|next <text>|pod ...|inject}
+// sidecar ing {show|add <text> [--to <repo>]|done <id|match>|next <text>|pod ...|inject}
 // In-progress board stored on a DEDICATED git ref (refs/heads/ing) as a single
 // ING.jsonl file — NOT in the working tree.
 // @convergence state=ossified id=ING_BOARD_DEDICATED_REF value="board lives on a dedicated `ing` ref via plumbing, never the working tree" threshold="tracked worktree file: branch-switch/reset clobbers session edits (happened); untracked: unshared"
@@ -32,7 +32,7 @@ const ING_FILE = "ING.jsonl";
 // ancestry-walked REPO_ROOT (from $PWD, which can be stale or in a mismatched realpath
 // namespace, or which walks past a config-less worktree) silently points the write at
 // the wrong checkout and the board edit lands nowhere the worktree can see (repro:
-// `harness ing add` in a linked worktree, then `git add ING.jsonl` = nothing to commit).
+// `sidecar ing add` in a linked worktree, then `git add ING.jsonl` = nothing to commit).
 // `git rev-parse --show-toplevel` is git's OWN authoritative answer for the worktree
 // containing cwd, so it's correct in linked worktrees, nested subdirs, and the
 // /tmp↔/private/tmp namespace. Falls back to REPO_ROOT (current behavior) when git
@@ -57,7 +57,7 @@ interface Item {
   id: string;
   ts: string;
   text?: string;
-  from?: string; // set when forwarded from another repo (harness ing add --to <repo>)
+  from?: string; // set when forwarded from another repo (sidecar ing add --to <repo>)
   provider?: string;
   gpu?: string;
   purpose?: string;
@@ -148,7 +148,7 @@ export async function runIng(args: string[]): Promise<number> {
     // STDIN text path — robust for ANY characters (parens·quotes·$·→ …) that break
     // unquoted argv via the slash command's `$ARGUMENTS`. Opt-in only (`--stdin` flag
     // or a lone `-`) so an interactive no-text call still shows usage, never blocks on
-    // a TTY. Agent-safe form: `printf '%s' "<free text>" | harness ing add --stdin`.
+    // a TTY. Agent-safe form: `printf '%s' "<free text>" | sidecar ing add --stdin`.
     const wantStdin = parts.includes("--stdin") || (parts.length === 1 && parts[0] === "-");
     const text = wantStdin
       ? readStdin().trim()
@@ -181,7 +181,7 @@ export async function runIng(args: string[]): Promise<number> {
     const rows = await readItems();
     const openIds = () => rows.map((r) => r.id + (r.kind === "pod" ? "(pod)" : "")).join(", ") || "none";
     if (!tokens.length) {
-      info(`ing: usage — harness ing done <id|id...|match>. open ids: ${openIds()}`);
+      info(`ing: usage — sidecar ing done <id|id...|match>. open ids: ${openIds()}`);
       return 1;
     }
     // EXACT id match wins — `done 1` removes ONLY id=1, never items whose text
@@ -231,10 +231,10 @@ export async function runIng(args: string[]): Promise<number> {
       const parts: string[] = [];
       if (work.length) parts.push(`작업 ${work.length}: ` + work.map((r) => `#${r.id}${r.from ? ` 📥${r.from}` : ""} ${r.text}`).join(" · "));
       if (pods.length) parts.push(`POD ${pods.length}: ` + pods.map((r) => `${r.id}(${r.gpu ?? "?"})`).join(" · "));
-      let ctx = `🔵 ING (진행중 · ing ref) — ${parts.join("  |  ")}  · \`harness ing show\` / done <id>`;
+      let ctx = `🔵 ING (진행중 · ing ref) — ${parts.join("  |  ")}  · \`sidecar ing show\` / done <id>`;
       // Turn-close gate: make per-turn board upkeep + reporting actual, not on-request only.
       ctx +=
-        `\n🔵 턴 마감 게이트 — 이번 턴에 진행상황이 바뀌었으면(완료/새 작업/다음 단계) **지금** \`harness ing done <id>\`/\`add\`/\`next\` 로 보드를 갱신하고, ` +
+        `\n🔵 턴 마감 게이트 — 이번 턴에 진행상황이 바뀌었으면(완료/새 작업/다음 단계) **지금** \`sidecar ing done <id>\`/\`add\`/\`next\` 로 보드를 갱신하고, ` +
         "응답에 `🔵 ING 갱신: <무엇을>` 한 줄로 보고하라. 안 바뀌었으면 보드 그대로 두고 보고도 생략.";
       // c21 heartbeat: flag live long-runners (pods) left unchecked past maxSilenceSec.
       const hb = staleLongRunnerWarn(
@@ -261,7 +261,7 @@ export async function runIng(args: string[]): Promise<number> {
   // show
   const rows = await readItems();
   if (!rows.length) {
-    info("ing: empty (ing ref). add: harness ing add <text> · next <text> · pod add ...");
+    info("ing: empty (ing ref). add: sidecar ing add <text> · next <text> · pod add ...");
     return 0;
   }
   const work = rows.filter((r) => r.kind === "work");
@@ -294,7 +294,7 @@ async function pod(args: string[]): Promise<number> {
   if (verb === "add") {
     const [, id, provider, gpu, ...rest] = args;
     if (!id) {
-      info("usage: harness ing pod add <id> <provider> <gpu> <purpose> [cost/hr]");
+      info("usage: sidecar ing pod add <id> <provider> <gpu> <purpose> [cost/hr]");
       return 1;
     }
     const cost = rest.length && /^[\d.$]/.test(rest[rest.length - 1]) ? rest.pop()! : "-";
@@ -309,7 +309,7 @@ async function pod(args: string[]): Promise<number> {
   if (verb === "rm") {
     const id = args[1];
     if (!id) {
-      info("usage: harness ing pod rm <id>");
+      info("usage: sidecar ing pod rm <id>");
       return 1;
     }
     const afterRm = rows.filter((r) => !(r.kind === "pod" && r.id === id));
@@ -318,13 +318,13 @@ async function pod(args: string[]): Promise<number> {
     info(`ing pod: removed ${id}`);
     return 0;
   }
-  info("usage: harness ing pod {add <id> <provider> <gpu> <purpose> [cost]|rm <id>|list}");
+  info("usage: sidecar ing pod {add <id> <provider> <gpu> <purpose> [cost]|rm <id>|list}");
   return 1;
 }
 
 function usage(): number {
-  info("usage: harness ing {show|add <text> [--to <repo>]|done <id|match>|next <text>|pod {add|rm|list}|inject}");
+  info("usage: sidecar ing {show|add <text> [--to <repo>]|done <id|match>|next <text>|pod {add|rm|list}|inject}");
   info("  free text with shell-special chars (parens·quotes·$·→): pipe via --stdin —");
-  info("    printf '%s' \"<text>\" | harness ing add --stdin   (or: ... add --to <repo> --stdin)");
+  info("    printf '%s' \"<text>\" | sidecar ing add --stdin   (or: ... add --to <repo> --stdin)");
   return 1;
 }

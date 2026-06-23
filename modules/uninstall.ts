@@ -1,9 +1,9 @@
-// harness uninstall [--dry-run] [--force] [--keep-logs]
-// Reverse of `init`: remove what the harness INJECTED into the repo. Never
+// sidecar uninstall [--dry-run] [--force] [--keep-logs]
+// Reverse of `init`: remove what the sidecar INJECTED into the repo. Never
 // touches user content (ARCHITECTURE.md / CHANGELOG.md / CLAUDE.md / scripts/
-// scratch / source). Git hooks + the scripts/harness wrapper are removed only
-// when they carry the harness signature; .claude/settings.json is auto-removed
-// only when ALL its hook commands are harness ones (else left + advised).
+// scratch / source). Git hooks + the scripts/sidecar wrapper are removed only
+// when they carry the sidecar signature; .claude/settings.json is auto-removed
+// only when ALL its hook commands are sidecar ones (else left + advised).
 import { existsSync, readFileSync, rmSync, writeFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { REPO_ROOT } from "../lib/paths.ts";
@@ -19,7 +19,7 @@ type Act = { path: string; how: "remove" | "edit" | "keep" | "skip" | "would" };
 
 function isHarnessWrapper(abs: string): boolean {
   try {
-    return /bin\/harness/.test(readFileSync(abs, "utf8"));
+    return /bin\/sidecar/.test(readFileSync(abs, "utf8"));
   } catch {
     return false;
   }
@@ -28,7 +28,7 @@ function isHarnessHook(abs: string): boolean {
   try {
     const t = readFileSync(abs, "utf8");
     // primary signal = the signature comment init writes into every hook it installs
-    return t.includes("installed by 'harness init") || /scripts\/harness"?\s+(lint|verify|errors)/.test(t);
+    return t.includes("installed by 'sidecar init") || /scripts\/sidecar"?\s+(lint|verify|errors)/.test(t);
   } catch {
     return false;
   }
@@ -73,14 +73,14 @@ export async function runUninstall(args: string[]): Promise<number> {
   // 2. harness.config.json
   rm("harness.config.json");
 
-  // 3. scripts/harness wrapper (only if it's ours)
+  // 3. scripts/sidecar wrapper (only if it's ours)
   {
-    const abs = resolve(REPO_ROOT, "scripts", "harness");
-    if (existsSync(abs) && isHarnessWrapper(abs)) rm("scripts/harness");
-    else if (existsSync(abs)) acts.push({ path: "scripts/harness", how: "keep" });
+    const abs = resolve(REPO_ROOT, "scripts", "sidecar");
+    if (existsSync(abs) && isHarnessWrapper(abs)) rm("scripts/sidecar");
+    else if (existsSync(abs)) acts.push({ path: "scripts/sidecar", how: "keep" });
   }
 
-  // 4. git hooks installed by harness (signature-gated)
+  // 4. git hooks installed by sidecar (signature-gated)
   for (const hook of ["pre-commit", "pre-push"]) {
     const abs = resolve(REPO_ROOT, ".git", "hooks", hook);
     if (existsSync(abs) && isHarnessHook(abs)) rm(`.git/hooks/${hook}`);
@@ -104,7 +104,7 @@ export async function runUninstall(args: string[]): Promise<number> {
     }
   }
 
-  // 6. .claude/settings.json — remove only if EVERY hook command is harness
+  // 6. .claude/settings.json — remove only if EVERY hook command is sidecar
   {
     const abs = resolve(REPO_ROOT, ".claude", "settings.json");
     if (existsSync(abs)) {
@@ -127,14 +127,14 @@ export async function runUninstall(args: string[]): Promise<number> {
   }
 
   // report
-  info(`harness uninstall ${flags.dryRun ? "(dry-run) " : ""}— repo: ${REPO_ROOT}`);
+  info(`sidecar uninstall ${flags.dryRun ? "(dry-run) " : ""}— repo: ${REPO_ROOT}`);
   for (const a of acts) {
     const mark = a.how === "remove" || a.how === "edit" ? "✓" : a.how === "would" ? "?" : "·";
     info(`  ${mark} ${a.how.padEnd(6)} ${a.path}`);
   }
   const kept = acts.filter((a) => a.how === "keep");
   if (kept.some((a) => a.path.includes("settings.json"))) {
-    warn(".claude/settings.json kept (has non-harness hooks) — remove harness pre/post/prompt/prefs/easy/recommend lines manually if desired.");
+    warn(".claude/settings.json kept (has non-harness hooks) — remove sidecar pre/post/prompt/prefs/easy/recommend lines manually if desired.");
   }
   info("");
   info("preserved (user content, never removed): ARCHITECTURE.md · CHANGELOG.md · CLAUDE.md · scripts/scratch/ · source.");

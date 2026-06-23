@@ -19,7 +19,10 @@
       "CLAUDE-MD-TREE-NO-DESC": "warn",
       "SHADOW-DESC": "warn",
       "COMMONS-PROSE": "block",
-      "COMMONS-NO-DODONT": "block"
+      "COMMONS-NO-DODONT": "block",
+      "ARCH-BIG-CELL": "block",
+      "ARCH-PILED": "block",
+      "ARCH-HISTORY": "block"
     },
     "build_kind": {
       "bash_nonzero": "block",

@@ -137,7 +137,9 @@ export async function runLint(args: string[]): Promise<number> {
   }
 
   // 4c. architecture tree hygiene (single-doc) — oversized / piled / history leaf nodes
-  // drift the design SSOT from a navigable tree into a wall of text. warn-only.
+  // drift the design SSOT from a navigable tree into a wall of text. BLOCK
+  // (severity-map ARCH-* = block): forces the tree to stay finely decomposed —
+  // a >700-char or >6-piled leaf must split into one child node per sub-point.
   for (const h of lintArchitectureTree()) {
     violations.push({ rule: h.rule, file: "ARCHITECTURE.json", msg: `${h.path} — ${h.msg}` });
   }

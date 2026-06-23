@@ -27,7 +27,7 @@ export interface Companion {
   lines?: number; // cap injected lines (default 40)
 }
 
-const GLOBAL = resolve(homedir(), ".harness", "companions.json");
+const GLOBAL = resolve(homedir(), ".sidecar", "companions.json");
 const PROBE_TIMEOUT_MS = 8000;
 
 function normalize(e: string | Companion): Companion | null {

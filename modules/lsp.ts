@@ -86,7 +86,7 @@ function hexaLspRepo(p: string): string {
 export function lspRebuildOnEdit(file: string): boolean {
   if (!config().lsp.rebuild || !file) return false;
   const abs = resolve(REPO_ROOT, file);
-  const log = resolve(homedir(), ".harness", "lsp-rebuild.log");
+  const log = resolve(homedir(), ".sidecar", "lsp-rebuild.log");
   mkdirSync(dirname(log), { recursive: true });
 
   // Case A — hexa-lang's own LSP (self/lsp.hexa | self/lsp/*.hexa) → 3-stage

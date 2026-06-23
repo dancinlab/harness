@@ -151,7 +151,7 @@ function installHooks(args: string[]): number {
 // The global install clone the `sidecar` wrapper on PATH actually runs (install.sh
 // SSOT: clone → ~/.sidecar/cli). self-update must refresh THIS regardless of where
 // the running binary lives, else a dev-clone invocation silently leaves PATH stale.
-const GLOBAL_CLI = resolve(homedir(), ".harness", "cli");
+const GLOBAL_CLI = resolve(homedir(), ".sidecar", "cli");
 
 // Fast-forward one clone to origin/main. Returns the outcome (for the caller to
 // report) or null when `dir` is not a git clone. before===after ⇒ already current.

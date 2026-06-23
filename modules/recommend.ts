@@ -22,7 +22,7 @@ function defaultFile(): string {
   return resolve(REPO_ROOT, ".harness", "recommend-default");
 }
 function globalDefaultFile(): string {
-  return resolve(homedir(), ".harness", "recommend-default");
+  return resolve(homedir(), ".sidecar", "recommend-default");
 }
 function readWithSource(): { mode: string; source: "repo" | "global" | "none" } {
   for (const [f, src] of [[defaultFile(), "repo"], [globalDefaultFile(), "global"]] as const) {

@@ -1,4 +1,4 @@
-// harness claudemd {inject|show} — project-rules carrier. CLAUDE.md lands in
+// sidecar claudemd {inject|show} — project-rules carrier. CLAUDE.md lands in
 // context once at SessionStart (Claude Code default), then fades as the
 // conversation grows and the per-project rules get forgotten. `inject` re-emits
 // the repo-root CLAUDE.md (or just its marked enforce block) as additionalContext
@@ -56,6 +56,6 @@ export async function runClaudemd(args: string[]): Promise<number> {
     return 0;
   }
 
-  process.stdout.write("usage: harness claudemd {inject|show}\n");
+  process.stdout.write("usage: sidecar claudemd {inject|show}\n");
   return 1;
 }

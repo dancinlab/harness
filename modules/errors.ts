@@ -1,4 +1,4 @@
-// harness errors {route|list|drain_check|mark_fixed}
+// sidecar errors {route|list|drain_check|mark_fixed}
 // Classify error signals by (kind, code) → severity via a pluggable map, then
 // queue them in an append-only JSONL so gates (drain_check) can block on backlog.
 import { readJson } from "../lib/json.ts";
@@ -92,12 +92,12 @@ export async function runErrors(args: string[]): Promise<number> {
   if (sub === "mark_fixed") {
     const code = args[1];
     if (!code) {
-      info("usage: harness errors mark_fixed <code>");
+      info("usage: sidecar errors mark_fixed <code>");
       return 1;
     }
     appendJsonl(LOGS.errors, { source: "manual", kind: "marker", code, file: "", line: 0, msg: "marked fixed", severity: "warn", status: "fixed" });
     return 0;
   }
-  info("usage: harness errors {route|list|drain_check|mark_fixed}");
+  info("usage: sidecar errors {route|list|drain_check|mark_fixed}");
   return 1;
 }

@@ -1,16 +1,16 @@
-// harness easy {show|inject}
+// sidecar easy {show|inject}
 // Auto-inject the "easy" (friendly) response style.
 // `inject` reads styles/easy.<lang>.md for the prefs response language and emits
 // it as UserPromptSubmit/SessionStart additionalContext so the 7-element pattern
 // is active from turn 0. The NL substrings 설명 / 쉽게 prepend an activation banner.
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { HARNESS_ROOT } from "../lib/paths.ts";
+import { SIDECAR_ROOT } from "../lib/paths.ts";
 import { info } from "../lib/log.ts";
 import { readStdin } from "../lib/exec.ts";
 import { loadPrefs } from "./prefs.ts";
 
-const STYLES_DIR = resolve(HARNESS_ROOT, "styles");
+const STYLES_DIR = resolve(SIDECAR_ROOT, "styles");
 
 // prefs response language → style file code (easy.md is the English base)
 function langCode(response: string): string {
@@ -33,7 +33,7 @@ function styleFile(): string {
 function header(src: string, banner: string): string {
   return (
     banner +
-    `# response style: easy (auto-injected by harness easy · ${src})\n\n` +
+    `# response style: easy (auto-injected by sidecar easy · ${src})\n\n` +
     "Apply the 7-element friendly pattern below to user-facing prose this turn — " +
     "icon · name · alias · plain-line · analogy · ASCII · compare. Scope/exclusions per the canonical reference.\n\n" +
     "---\n\n"
@@ -78,6 +78,6 @@ export async function runEasy(args: string[]): Promise<number> {
     );
     return 0;
   }
-  info("usage: harness easy {show|inject}");
+  info("usage: sidecar easy {show|inject}");
   return 1;
 }

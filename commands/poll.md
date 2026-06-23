@@ -4,4 +4,4 @@ argument-hint: "[interval-seconds] [what to watch]"
 allowed-tools: Bash
 ---
 
-!`command -v harness >/dev/null 2>&1 && harness poll $ARGUMENTS || echo "harness CLI not found"`
+!`command -v sidecar >/dev/null 2>&1 && sidecar poll $ARGUMENTS || echo "sidecar CLI not found"`

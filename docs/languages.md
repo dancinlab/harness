@@ -9,16 +9,16 @@
 엔진 자체는 TypeScript 라 `tsx`(Node) 로 실행된다. 즉 **개발 머신에 Node 1개**가 필요하다. 단:
 
 - **타깃 프로젝트 빌드와는 무관** — Rust/Swift 프로젝트에 Node 의존성을 추가하지 않는다. 하네스만 Node 로 돈다.
-- `bin/harness` 는 `tsx` 를 자동 탐색하고 없으면 `npx tsx` 로 받는다.
+- `bin/sidecar` 는 `tsx` 를 자동 탐색하고 없으면 `npx tsx` 로 받는다.
 - 완전 오프라인/Node 불가 환경이면 엔진 옆에서 한 번 `pnpm install`(tsx 번들) 해두면 네트워크 없이 동작.
 
 ```
 [ 내 Rust/Swift repo ] ──(코드)── 빌드: cargo / swift  (Node 무관)
         │
-        └──(거버넌스)── harness (tsx/Node) ── lint·pre·post·folders·verify
+        └──(거버넌스)── sidecar (tsx/Node) ── lint·pre·post·folders·verify
 ```
 
-## `harness init` 자동 감지
+## `sidecar init` 자동 감지
 
 `init` 이 마커 파일로 스택을 감지해 `verify.checks` 와 CHANGELOG `triggerPattern` 을 자동 채운다(여러 개면 병합):
 
@@ -58,18 +58,18 @@
 
 ```bash
 cd my-rust-app
-git submodule add https://github.com/dancinlab/harness .harness-engine
-bash .harness-engine/bin/harness init   # hooks: 전역 1벌 → harness install
+git submodule add https://github.com/dancinlab/sidecar .harness-engine
+bash .harness-engine/bin/sidecar init   # hooks: 전역 1벌 → sidecar install
 # → detected stack: rust
 #   verify.checks = cargo fmt/clippy/test, changelog trigger = \.(rs)$
-bash .harness-engine/bin/harness ci   # cargo 검증 병렬 실행
+bash .harness-engine/bin/sidecar ci   # cargo 검증 병렬 실행
 ```
 
 ## 예시 — Swift 앱
 
 ```bash
 cd MyApp
-git submodule add https://github.com/dancinlab/harness .harness-engine
-bash .harness-engine/bin/harness init   # → detected stack: swift (hooks: 전역 → harness install)
+git submodule add https://github.com/dancinlab/sidecar .harness-engine
+bash .harness-engine/bin/sidecar init   # → detected stack: swift (hooks: 전역 → sidecar install)
 # .swiftlint 억제 마커, swift build/test 자동 등록
 ```

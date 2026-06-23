@@ -42,7 +42,7 @@
 }
 ```
 
-규칙 추가 전 **`harness bitter-gate audit`** 으로 안 쓰이는 규칙부터 점검(H3).
+규칙 추가 전 **`sidecar bitter-gate audit`** 으로 안 쓰이는 규칙부터 점검(H3).
 
 ## 2. keywords 트리거 추가
 
@@ -115,8 +115,8 @@ repo 군이 공통 도메인(예: 같은 배포 인프라)을 쓰면, 엔진을 
 각 소스 폴더에 로컬 `CLAUDE.md` 를 두면 에이전트가 그 폴더만 읽어도 맥락(목적·핵심파일·컨벤션·주의점)을 잡는다. 하네스가 이를 두 갈래로 유도한다:
 
 ```
-능동: harness folders scan            누락 폴더 목록
-      harness folders scaffold <dir>  템플릿 생성
+능동: sidecar folders scan            누락 폴더 목록
+      sidecar folders scaffold <dir>  템플릿 생성
 수동(자동): post edit hook            CLAUDE.md 없는 폴더의 파일을 편집하면
                                       그 폴더당 1회 "가이드 만드세요" 넛지 (dedupe)
 ```
@@ -139,11 +139,11 @@ repo 군이 공통 도메인(예: 같은 배포 인프라)을 쓰면, 엔진을 
 
 ## 7. 커밋 전 CHANGELOG 갱신 강제
 
-소스 코드를 staged 했는데 `CHANGELOG.md` 를 함께 staged 하지 않으면 `lint` 가 `CHANGELOG-MISSING`(severity=block)으로 막는다. 실제 "강제"는 `harness init` 이 깔아준 **git pre-commit hook**(`harness lint` 호출)이 한다.
+소스 코드를 staged 했는데 `CHANGELOG.md` 를 함께 staged 하지 않으면 `lint` 가 `CHANGELOG-MISSING`(severity=block)으로 막는다. 실제 "강제"는 `sidecar init` 이 깔아준 **git pre-commit hook**(`sidecar lint` 호출)이 한다.
 
 ```
 git add src/foo.ts          (CHANGELOG 안 건드림)
-git commit -m "fix: ..."  ──▶ pre-commit → harness lint → CHANGELOG-MISSING → 커밋 차단
+git commit -m "fix: ..."  ──▶ pre-commit → sidecar lint → CHANGELOG-MISSING → 커밋 차단
 git add CHANGELOG.md
 git commit -m "fix: ..."  ──▶ 통과
 ```
@@ -162,7 +162,7 @@ git commit -m "fix: ..."  ──▶ 통과
 
 - docs/JSON-only 변경은 `triggerPattern` 에 안 걸리므로 CHANGELOG 불필요.
 - 긴급 우회는 `git commit --no-verify` (의도된 탈출구 — 남용 금지).
-- pre-commit hook 은 `.git/hooks/` 에 있어 커밋되지 않으므로 **clone 마다 `harness init` 1회** 필요(또는 `core.hooksPath` 사용).
+- pre-commit hook 은 `.git/hooks/` 에 있어 커밋되지 않으므로 **clone 마다 `sidecar init` 1회** 필요(또는 `core.hooksPath` 사용).
 
 ## 8. 로그 활용
 

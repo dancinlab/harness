@@ -1,4 +1,4 @@
-// harness verdict {record <slug>/<id> <cmd...> | list | show <slug>/<id>}
+// sidecar verdict {record <slug>/<id> <cmd...> | list | show <slug>/<id>}
 // Verification-evidence ledger (hexa verify / g5 parity). `record` runs a verify
 // command, captures its stdout+stderr verbatim to state/<slug>/<id>.txt with
 // a tier header (PASS exit0 / FAIL else), and appends to a verdict ledger so you
@@ -35,7 +35,7 @@ export async function runVerdict(args: string[]): Promise<number> {
     // shell operators verbatim.
     const cmd = rest[0] === "--" ? rest.slice(1).map(shq).join(" ") : rest.join(" ");
     if (!id || !cmd) {
-      info("usage: harness verdict record <slug>/<id> <verify-cmd...>");
+      info("usage: sidecar verdict record <slug>/<id> <verify-cmd...>");
       return 1;
     }
     const r = await execShell(cmd, { cwd: resolve(REPO_ROOT), timeoutMs: 600_000 });
@@ -66,7 +66,7 @@ export async function runVerdict(args: string[]): Promise<number> {
   // list — latest verdict per id
   const rows = readJsonl<{ id: string; tier: string; ts?: string; cmd?: string }>(LEDGER);
   if (!rows.length) {
-    info("verdict: none recorded. `harness verdict record <slug>/<id> <cmd>`");
+    info("verdict: none recorded. `sidecar verdict record <slug>/<id> <cmd>`");
     return 0;
   }
   const latest = new Map<string, (typeof rows)[number]>();

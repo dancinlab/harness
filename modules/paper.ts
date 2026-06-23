@@ -1,14 +1,14 @@
-// harness paper <new|build|cover|list|help>
+// sidecar paper <new|build|cover|list|help>
 //
 // Demiurge-house-style scientific-paper tool. Bakes the hard-won paper
-// discipline into the harness so it is never hand-rolled per campaign:
+// discipline into the sidecar so it is never hand-rolled per campaign:
 //   • new   — scaffold PAPERS/<slug>/ with the house arxiv template
 //             (emoji title · g5 tier-badge discs · TikZ+pgfplots · fal.ai cover
 //              include · references.bib · PAPER.md), generate the cover via
-//              `harness imagine` (fal), then build.
+//              `sidecar imagine` (fal), then build.
 //   • build — xelatex → bibtex → xelatex → xelatex, report pages + refs, and
 //             enforce the g51 page floor (default 10 pages).
-//   • cover — (re)generate figures/cover.png via `harness imagine`.
+//   • cover — (re)generate figures/cover.png via `sidecar imagine`.
 //   • list  — list papers under the papers dir.
 //
 // Rationale (commons "self-improving tool" principle): every paper this repo
@@ -75,7 +75,7 @@ function mainTexTemplate(slug: string, title: string, subtitle: string): string 
 \begin{document}
 \maketitle
 
-% Cover (generate via: harness paper cover ` + slug + String.raw`)
+% Cover (generate via: sidecar paper cover ` + slug + String.raw`)
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.82\textwidth]{figures/cover.png}
@@ -142,7 +142,7 @@ function refsTemplate(): string {
 }
 
 function paperMd(slug: string, title: string): string {
-  return `# ${slug} — paper status\n\n@title: ${title}\n@goal: TODO.\n\n- [ ] draft v1\n- [ ] cover (harness paper cover ${slug})\n- [ ] references (≥10)\n- [ ] compile clean (harness paper build ${slug} — ≥10 pages, g51)\n\nprovenance: TODO. 검증 수치는 verbatim 복사(c9), closed-negative는 그대로 표기.\n`;
+  return `# ${slug} — paper status\n\n@title: ${title}\n@goal: TODO.\n\n- [ ] draft v1\n- [ ] cover (sidecar paper cover ${slug})\n- [ ] references (≥10)\n- [ ] compile clean (sidecar paper build ${slug} — ≥10 pages, g51)\n\nprovenance: TODO. 검증 수치는 verbatim 복사(c9), closed-negative는 그대로 표기.\n`;
 }
 
 // ── path helpers ────────────────────────────────────────────────────────────
@@ -197,7 +197,7 @@ async function build(dir: string, minPages: number): Promise<number> {
     // a few-byte stub is xelatex's failure residue, not a real PDF
     loudFail("paper build: main.pdf not produced (or empty) — compile failed. Errors:");
     reportErrors();
-    if (!existsSync(resolve(dir, "figures", "cover.png"))) info("  (no figures/cover.png — run `harness paper cover <slug>` first)");
+    if (!existsSync(resolve(dir, "figures", "cover.png"))) info("  (no figures/cover.png — run `sidecar paper cover <slug>` first)");
     return 2;
   }
 
@@ -209,7 +209,7 @@ async function build(dir: string, minPages: number): Promise<number> {
     if (pages === 0) {
       loudFail("paper build: pdfinfo could not read main.pdf (corrupt output) — compile failed. Errors:");
       reportErrors();
-      if (!existsSync(resolve(dir, "figures", "cover.png"))) info("  (no figures/cover.png — run `harness paper cover <slug>` first)");
+      if (!existsSync(resolve(dir, "figures", "cover.png"))) info("  (no figures/cover.png — run `sidecar paper cover <slug>` first)");
       return 2;
     }
   }
@@ -234,14 +234,14 @@ async function build(dir: string, minPages: number): Promise<number> {
   return 0;
 }
 
-// ── cover: generate figures/cover.png via harness imagine (fal) ──────────────
+// ── cover: generate figures/cover.png via sidecar imagine (fal) ──────────────
 async function cover(dir: string, promptText: string, size: string): Promise<number> {
   mkdirSync(resolve(dir, "figures"), { recursive: true });
   const out = resolve(dir, "figures", "cover.png");
-  const pf = resolve(tmpdir(), `harness-paper-cover-${process.pid}.txt`);
+  const pf = resolve(tmpdir(), `sidecar-paper-cover-${process.pid}.txt`);
   writeFileSync(pf, promptText, "utf8");
   try {
-    // delegate to `harness imagine` (fal backend, key via secret) — no key handling here
+    // delegate to `sidecar imagine` (fal backend, key via secret) — no key handling here
     const rc = await runImagine([pf, out, "-s", size]);
     if (rc !== 0) {
       loudFail("paper cover: imagine failed (see above). Need `secret set fal.api_key`.");
@@ -262,7 +262,7 @@ function defaultCoverPrompt(title: string): string {
 async function scaffold(slug: string, opts: { dir: string; title: string; subtitle: string; minPages: number; doCover: boolean; coverPrompt?: string; coverSize: string }): Promise<number> {
   const dir = paperDir(slug, opts.dir);
   if (existsSync(resolve(dir, "main.tex"))) {
-    loudFail(`paper new: ${dir}/main.tex already exists — use 'harness paper build ${slug}' or pick another slug.`);
+    loudFail(`paper new: ${dir}/main.tex already exists — use 'sidecar paper build ${slug}' or pick another slug.`);
     return 1;
   }
   mkdirSync(resolve(dir, "figures"), { recursive: true });
@@ -273,13 +273,13 @@ async function scaffold(slug: string, opts: { dir: string; title: string; subtit
 
   if (opts.doCover) {
     const rc = await cover(dir, opts.coverPrompt || defaultCoverPrompt(opts.title), opts.coverSize);
-    if (rc !== 0) warn("paper new: cover generation failed — placeholder include left; run `harness paper cover` later.");
+    if (rc !== 0) warn("paper new: cover generation failed — placeholder include left; run `sidecar paper cover` later.");
   } else {
-    info("paper new: --no-cover — add figures/cover.png or run `harness paper cover` before build.");
+    info("paper new: --no-cover — add figures/cover.png or run `sidecar paper cover` before build.");
   }
   // only build if a cover exists (the template \includegraphics would otherwise fail)
   if (existsSync(resolve(dir, "figures", "cover.png"))) return build(dir, opts.minPages);
-  info(`paper new: skip build (no cover yet). After adding one: harness paper build ${slug}`);
+  info(`paper new: skip build (no cover yet). After adding one: sidecar paper build ${slug}`);
   return 0;
 }
 
@@ -305,11 +305,11 @@ function listPapers(dir: string): number {
 }
 
 function usage(): void {
-  info("harness paper <new|build|cover|list|help>");
+  info("sidecar paper <new|build|cover|list|help>");
   info("  new <slug> [--title T] [--subtitle S] [--dir D] [--min-pages N] [--no-cover] [--cover-prompt-file F] [-s size]");
   info("            scaffold demiurge-house template (emoji title · g5 tier badges · TikZ+pgfplots · fal.ai cover) → cover → build");
   info("  build <slug|dir> [--min-pages N] [--dir D]   xelatex → bibtex → xelatex×2; report pages+refs; g51 ≥N gate (default 10)");
-  info("  cover <slug|dir> [--cover-prompt-file F] [-p \"prompt\"] [-s size] [--dir D]   (re)generate figures/cover.png via `harness imagine`");
+  info("  cover <slug|dir> [--cover-prompt-file F] [-p \"prompt\"] [-s size] [--dir D]   (re)generate figures/cover.png via `sidecar imagine`");
   info("  list [--dir D]");
   info(`  defaults: dir=${DEFAULT_DIR} · min-pages=${DEFAULT_MIN_PAGES} (g51) · cover size=landscape_16_9 · cover backend=fal (secret get fal.api_key)`);
 }
@@ -345,7 +345,7 @@ export async function runPaper(args: string[]): Promise<number> {
   if (sub === "new") {
     const slug = pos[0];
     if (!slug) {
-      loudFail("paper new: usage: harness paper new <slug> [--title T] [--subtitle S]");
+      loudFail("paper new: usage: sidecar paper new <slug> [--title T] [--subtitle S]");
       return 1;
     }
     const title = flags["title"] || `\u{1F4C4} ${slug}`; // 📄 default emoji title
@@ -362,7 +362,7 @@ export async function runPaper(args: string[]): Promise<number> {
   if (sub === "build") {
     const target = pos[0];
     if (!target) {
-      loudFail("paper build: usage: harness paper build <slug|dir> [--min-pages N]");
+      loudFail("paper build: usage: sidecar paper build <slug|dir> [--min-pages N]");
       return 1;
     }
     return build(paperDir(target, dir), minPages);
@@ -371,7 +371,7 @@ export async function runPaper(args: string[]): Promise<number> {
   if (sub === "cover") {
     const target = pos[0];
     if (!target) {
-      loudFail("paper cover: usage: harness paper cover <slug|dir> [--cover-prompt-file F] [-p \"prompt\"]");
+      loudFail("paper cover: usage: sidecar paper cover <slug|dir> [--cover-prompt-file F] [-p \"prompt\"]");
       return 1;
     }
     const pdir = paperDir(target, dir);

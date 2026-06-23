@@ -1,4 +1,4 @@
-// harness kick <seed…> | <hexa-kick flags> — thin wrapper over `hexa kick`,
+// sidecar kick <seed…> | <hexa-kick flags> — thin wrapper over `hexa kick`,
 // the hexa-lang gap-breakthrough / discovery engine (aliased to `hexa drill`).
 // The /kick wrapper: bare natural-language args join into
 // `--seed "<seed>"`; if the first token is a flag (e.g. --rounds N, --engine
@@ -19,7 +19,7 @@ export async function runKick(args: string[]): Promise<number> {
     return 127;
   }
   if (!args.length) {
-    info('usage: harness kick <seed — natural language>   ·   harness kick --rounds N --engine mk9|mk10 …');
+    info('usage: sidecar kick <seed — natural language>   ·   sidecar kick --rounds N --engine mk9|mk10 …');
     info('  wraps `hexa kick --seed "<seed>"` — gap-breakthrough / discovery engine (alias: hexa drill).');
     return 0;
   }

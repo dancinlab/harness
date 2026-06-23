@@ -1,4 +1,4 @@
-// harness lsp {wire|status|rebuild <file>}
+// sidecar lsp {wire|status|rebuild <file>}
 // LSP wiring for the agent's editor.
 //
 //   wire           write a Claude-Code `.lsp.json` (canonical filename) at repo
@@ -60,7 +60,7 @@ async function wire(force: boolean): Promise<number> {
 
 async function status(): Promise<number> {
   const servers = config().lsp.servers;
-  info(`lsp: ${servers.length} server(s) configured · .lsp.json ${existsSync(lspJsonPath()) ? "✓ present" : "○ not wired (harness lsp wire)"}`);
+  info(`lsp: ${servers.length} server(s) configured · .lsp.json ${existsSync(lspJsonPath()) ? "✓ present" : "○ not wired (sidecar lsp wire)"}`);
   for (const s of servers) {
     const bin = s.command === "sh" ? "hexa" : s.command; // sh -c wrapper ultimately execs `hexa lsp`
     const found = (await execShell(`command -v ${bin} 2>/dev/null`)).stdout.trim();
@@ -95,7 +95,7 @@ export function lspRebuildOnEdit(file: string): boolean {
   if (repo) {
     const orch = `${repo}/tool/build_hexa_lsp.hexa`;
     execShell(`nohup env HEXA_MAC_BUILD_OK=1 HEXA_LANG='${repo}' hexa run '${orch}' >> '${log}' 2>&1 &`);
-    warn(`lsp-rebuild: hexa-lang LSP source changed → rebuilding ${repo}/bin/hexa-lsp in background (log: ~/.harness/lsp-rebuild.log). Reload the LSP session.`);
+    warn(`lsp-rebuild: hexa-lang LSP source changed → rebuilding ${repo}/bin/hexa-lsp in background (log: ~/.sidecar/lsp-rebuild.log). Reload the LSP session.`);
     return true;
   }
 
@@ -106,7 +106,7 @@ export function lspRebuildOnEdit(file: string): boolean {
   if (!lang) return false;
   const out = resolve(homedir(), ".local", "bin", `${lang}-lsp-hexa`);
   execShell(`nohup env HEXA_MAC_BUILD_OK=1 hexa build '${abs}' -o '${out}' >> '${log}' 2>&1 &`);
-  warn(`lsp-rebuild: ${lang} LSP grammar changed → rebuilding ${lang}-lsp-hexa in background (log: ~/.harness/lsp-rebuild.log). Reload the LSP session.`);
+  warn(`lsp-rebuild: ${lang} LSP grammar changed → rebuilding ${lang}-lsp-hexa in background (log: ~/.sidecar/lsp-rebuild.log). Reload the LSP session.`);
   return true;
 }
 
@@ -119,6 +119,6 @@ export async function runLsp(args: string[]): Promise<number> {
     if (!hit) info("lsp: not an LSP grammar source (no rebuild)");
     return 0;
   }
-  info("usage: harness lsp {wire [--force]|status|rebuild <file>}");
+  info("usage: sidecar lsp {wire [--force]|status|rebuild <file>}");
   return 1;
 }

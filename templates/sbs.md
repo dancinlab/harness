@@ -1,7 +1,7 @@
 # /sbs — plan-first 순차 런북 (2-mode · chat-form · plan.md handoff)
 
 > 📍 SSOT: 설계 [ARCHITECTURE.json](../ARCHITECTURE.json). 본 문서는 /sbs 런북.
-> harness `recommend resolve-mode` 가 결정한 mode 를 따른다. AUTO = 4축 가중평균 자동선택, MANUAL = 라운드별 사용자 채팅 응답. 둘 다 같은 흐름.
+> sidecar `recommend resolve-mode` 가 결정한 mode 를 따른다. AUTO = 4축 가중평균 자동선택, MANUAL = 라운드별 사용자 채팅 응답. 둘 다 같은 흐름.
 
 ## 1. mode 파싱
 위 `resolved:` 줄을 권위로 따른다 (mode/axis/weights). `mode:` 한 줄을 그대로 echo 해 모드를 선언. task 가 비면 현재 맥락의 작업으로 가정(가정을 말하되 묻지 않음).
@@ -30,7 +30,7 @@ plan 문서: drafts/<slug>-plan.md (생성 예정)
 - `drafts/` 보장 + `.gitignore` 에 추가(없으면).
 - `drafts/<slug>-plan.md` 작성 (frontmatter: slug · mode · `status: active` · AUTO면 weights · 생성일 · 본문 `## task brief` · `## locked decisions` · `## next-action checklist`(끝에 `[ ] ship …`) · `## completion criteria`).
 - `## locked decisions` 는 기계검증 계약 가능: `- @L<n> (<axis>): <option> · assert:<kind> <arg>` (`grep <pat>` 존재 / `!pat` 부재 · `file <path>` 존재).
-- 백그라운드 Agent(run_in_background) 발사: plan.md 내용 + ship 지침(명시 경로 · no force-push · CHANGELOG 동시 갱신 · push 후 `harness sync`(있으면)) + 완료기준 + "끝나면 보고".
+- 백그라운드 Agent(run_in_background) 발사: plan.md 내용 + ship 지침(명시 경로 · no force-push · CHANGELOG 동시 갱신 · push 후 `sidecar sync`(있으면)) + 완료기준 + "끝나면 보고".
 - 사용자에게: `🚀 handoff: agent launched · plan saved to drafts/<slug>-plan.md · 나가셔도 됩니다` 후 턴 종료.
 
 ## 5. 인라인 fallback (2번 첫 스캔에서 모호성 0)
@@ -46,4 +46,4 @@ plan 문서: drafts/<slug>-plan.md (생성 예정)
 **functional**(새 동작?) · **visible**(노출 경로?) · **conformance**(locked decision ↔ 코드 1:1) · **regression**(기존 표면 미손상). 각 PASS/FAIL/SKIP(SKIP=PASS). regression FAIL → `git revert <SHA>` 자동 + banner. 나머지 FAIL → ship 유지 + plan.md `## qa-deferred` + alert. 결과는 plan.md `## qa-results` 에 기록.
 
 ## 9. 인계 dossier (handoff agent · QA 직후)
-plan PR≥3 또는 변경 LOC≥500 이면 `drafts/<slug>-plan.md` 에 `## handoff` 섹션 작성(PR 상태 · SSOT 파일 인덱스 · 새 API surface · 새 컴포넌트 트리 · 환경변수 · 다음 우선순위 · 알려진 한계 · 시작 가이드). 아니면 SKIP 한 줄 기록. ⛔ 별도 HANDOFF.md 금지 — `harness ing` 또는 plan.md 에만.
+plan PR≥3 또는 변경 LOC≥500 이면 `drafts/<slug>-plan.md` 에 `## handoff` 섹션 작성(PR 상태 · SSOT 파일 인덱스 · 새 API surface · 새 컴포넌트 트리 · 환경변수 · 다음 우선순위 · 알려진 한계 · 시작 가이드). 아니면 SKIP 한 줄 기록. ⛔ 별도 HANDOFF.md 금지 — `sidecar ing` 또는 plan.md 에만.

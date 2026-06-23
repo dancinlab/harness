@@ -1,4 +1,4 @@
-// harness folders [scan|missing|scaffold <dir>]
+// sidecar folders [scan|missing|scaffold <dir>]
 // Encourage a per-subfolder CLAUDE.md so an agent reading just that folder has
 // local context. `scan` lists qualifying folders that lack one; `scaffold`
 // writes a skeleton. A post-edit nudge (see post.ts) surfaces this during work.
@@ -113,7 +113,7 @@ export function postEditNudge(file: string): void {
   if (already) return;
   appendJsonl(LOGS.observations, { kind: "folder_guide_nudge", dir: rel });
   process.stderr.write(
-    `\x1b[33m📁 ${rel}/ 에 ${cfg.filename} 가 없습니다 — 이 폴더 작업 맥락을 남기려면 \`harness folders scaffold ${rel}\` 로 가이드를 만드세요.\x1b[0m\n`
+    `\x1b[33m📁 ${rel}/ 에 ${cfg.filename} 가 없습니다 — 이 폴더 작업 맥락을 남기려면 \`sidecar folders scaffold ${rel}\` 로 가이드를 만드세요.\x1b[0m\n`
   );
 }
 
@@ -123,7 +123,7 @@ export async function runFolders(args: string[]): Promise<number> {
   if (sub === "scaffold") {
     const target = args[1];
     if (!target) {
-      info("usage: harness folders scaffold <dir> [--force]");
+      info("usage: sidecar folders scaffold <dir> [--force]");
       return 1;
     }
     const abs = repoPath(target);
@@ -155,6 +155,6 @@ export async function runFolders(args: string[]): Promise<number> {
   warn(`folders: ${missing.length} folder(s) without ${fg().filename}`);
   for (const d of missing) info(`  ${relative(REPO_ROOT, d)}/`);
   info("");
-  info(`scaffold one: harness folders scaffold <dir>`);
+  info(`scaffold one: sidecar folders scaffold <dir>`);
   return 0;
 }

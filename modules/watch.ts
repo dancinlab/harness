@@ -1,4 +1,4 @@
-// harness watch <url|path> [question…] [flags]
+// sidecar watch <url|path> [question…] [flags]
 // Give the agent the ability to WATCH a video: download
 // with yt-dlp (any platform it supports + local files), extract auto-scaled
 // frames with ffmpeg, and pull a timestamped transcript (native captions first,
@@ -97,7 +97,7 @@ export async function runWatch(args: string[]): Promise<number> {
   const source = pos[0];
   const question = pos.slice(1).join(" ");
   if (!source) {
-    info("usage: harness watch <url|path> [question] [--start S --end S --max-frames N --fps F --resolution W --whisper groq|openai --no-whisper --out-dir DIR]");
+    info("usage: sidecar watch <url|path> [question] [--start S --end S --max-frames N --fps F --resolution W --whisper groq|openai --no-whisper --out-dir DIR]");
     return 1;
   }
   if (!(await has("ffmpeg")) || !(await has("ffprobe"))) {
@@ -105,7 +105,7 @@ export async function runWatch(args: string[]): Promise<number> {
     return 1;
   }
 
-  const out = outDir ? resolve(outDir) : resolve(tmpdir(), `harness-watch-${process.pid}`);
+  const out = outDir ? resolve(outDir) : resolve(tmpdir(), `sidecar-watch-${process.pid}`);
   mkdirSync(out, { recursive: true });
   const isLocal = existsSync(source);
   let video = "";

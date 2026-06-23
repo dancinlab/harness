@@ -1,8 +1,8 @@
-// harness commons {inject|show} — cross-project governance carrier (the harness
+// sidecar commons {inject|show} — cross-project governance carrier (the sidecar
 // governance SSOT). `inject` emits config/commons.md (or a repo override at
 // .harness/commons.md) as additionalContext, re-injected each turn so the
 // always-on rules never fade from context. The discrete rules are also
-// mechanically enforced by harness hooks (root-cause/pre write · verify ·
+// mechanically enforced by sidecar hooks (root-cause/pre write · verify ·
 // bypass · docs · tmp-guard · handoff-guard · git-guard · recommend · askq);
 // this is the salient single SSOT, re-injected like recommend.
 import { readFileSync } from "node:fs";
@@ -60,7 +60,7 @@ export function lintCommonsText(text: string, rel: string): Array<{ rule: string
   return out;
 }
 
-// commit-time entry — reads the resolved commons.md off disk (harness lint 4g).
+// commit-time entry — reads the resolved commons.md off disk (sidecar lint 4g).
 export function lintCommonsFormat(): Array<{ rule: string; file: string; msg: string }> {
   const f = resolveRuleFile(".harness/commons.md", "commons.md");
   let text: string;
@@ -120,6 +120,6 @@ export async function runCommons(args: string[]): Promise<number> {
     }
     return 0;
   }
-  process.stdout.write("usage: harness commons {inject|show}\n");
+  process.stdout.write("usage: sidecar commons {inject|show}\n");
   return 1;
 }

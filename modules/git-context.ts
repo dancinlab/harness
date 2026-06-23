@@ -119,6 +119,6 @@ export async function runGitContext(args: string[]): Promise<number> {
     return 0;
   }
 
-  process.stdout.write("usage: harness git-context {inject|show}\n");
+  process.stdout.write("usage: sidecar git-context {inject|show}\n");
   return 1;
 }

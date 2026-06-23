@@ -1,20 +1,20 @@
-// harness recommend {inject|show|set-default|clear-default|get-default|resolve-mode}
+// sidecar recommend {inject|show|set-default|clear-default|get-default|resolve-mode}
 // 4-axis recommendation rubric. `inject` emits
 // config/recommend.md (the SSOT rule carrier — was recommend.tape; a plain
 // Markdown carrier now, the .tape DSL is retired) + the active default-mode
 // directive as additionalContext. `resolve-mode` is the deterministic mode
-// resolver consumed by `harness sbs` (LOCKED precedence in code, not prose).
+// resolver consumed by `sidecar sbs` (LOCKED precedence in code, not prose).
 import { existsSync, readFileSync, writeFileSync, rmSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { homedir } from "node:os";
-import { HARNESS_CONFIG_DIR, REPO_ROOT } from "../lib/paths.ts";
+import { SIDECAR_CONFIG_DIR, REPO_ROOT } from "../lib/paths.ts";
 import { resolveRuleFile } from "../lib/config.ts";
 import { readStdin } from "../lib/exec.ts";
 import { info } from "../lib/log.ts";
 
 // Standing default mode (one token), resolved with precedence:
 //   per-repo .harness/recommend-default  (committed = team-shared, wins)
-//   > global ~/.harness/recommend-default (host-wide — `set-default --global`)
+//   > global ~/.sidecar/recommend-default (host-wide — `set-default --global`)
 //   > "present" (the original 4-axis-box behavior)
 // The global tier is what makes a host-wide "공용 완성도" default actually
 // inherit across every repo on the machine.
@@ -72,7 +72,7 @@ function body(): string {
   } catch {
     text = "";
   }
-  if (!text) text = readFileSync(resolve(HARNESS_CONFIG_DIR, "recommend.md"), "utf8");
+  if (!text) text = readFileSync(resolve(SIDECAR_CONFIG_DIR, "recommend.md"), "utf8");
   return text + defaultDirective();
 }
 
@@ -157,13 +157,13 @@ export async function runRecommend(args: string[]): Promise<number> {
     const isGlobal = args.includes("--global") || args.includes("-g");
     const mode = (args.slice(1).find((a) => !a.startsWith("-")) ?? "").trim();
     if (!modeLabel(mode)) {
-      info("usage: harness recommend set-default <present|auto|complete|simple|safe|std> [--global]");
+      info("usage: sidecar recommend set-default <present|auto|complete|simple|safe|std> [--global]");
       return 1;
     }
     const f = isGlobal ? globalDefaultFile() : defaultFile();
     mkdirSync(dirname(f), { recursive: true });
     writeFileSync(f, mode + "\n", "utf8");
-    info(`recommend default mode = ${modeLabel(mode)} [${isGlobal ? "global ~/.harness" : "repo .harness"}]`);
+    info(`recommend default mode = ${modeLabel(mode)} [${isGlobal ? "global ~/.sidecar" : "repo .harness"}]`);
     if (!isGlobal && existsSync(globalDefaultFile())) info("  note: a global default also exists; the repo default takes precedence here.");
     return 0;
   }
@@ -183,6 +183,6 @@ export async function runRecommend(args: string[]): Promise<number> {
     resolveMode(args.slice(1).join(" "));
     return 0;
   }
-  info("usage: harness recommend {inject|show|set-default|clear-default|get-default|resolve-mode}");
+  info("usage: sidecar recommend {inject|show|set-default|clear-default|get-default|resolve-mode}");
   return 1;
 }

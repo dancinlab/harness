@@ -1,4 +1,4 @@
-# harness gap — multi-axis gap exploration
+# sidecar gap — multi-axis gap exploration
 
 A structured sweep of the current work through **40 breakthrough-strategy lenses**,
 curated into 8 families. Each lens is one probing question. A "gap" is anything the

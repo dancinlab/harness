@@ -1,4 +1,4 @@
-// harness prompt <text> — scan a user prompt for trigger keywords and surface
+// sidecar prompt <text> — scan a user prompt for trigger keywords and surface
 // the recommended playbook / hint / tool for each match. Mirrors the project's
 // CLAUDE.md / AGENTS.md triggers so the agent doesn't have to remember them.
 //
@@ -72,7 +72,7 @@ function safeRegexTest(pat: string, text: string): boolean {
 export async function runPromptScan(args: string[]): Promise<number> {
   const text = args.join(" ");
   if (!text) {
-    info("usage: harness prompt <user_text>");
+    info("usage: sidecar prompt <user_text>");
     return 0;
   }
   const matches = scanPrompt(text);
@@ -90,10 +90,10 @@ export async function runPromptScan(args: string[]): Promise<number> {
 
   const lines: string[] = [];
   if (stranded.length) {
-    lines.push(`⚠ ${stranded.length} stranded worktree(s) — 방치된 작업을 먼저 완료(harness pr-cycle)/정리한 뒤 새 작업을 시작하세요:`);
+    lines.push(`⚠ ${stranded.length} stranded worktree(s) — 방치된 작업을 먼저 완료(sidecar pr-cycle)/정리한 뒤 새 작업을 시작하세요:`);
     for (const w of stranded) lines.push(`  • ${w.path} [${w.branch}] ${w.dirty ? "dirty " : ""}${w.ahead ? "unpushed:" + w.ahead : ""}`);
   }
-  if (matches.length) lines.push(`▶ harness prompt-scan: ${matches.length} keyword match(es)`);
+  if (matches.length) lines.push(`▶ sidecar prompt-scan: ${matches.length} keyword match(es)`);
   for (const m of matches) {
     lines.push(`  • ${m.id}  (← "${m.matched}")`);
     if (m.rule.playbook) lines.push(`    playbook: ${m.rule.playbook}`);

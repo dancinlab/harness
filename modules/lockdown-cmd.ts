@@ -1,4 +1,4 @@
-// harness lockdown {status|list|add <path...>|rm <path...>|check <path>}
+// sidecar lockdown {status|list|add <path...>|rm <path...>|check <path>}
 // Manage the L0 (lockdown) file set — the files whose edits get flagged so the
 // agent treats them deliberately. L0 is OPT-IN: empty until a repo explicitly
 // designates files here. `add`/`rm` mutate harness.config.json's lockdown.files
@@ -51,7 +51,7 @@ function printStatus(): void {
   const all = l0Files();
   const md = config().lockdown.fromMarkdown;
   if (all.length === 0) {
-    info("L0: none — 별도 지정 없음 (opt-in). 지정: harness lockdown add <path>");
+    info("L0: none — 별도 지정 없음 (opt-in). 지정: sidecar lockdown add <path>");
     return;
   }
   info(`L0 (${all.length} file${all.length === 1 ? "" : "s"}):`);
@@ -73,7 +73,7 @@ export async function runLockdown(args: string[]): Promise<number> {
   if (sub === "check") {
     const target = args[1];
     if (!target) {
-      err("usage: harness lockdown check <path>");
+      err("usage: sidecar lockdown check <path>");
       return 2;
     }
     const rel = toRepoRel(target);
@@ -89,7 +89,7 @@ export async function runLockdown(args: string[]): Promise<number> {
   if (sub === "add") {
     const targets = args.slice(1).map(toRepoRel).filter(Boolean);
     if (targets.length === 0) {
-      err("usage: harness lockdown add <path...>");
+      err("usage: sidecar lockdown add <path...>");
       return 2;
     }
     const cur = configFiles();
@@ -114,7 +114,7 @@ export async function runLockdown(args: string[]): Promise<number> {
   if (sub === "rm" || sub === "remove" || sub === "release") {
     const targets = args.slice(1).map(toRepoRel);
     if (targets.length === 0) {
-      err("usage: harness lockdown rm <path...>");
+      err("usage: sidecar lockdown rm <path...>");
       return 2;
     }
     const cur = configFiles();
@@ -132,6 +132,6 @@ export async function runLockdown(args: string[]): Promise<number> {
   }
 
   err(`unknown subcommand: ${sub}`);
-  info("usage: harness lockdown {status|list|add <path...>|rm <path...>|check <path>}");
+  info("usage: sidecar lockdown {status|list|add <path...>|rm <path...>|check <path>}");
   return 2;
 }

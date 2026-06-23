@@ -1,5 +1,5 @@
 {
-  "_doc": "enforcement profile — maximum strictness. Everything that can block, blocks; escape hatches (--no-verify) are closed; destructive git is gated. Installed by `harness init`.",
+  "_doc": "enforcement profile — maximum strictness. Everything that can block, blocks; escape hatches (--no-verify) are closed; destructive git is gated. Installed by `sidecar init`.",
   "pre_bash": [
     {
       "id": "H-FORCE-PUSH",
@@ -39,7 +39,7 @@
       "match": "(\\bmktemp\\b|(>>?|\\btee\\b|cat\\s+>+)\\s*\\S*(/tmp/|/var/folders/|\\$TMPDIR))",
       "exceptions": ["# scratch-ok", "scripts/scratch", "\\.harness/"],
       "action": "warn",
-      "reason": "임시 파일을 /tmp(휘발)에 쓰지 말 것 — `scripts/scratch/` 에 보관(회귀추적·재현 가능). 진짜 일회성이면 `# scratch-ok <사유>`. (`harness docs scratch <name>` 가 경로 생성)"
+      "reason": "임시 파일을 /tmp(휘발)에 쓰지 말 것 — `scripts/scratch/` 에 보관(회귀추적·재현 가능). 진짜 일회성이면 `# scratch-ok <사유>`. (`sidecar docs scratch <name>` 가 경로 생성)"
     },
     {
       "id": "H-SUDO",
@@ -53,11 +53,11 @@
   "pre_write": [
     {
       "id": "H-NO-INLINE-HOOK",
-      "desc": "agent settings must delegate to harness",
+      "desc": "agent settings must delegate to sidecar",
       "path_match": "\\.claude/settings.*\\.json$",
-      "content_forbidden_pattern": "\"(PreToolUse|PostToolUse|UserPromptSubmit)\"[\\s\\S]{0,400}?\"command\"\\s*:\\s*\"(?!.*harness (?:pre|post|prompt))",
+      "content_forbidden_pattern": "\"(PreToolUse|PostToolUse|UserPromptSubmit)\"[\\s\\S]{0,400}?\"command\"\\s*:\\s*\"(?!.*sidecar (?:pre|post|prompt))",
       "action": "block",
-      "reason": "hook 은 harness pre|post|prompt 로만 delegate. 인라인 셸 금지 — 규칙은 enforcement.json 에."
+      "reason": "hook 은 sidecar pre|post|prompt 로만 delegate. 인라인 셸 금지 — 규칙은 enforcement.json 에."
     },
     {
       "id": "H-ROOT-CAUSE",
@@ -133,13 +133,13 @@
       "id": "H-SINGLE-DOC",
       "desc": "문서/정리/아키텍처/리포트 작성 요청 시 단일 문서 규약 안내",
       "match_patterns": ["문서화", "문서 ?정리", "정리해", "아키텍처", "architecture", "리포트", "report", "요약 ?문서", "설계 ?문서", "노트 ?정리", "구조 ?문서"],
-      "hint": "📄 단일 문서 규약: AI 산출물을 흩뿌리지 말 것. **2개 파일만** — ①`ARCHITECTURE.md` = 최종 아키텍처(업데이트형: 항상 최신 상태로 덮어씀, 추가형 아님) ②`CHANGELOG.md` = 이력/결정(추가형: append). 임시 분석/스크래치는 `scripts/scratch/`(tmp 휘발 금지). 부득이 문서를 분리하면 상단에 SSOT 로 가는 **quickref 1줄** 무조건 연결. 메인 `CLAUDE.md` 에는 **프로젝트 간략 설명 + 트리 구조(트리별 간략 설명)** 반드시 포함. 검사: `harness docs status` · 강제: lint(DOC-SCATTER/DOC-NO-QUICKREF/CLAUDE-MD-*)."
+      "hint": "📄 단일 문서 규약: AI 산출물을 흩뿌리지 말 것. **2개 파일만** — ①`ARCHITECTURE.md` = 최종 아키텍처(업데이트형: 항상 최신 상태로 덮어씀, 추가형 아님) ②`CHANGELOG.md` = 이력/결정(추가형: append). 임시 분석/스크래치는 `scripts/scratch/`(tmp 휘발 금지). 부득이 문서를 분리하면 상단에 SSOT 로 가는 **quickref 1줄** 무조건 연결. 메인 `CLAUDE.md` 에는 **프로젝트 간략 설명 + 트리 구조(트리별 간략 설명)** 반드시 포함. 검사: `sidecar docs status` · 강제: lint(DOC-SCATTER/DOC-NO-QUICKREF/CLAUDE-MD-*)."
     },
     {
       "id": "H-PRE-COMMIT-FLOW",
       "desc": "strict commit flow",
       "match_patterns": ["커밋", "commit", "푸시", "push", "마무리", "wrap\\s*up"],
-      "hint": "강제 흐름: ① feature 브랜치에서 작업(main 직접 커밋 차단) ② 코드 변경 시 CHANGELOG 동시 stage(차단) ③ pre-commit=harness lint, pre-push=harness ci+errors drain 통과 ④ --no-verify 우회 금지."
+      "hint": "강제 흐름: ① feature 브랜치에서 작업(main 직접 커밋 차단) ② 코드 변경 시 CHANGELOG 동시 stage(차단) ③ pre-commit=sidecar lint, pre-push=sidecar ci+errors drain 통과 ④ --no-verify 우회 금지."
     }
   ]
 }

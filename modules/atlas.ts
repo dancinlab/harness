@@ -1,4 +1,4 @@
-// harness atlas {add <id> <claim...> | list | link <id> <slug>/<vid> | show}
+// sidecar atlas {add <id> <claim...> | list | link <id> <slug>/<vid> | show}
 // Knowledge / claim registry (hexa atlas parity). Each atom = a verifiable claim
 // with a tier and an optional pointer to its verdict file (state/<slug>/<id>).
 // Atoms live in repo-root ATLAS.md (committable table) + a ledger; an atom is only
@@ -14,7 +14,7 @@ function atlasPath(): string {
 const HEADER = `# ATLAS — claim registry
 
 > 📍 SSOT: [ARCHITECTURE.md](ARCHITECTURE.md) · verdicts in \`state/\`
-> Each atom = a verifiable claim. An atom is VERIFIED only when it links a PASS verdict (\`harness verdict\`). Never LLM-judge.
+> Each atom = a verifiable claim. An atom is VERIFIED only when it links a PASS verdict (\`sidecar verdict\`). Never LLM-judge.
 
 | id | claim | tier | verdict |
 |----|-------|------|---------|
@@ -48,7 +48,7 @@ export async function runAtlas(args: string[]): Promise<number> {
     const id = args[1];
     const claim = args.slice(2).join(" ");
     if (!id || !claim) {
-      info("usage: harness atlas add <id> <claim...>");
+      info("usage: sidecar atlas add <id> <claim...>");
       return 1;
     }
     const lines = text.split("\n").filter((l) => cellId(l) !== id);
@@ -67,7 +67,7 @@ export async function runAtlas(args: string[]): Promise<number> {
     const id = args[1];
     const vid = args[2];
     if (!id || !vid) {
-      info("usage: harness atlas link <id> <slug>/<verdict-id>");
+      info("usage: sidecar atlas link <id> <slug>/<verdict-id>");
       return 1;
     }
     const vfile = resolve(REPO_ROOT, "state", vid + ".txt");
@@ -80,7 +80,7 @@ export async function runAtlas(args: string[]): Promise<number> {
       return l.replace(/\|[^|]*\|[^|]*\|$/, `| ${tier} | state/${vid}.txt |`);
     });
     if (!found) {
-      info(`atlas: no atom "${id}" — add it first: harness atlas add ${id} <claim>`);
+      info(`atlas: no atom "${id}" — add it first: sidecar atlas add ${id} <claim>`);
       return 1;
     }
     writeFileSync(atlasPath(), lines.join("\n"), "utf8");
@@ -96,7 +96,7 @@ export async function runAtlas(args: string[]): Promise<number> {
   // list
   const rs = rows(text);
   if (!rs.length) {
-    info("atlas: no atoms. `harness atlas add <id> <claim>`");
+    info("atlas: no atoms. `sidecar atlas add <id> <claim>`");
     return 0;
   }
   const verified = rs.filter((r) => r.includes("🟢")).length;

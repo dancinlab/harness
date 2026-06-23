@@ -1,4 +1,4 @@
-// harness convergence {status|recompute|by-category}
+// sidecar convergence {status|recompute|by-category}
 // Optional incident-tracking aggregator. Operates on a JSON file (configured via
 // convergence.issuesFile) shaped like:
 //   { "incidents": { "records": [ { "category","verified","fix_permanent","recurrence_after_fix" } ] },
@@ -18,7 +18,7 @@ import { resolve } from "node:path";
 // The recurrence-prevention markers live as inline code comments. To MECHANICALLY
 // enforce them, `scan` validates every marker carries the required keys (state·id)
 // and a state from the allowed enum — a malformed marker can't be aggregated, so
-// the learning is silently lost. `harness lint` calls this so commits gate on it.
+// the learning is silently lost. `sidecar lint` calls this so commits gate on it.
 // MARKER_TAG is split so THIS scanner never flags its own source as a marker.
 const MARKER_TAG = "@con" + "vergence";
 const ALLOWED_STATES = new Set([
@@ -163,7 +163,7 @@ export function convergenceDueWarn(): string | null {
   return (
     `재발 신호("${d.matched}")를 감지했는데 이 세션에서 well-formed @convergence 마커가 추가되지 않았다 (c1 · 캡처 토큰 ${d.token}). ` +
     `같은 결함이 또 났다면 결함난 그 코드 파일의 인라인 주석에 // @convergence state=ossified id=RECUR_ID value="<핵심>" threshold="<재발조건/해결>" 를 남겨라 ` +
-    `— 마커를 쓰면 다음 편집에서 이 부채는 자동 해소된다 (harness convergence scan 검증). 진짜 마커가 불필요한 턴이면 무시해도 된다 (warn-only).`
+    `— 마커를 쓰면 다음 편집에서 이 부채는 자동 해소된다 (sidecar convergence scan 검증). 진짜 마커가 불필요한 턴이면 무시해도 된다 (warn-only).`
   );
 }
 

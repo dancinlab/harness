@@ -1,9 +1,9 @@
-// harness secret <args...> — thin wrapper over the `secret` CLI (dancinlab/secret:
+// sidecar secret <args...> — thin wrapper over the `secret` CLI (dancinlab/secret:
 // encrypted-file/Keychain credential store). Verbs pass
 // through: get · set · rotate · check · delete · list · service · init · backup ·
 // sync · migrate. Credentials belong in the secret store, never hardcoded
 // (enforcement G-SECRET-LITERAL). `get` exposes the value in output — for tool
-// invocations prefer inline `$(secret get <k>)` instead of `harness secret get`.
+// invocations prefer inline `$(secret get <k>)` instead of `sidecar secret get`.
 import { execShell } from "../lib/exec.ts";
 import { info, warn } from "../lib/log.ts";
 import { existsSync } from "node:fs";

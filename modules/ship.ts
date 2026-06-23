@@ -1,11 +1,11 @@
-// harness ship [--no-doc]
+// sidecar ship [--no-doc]
 // One-shot propagation: after an implementation cycle, push the change to EVERY
-// surface a harness install lives on, in the one correct order — so a feature can
+// surface a sidecar install lives on, in the one correct order — so a feature can
 // never land on one surface (merged) while silently missing another (slash command
 // invisible because the shadow mirror was never refreshed).
 //
 //   1. pr-cycle    — doc-gate → push → PR → verified merge → local main ff-sync
-//   2. self-update — git-pull the GLOBAL CLI clone (~/.harness/cli) to the just-merged main
+//   2. self-update — git-pull the GLOBAL CLI clone (~/.sidecar/cli) to the just-merged main
 //   3. shadow      — re-mirror commands/ → ~/.claude/commands/ as bare /cmd delegators
 //
 // @convergence state=ossified id=SHIP_PROPAGATE_ALL_SURFACES value="merge+self-update+shadow must run as one unit" threshold="adding a slash command then running only pr-cycle+self-update left the shadow mirror stale → /fleet-abstract invisible; ship bundles all three"
@@ -23,11 +23,11 @@ export async function runShip(args: string[]): Promise<number> {
     return merged;
   }
 
-  // global CLI clone (~/.harness/cli) git-pulls the merged main — terminal `harness …` current.
-  info("ship: 2/3 — self-update (global CLI ~/.harness/cli)…");
+  // global CLI clone (~/.sidecar/cli) git-pulls the merged main — terminal `sidecar …` current.
+  info("ship: 2/3 — self-update (global CLI ~/.sidecar/cli)…");
   const updated = await runSelfUpdate([]);
   if (updated !== 0) {
-    loudFail("ship: self-update failed — merge landed but global CLI is STALE. fix then re-run `harness self-update`.");
+    loudFail("ship: self-update failed — merge landed but global CLI is STALE. fix then re-run `sidecar self-update`.");
     return updated;
   }
 
@@ -36,7 +36,7 @@ export async function runShip(args: string[]): Promise<number> {
   info("ship: 3/3 — shadow (mirror slash commands → ~/.claude/commands)…");
   const mirrored = runShadow([]);
   if (mirrored !== 0) {
-    loudFail("ship: shadow failed — merge + global CLI current, but new slash commands may be missing. re-run `harness shadow`.");
+    loudFail("ship: shadow failed — merge + global CLI current, but new slash commands may be missing. re-run `sidecar shadow`.");
     return mirrored;
   }
 

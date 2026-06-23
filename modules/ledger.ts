@@ -1,4 +1,4 @@
-// harness ledger {register|complete|list|gc|dup_check}
+// sidecar ledger {register|complete|list|gc|dup_check}
 // Tracks background-agent lifecycles so parallel fan-outs don't double-spawn
 // work in the same area. Append-only JSONL, merged by agent_id (last write wins).
 import { createHash } from "node:crypto";
@@ -36,13 +36,13 @@ export async function runLedger(args: string[]): Promise<number> {
     const hash = args[2] ?? "";
     const id = genId(area, hash);
     appendJsonl(LOGS.workRegistry, { agent_id: id, area, prompt_hash: hash, ts_start: new Date().toISOString(), status: "active" });
-    process.stdout.write(id + "\n"); // capture: agent_id=$(harness ledger register <area>)
+    process.stdout.write(id + "\n"); // capture: agent_id=$(sidecar ledger register <area>)
     return 0;
   }
   if (sub === "complete") {
     const id = args[1];
     if (!id) {
-      info("usage: harness ledger complete <agent_id>");
+      info("usage: sidecar ledger complete <agent_id>");
       return 1;
     }
     appendJsonl(LOGS.workRegistry, { agent_id: id, ts_end: new Date().toISOString(), status: "done" });
@@ -77,6 +77,6 @@ export async function runLedger(args: string[]): Promise<number> {
     process.stdout.write(String(n) + "\n");
     return 0;
   }
-  info("usage: harness ledger {register|complete|list|gc|dup_check}");
+  info("usage: sidecar ledger {register|complete|list|gc|dup_check}");
   return 1;
 }

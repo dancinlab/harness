@@ -1,4 +1,4 @@
-// harness worktree {scan|gc|guard <cmd>}
+// sidecar worktree {scan|gc|guard <cmd>}
 // Enforces the no-pileup / no-stranded-work principle:
 //   scan         classify every linked worktree (clean/dirty/unpushed/[gone]) and
 //                LOUDLY flag STRANDED ones — uncommitted or unpushed work left in a
@@ -110,7 +110,7 @@ async function scan(): Promise<number> {
     info(`  ${mark} ${w.path}  [${w.branch || "detached"}]  ${flags || "clean"}`);
   }
   if (stranded.length) {
-    loudFail(`worktree: ${stranded.length} STRANDED — finish via 'harness pr-cycle' or clean (commit+push / git worktree remove) before new work.`);
+    loudFail(`worktree: ${stranded.length} STRANDED — finish via 'sidecar pr-cycle' or clean (commit+push / git worktree remove) before new work.`);
     return 1;
   }
   return 0;
@@ -166,7 +166,7 @@ async function gc(): Promise<number> {
   }
 
   const stranded = (await strandedWorktrees());
-  if (stranded.length) warn(`worktree gc: ${stranded.length} stranded worktree(s) left untouched (active work) — finish via 'harness pr-cycle'.`);
+  if (stranded.length) warn(`worktree gc: ${stranded.length} stranded worktree(s) left untouched (active work) — finish via 'sidecar pr-cycle'.`);
   if (swept === 0 && !stranded.length) ok("worktree gc: nothing to sweep — clean.");
   else if (swept > 0) ok(`worktree gc: swept ${swept} merged/dangling item(s).`);
   return 0;
@@ -179,7 +179,7 @@ export async function worktreeAddAdvisory(cmd: string): Promise<string> {
   const stranded = await strandedWorktrees();
   if (stranded.length) {
     lines.push(
-      `⚠ ${stranded.length} stranded worktree(s) already exist (uncommitted/unpushed work). 원칙: 방치된 작업을 먼저 완료(harness pr-cycle)/정리한 뒤 새 작업을 시작하세요:`
+      `⚠ ${stranded.length} stranded worktree(s) already exist (uncommitted/unpushed work). 원칙: 방치된 작업을 먼저 완료(sidecar pr-cycle)/정리한 뒤 새 작업을 시작하세요:`
     );
     for (const w of stranded) lines.push(`    • ${w.path} [${w.branch}] ${w.dirty ? "dirty " : ""}${w.ahead ? "unpushed:" + w.ahead : ""}`);
   }
@@ -202,6 +202,6 @@ export async function runWorktree(args: string[]): Promise<number> {
     if (adv) process.stderr.write(adv + "\n");
     return 0;
   }
-  info("usage: harness worktree {scan|gc|guard <cmd>}");
+  info("usage: sidecar worktree {scan|gc|guard <cmd>}");
   return 1;
 }

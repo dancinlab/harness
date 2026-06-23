@@ -1,11 +1,11 @@
-// harness pre bash|write — delegate target for an agent's PreToolUse hook.
+// sidecar pre bash|write — delegate target for an agent's PreToolUse hook.
 // On a blocking match it writes {"decision":"block","reason":"..."} to stdout
 // (the shape Claude Code / compatible runtimes read to veto a tool call).
 // On a warn it prints to stderr. On no match it stays silent (H1).
 //
 // settings.json wiring (Claude Code):
 //   "PreToolUse": [{ "matcher": "Bash", "hooks": [{ "type": "command",
-//     "command": "CLAUDE_TOOL_INPUT=\"$CLAUDE_TOOL_INPUT\" <harness> pre bash" }]}]
+//     "command": "CLAUDE_TOOL_INPUT=\"$CLAUDE_TOOL_INPUT\" <sidecar> pre bash" }]}]
 //
 // CLAUDE_TOOL_INPUT / CODEX_TOOL_INPUT is JSON: {"command":"...","file_path":"...","content":"..."}
 import { readJson } from "../lib/json.ts";
@@ -124,7 +124,7 @@ function emitBlock(id: string, reason: string): number {
 }
 
 function emitWarn(id: string, reason: string): void {
-  process.stderr.write(`[harness warn ${id}] ${reason}\n`);
+  process.stderr.write(`[sidecar warn ${id}] ${reason}\n`);
   appendJsonl(LOGS.observations, { kind: "pre_warn", rule_id: id, reason });
 }
 
@@ -157,7 +157,7 @@ export async function preBash(_args: string[]): Promise<number> {
   if (cloudLabel) {
     return emitBlock(
       "CLOUD-RAW-CLI",
-      `${cloudLabel} — raw GPU-provider CLI/API direct use is blocked (commons c11). Use the hexa builtins: GPU/cloud → \`hexa cloud run <host> -- <argv...>\`, training jobs → \`hexa dojo <domain> <slug> '<spec>'\`, input decks → \`hexa deck …\`. Register running cloud work with \`harness ing pod add\`. No override — provider CLIs/APIs are not called directly from the agent.`
+      `${cloudLabel} — raw GPU-provider CLI/API direct use is blocked (commons c11). Use the hexa builtins: GPU/cloud → \`hexa cloud run <host> -- <argv...>\`, training jobs → \`hexa dojo <domain> <slug> '<spec>'\`, input decks → \`hexa deck …\`. Register running cloud work with \`sidecar ing pod add\`. No override — provider CLIs/APIs are not called directly from the agent.`
     );
   }
 
@@ -180,7 +180,7 @@ export async function preBash(_args: string[]): Promise<number> {
   if (pollLabel) {
     return emitBlock(
       "POLL-INTERVAL",
-      `${pollLabel} — external long-running jobs (GPU pod · remote r2/measure · cloud) must be polled at ≥30min (1800s), not minute-by-minute (commons c19): short intervals bust the prompt cache (5min TTL) for no gain. Lengthen the sleep to ≥1800, or delegate the polling to a sub-agent (worktree-isolated), or register the job with \`harness ing pod add\` and check it ≥30min apart. (Fast local/CI waits are exempt — this only fires on external long-runners.)`
+      `${pollLabel} — external long-running jobs (GPU pod · remote r2/measure · cloud) must be polled at ≥30min (1800s), not minute-by-minute (commons c19): short intervals bust the prompt cache (5min TTL) for no gain. Lengthen the sleep to ≥1800, or delegate the polling to a sub-agent (worktree-isolated), or register the job with \`sidecar ing pod add\` and check it ≥30min apart. (Fast local/CI waits are exempt — this only fires on external long-runners.)`
     );
   }
 
@@ -348,6 +348,6 @@ export async function runPre(args: string[]): Promise<number> {
   if (sub === "bash") return preBash(args.slice(1));
   if (sub === "write") return preWrite(args.slice(1));
   if (sub === "askq") return preAskq(args.slice(1));
-  process.stderr.write("usage: harness pre {bash|write|askq}\n");
+  process.stderr.write("usage: sidecar pre {bash|write|askq}\n");
   return 1;
 }

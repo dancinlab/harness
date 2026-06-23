@@ -24,6 +24,7 @@ interface Snapshot {
   ramLight: string;
   swapUsedGiB: number;
   swapLight: string;
+  worktrees: number; // extra git worktrees (main checkout excluded) — hygiene at-a-glance
   danger: boolean;
 }
 
@@ -85,21 +86,28 @@ export function readSnapshot(): Snapshot | null {
   }
   const swapLight = light(swapUsedGiB, 2, 6);
 
+  // extra git worktrees in the current repo (main checkout excluded) — a quick
+  // hygiene gauge so stranded worktrees from isolated agents are visible every turn.
+  const wtRaw = sh("git worktree list --porcelain 2>/dev/null");
+  const worktrees = Math.max(0, (wtRaw.match(/^worktree /gm) || []).length - 1);
+
   const danger = cpuLight === "🔴" || ramLight === "🔴" || swapLight === "🔴" || pressure >= 2;
   return {
     load1, cores, cpuLight,
     ramUsedPct, pressure, pressureLabel, ramLight,
-    swapUsedGiB, swapLight, danger,
+    swapUsedGiB, swapLight, worktrees, danger,
   };
 }
 
 function line(s: Snapshot): string {
   const swap = s.swapUsedGiB >= 1 ? `${s.swapUsedGiB.toFixed(1)}G` : `${Math.round(s.swapUsedGiB * 1024)}M`;
   const head = s.danger ? "⚠️ 부하" : "🖥️ 부하";
+  const wtLight = s.worktrees === 0 ? "🟢" : s.worktrees >= 4 ? "🔴" : "🟡";
   return (
     `${head} — CPU ${s.load1.toFixed(2)}/${s.cores} ${s.cpuLight} · ` +
     `RAM ${s.ramUsedPct}%(${s.pressureLabel}) ${s.ramLight} · ` +
-    `swap ${swap} ${s.swapLight}`
+    `swap ${swap} ${s.swapLight} · ` +
+    `🌲 wt ${s.worktrees} ${wtLight}`
   );
 }
 
@@ -111,7 +119,8 @@ function body(s: Snapshot): string {
     "# mac load (report this one line at the TOP of every user-facing reply — hard rule)\n" +
     line(s) + "\n" +
     "- CPU = load1/cores (🟢<0.7 🟡<1.0 🔴≥1.0) · RAM = active+wired+compressor used% + kernel pressure(normal/warn/critical) · swap used (🟢<2G 🟡<6G 🔴≥6G).\n" +
-    "- A Mac that dies under load fails on MEMORY (compressor+swap), not CPU — when RAM/swap light is 🔴 or pressure≥warn, say so loudly." +
+    "- A Mac that dies under load fails on MEMORY (compressor+swap), not CPU — when RAM/swap light is 🔴 or pressure≥warn, say so loudly.\n" +
+    "- 🌲 wt = extra git worktrees (main excluded · 🟢0 🟡1-3 🔴≥4) — 누적되면 `harness worktree gc` 로 정리." +
     warn + "\n"
   );
 }

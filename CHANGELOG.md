@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## feat(load): 부하 한 줄 우측에 worktree 갯수 표시 (🌲 wt N · stranded 가시화)
+
+🌲 "지금 worktree 몇 개 떠있나 — 매 턴 눈에"
+
+- 매 턴 부하 readout(`harness load`) 끝에 **추가 git worktree 수**(main 제외)를 `🌲 wt N` 으로 붙임 — 신호등 🟢0 · 🟡1-3 · 🔴≥4. 격리 agent 가 만든 worktree 가 정리 안 되고 쌓이는 걸(stranded) 매 턴 눈에 보이게 해 `harness worktree gc` 를 유도.
+- 구현: `load.ts:readSnapshot` 에 `git worktree list --porcelain` plumbing 1회(빠름) → `^worktree ` 카운트 - 1. line/설명줄에 표시. 비-git 디렉토리는 0.
+- 영향: `modules/load.ts` · ARCHITECTURE.json(load 노드) · README.md.
+
 ## feat(commons): do/dont 형식 **write-time** hard-deny (sidecar 동형 · 커밋 아닌 수정 시점 차단)
 
 🚧 "잘못 쓰는 순간 막는다 — 커밋까지 안 기다리고"

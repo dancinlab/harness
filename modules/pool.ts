@@ -67,7 +67,7 @@ function guard(h: Host): { ok: boolean; via: string } {
 }
 
 function rosterPath(): string {
-  return resolve(homedir(), ".harness", "pool.json");
+  return resolve(homedir(), ".sidecar", "pool.json");
 }
 function load(): Roster {
   try {

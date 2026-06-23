@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## fix(rebrand): global-home paths built via `homedir(), ".harness"` → `.sidecar`
+
+🩹 "리브랜드 누락 — homedir 기반 글로벌 경로 5곳이 옛 ~/.harness 를 계속 가리킴"
+
+- 회귀: 직전 rebrand sweep 은 리터럴 `~/.harness`·`.harness/cli` 만 치환 → 코드가 `resolve(homedir(), ".harness", …)` 로 만드는 **글로벌 홈 경로 5곳**(pool.json·recommend-default·companions.json·lsp-rebuild.log·cli)은 누락, 이동된 옛 경로를 가리켜 `pool list`=no hosts·`recommend get-default`=source none 으로 깨짐.
+- 수정: 그 5줄만 `homedir(), ".sidecar"` 로. **per-repo `REPO_ROOT, ".harness"`(8곳)은 그대로** — `.harness/` 관례는 의도적 유지(교차 repo).
+- 검증: `pool list` 가 `~/.sidecar/pool.json` 의 호스트 정상 표시 · `recommend get-default` = FIXED complete [source: global] · `lint fast` ok.
+
 ## chore(rebrand): harness → sidecar — full command + repo + global-install rename
 
 🪪 "harness 라는 이름을 sidecar 로 — 명령어·repo·전역 설치까지 전부"

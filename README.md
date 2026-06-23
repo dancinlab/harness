@@ -236,6 +236,8 @@ bash .harness-engine/bin/sidecar ci list
 
 > 📌 **README = 현재상태 SSOT, 이력 로그 아님** (ARCHITECTURE 와 동급 규율 · commons `single-doc`). README 현행화는 *지금의* 기능·사용법·구조를 **제자리 덮어쓰기(update-in-place)** 하는 것이지, 변경이력을 덧붙이는 게 아니다. README 에 버전 로그·날짜·`이전엔…`/`deprecated`/"v0.x 에서 추가" 식 누적 금지 — 이력은 **CHANGELOG.md + git** 이 SSOT.
 
+> 🌳 **ARCHITECTURE.json 트리 위생 강제** (`architecture lint` · commons `single-doc`): 설계 트리는 **잘게 분해된 노드**로 유지된다 — `상세` 셀이 700자를 넘거나(ARCH-BIG-CELL), ` · ` 로 묶인 항목이 6개를 넘으면(ARCH-PILED), 또는 history 성 키(previous/deprecated/…=ARCH-HISTORY)가 있으면 `sidecar lint`(pre-commit)가 **커밋을 막는다**(severity-map `ARCH-*=block`). 큰 셀은 산문 leaf 가 아니라 한 사실당 한 child 노드로 쪼갠다.
+
 `sidecar pr-cycle` 은 검증된 머지 직후 **로컬 base(main) 를 origin/base 로 ff-sync** 한다(feature 브랜치에서 `git fetch origin <base>:<base>` — checkout 전환 없이 로컬 main 뒤처짐 방지, non-ff 거부=안전). origin 만 갱신하고 로컬 main 을 방치하지 않으므로, 다음 작업 브랜치는 항상 최신 base 에서 분기된다. (commons `cycle-docs-pr`)
 
 루트 `CLAUDE.md` 는 **진입 포인터**(프로젝트 설명 + SSOT 포인터 + 작업규칙)다 — 디렉토리·모듈 **트리는 `ARCHITECTURE.json` 단일 SSOT** 라 CLAUDE.md 에 중복하지 않는다(`docs.ts` 의 CLAUDE-MD-NO-TREE 검사는 구조 SSOT 존재 시 면제 · 트리 drift 방지).

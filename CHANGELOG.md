@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## feat(architecture-lint): tighten tree-hygiene to 700자/6-piled + BLOCK — force fine decomposition
+
+🌳 "ARCHITECTURE.json 트리를 산문 leaf 말고 잘게 쪼갠 노드로 쓰게 강제"
+
+- 동기: 설계 트리가 한 노드 `상세` 에 한 문단(900자+)을 욱여넣어도 막을 게 없었다(임계 1500자/10-piled · 사실상 무발화). "좀더 강제" 요청.
+- 강제: `architecture.ts` 임계 `MAX_CELL_CHARS 1500→700` · `MAX_PILED_ITEMS 10→6`. severity-map(`config/` + repo `.harness/`)에 `ARCH-BIG-CELL`·`ARCH-PILED`·`ARCH-HISTORY = block` 명시 → `sidecar lint`(pre-commit)가 위반 시 커밋 차단(이전엔 fallback=block 에 의존 + 주석은 "warn-only" 로 stale). standalone `architecture lint` 도 위반 시 exit 1(이전 --strict 일 때만).
+- 현행 트리 정합: 700 초과 5개 노드(fleet 929·shadow 808·convergence 720·pr-cycle 716·load 708)를 요약 + children 으로 분해 · `danger 가드` 의 괄호내 ` · ` 목록을 쉼표로(piled 오집계 해소). 결과 max 698자/6-piled.
+- 문서: `architecture` 노드에 `lint (트리 위생)` child 추가 · README 에 트리 위생 강제 항목 · lint.ts 4c 주석 정정(warn-only→block).
+- 검증: `architecture lint: ok` · `lint: ok` · `toolkit` 71 in-sync · init 스모크 그린.
+
 ## fix(init): scaffold ARCHITECTURE.json (not .md) + CLAUDE.md as tree-less entry pointer
 
 🏛️ "init 이 SSOT 인 .json 대신 .md 를 만들고, CLAUDE.md 에 파일트리를 박던 문제"

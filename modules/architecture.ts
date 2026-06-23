@@ -90,10 +90,12 @@ export async function runArchitecture(args: string[]): Promise<number> {
     }
     for (const h of hits) process.stdout.write(`  [${h.rule}] ${h.path} - ${h.msg}\n`);
     process.stdout.write(
-      `architecture lint: ${hits.length} warning(s) - c4 split-piled-cells-into-children` +
-        (args.includes("--strict") ? " (--strict: fail)" : " (warn, non-blocking)") + "\n",
+      `architecture lint: ${hits.length} violation(s) - c4 split-piled-cells-into-children (BLOCK)\n`,
     );
-    return args.includes("--strict") ? 1 : 0;
+    // Block by default — the design tree MUST stay finely decomposed. The commit
+    // gate (lint.ts 4c) already blocks via severity-map (ARCH-* = block); the
+    // standalone command mirrors that so `architecture lint` fails the same way.
+    return hits.length ? 1 : 0;
   }
 
   process.stdout.write("usage: sidecar architecture {inject|show|lint [--strict]}\n");
@@ -112,11 +114,14 @@ export interface ArchLintHit {
 }
 
 // A single leaf string past this should be decomposed into child nodes. Normal
-// cells run a few hundred chars; past ~1.5 KB a cell is a subsection in disguise.
-const MAX_CELL_CHARS = 1500;
+// cells run a few hundred chars; past ~700 a cell is a subsection in disguise —
+// break it into one child node per logical sub-point (c4). Tightened from 1500
+// to force a finely-split tree instead of paragraph-leaves.
+const MAX_CELL_CHARS = 700;
 // A leaf gluing more than this many dot-joined items is a child list flattened
 // into one string - it belongs in a list block or nested nodes, not one cell.
-const MAX_PILED_ITEMS = 10;
+// Tightened from 10 → 6 so piled enumerations decompose into child nodes.
+const MAX_PILED_ITEMS = 6;
 // Keys that smuggle change-history into a current-state snapshot tree.
 const HISTORY_KEYS = new Set(["previous", "deprecated", "history", "changelog", "이전"]);
 const PILE_SEP = " · ";

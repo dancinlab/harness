@@ -22,7 +22,7 @@
 {"id":"easy","kind":"hook","usage":"easy {show|inject}","use":"inject the \"easy\" friendly-response style (lang from prefs.response)"}
 {"id":"load","kind":"hook","usage":"load {show|inject}","use":"per-turn macOS resource readout (CPU load + RAM pressure/used% + swap, ⚠️ on danger) — UserPromptSubmit inject"}
 {"id":"recommend","kind":"hook","usage":"recommend {inject|show|get-default|set-default <m> [--global]|clear-default [--global]|resolve-mode <a>}","use":"4-axis rubric + default mode (repo .harness > global ~/.sidecar > present; fixed axis = auto-pick)"}
-{"id":"sbs","kind":"hook","usage":"sbs [auto[:<axis>]|manual] [<task>]","use":"step-by-step plan-first runbook (mode via recommend resolve-mode)"}
+{"id":"sbs","kind":"hook","usage":"sbs [auto[:<axis>]|manual] [<task>]","use":"plan-first runbook — resolver-first mode · chat-form 모호성→0 · plan.md handoff + auto-QA 4축 + 9-section dossier"}
 {"id":"abg","kind":"hook","usage":"abg [labels]","use":"all-bg-go — fan out prior-turn branches as parallel background Agents (runbook)"}
 {"id":"afg","kind":"hook","usage":"afg [labels]","use":"all-fg-go — run prior-turn branches sequentially in-session (runbook)"}
 {"id":"fleet","kind":"hook","usage":"fleet [name:goal,…|go|stop|status]","use":"perpetual multi-lane orchestrator (runbook + roster)"}

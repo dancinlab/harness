@@ -89,7 +89,7 @@ hook delegates (wire these into your agent's settings.json):
   load {show|inject}       per-turn macOS resource readout (CPU load + RAM pressure/used% + swap, ⚠️ on danger) — UserPromptSubmit inject
   recommend {inject|show|get-default|set-default <m> [--global]|clear-default [--global]|resolve-mode <a>}
                            4-axis rubric + default mode (repo .harness > global ~/.sidecar > present; fixed axis = auto-pick)
-  sbs [auto[:<axis>]|manual] [<task>]   step-by-step plan-first runbook (mode via recommend resolve-mode)
+  sbs [auto[:<axis>]|manual] [<task>]   plan-first runbook — resolver-first mode · chat-form 모호성→0 · plan.md handoff + auto-QA 4축 + 9-section dossier
   abg [labels]             all-bg-go — fan out prior-turn branches as parallel background Agents (runbook)
   afg [labels]             all-fg-go — run prior-turn branches sequentially in-session (runbook)
   fleet [name:goal,…|go|stop|status]   perpetual multi-lane orchestrator (runbook + roster)

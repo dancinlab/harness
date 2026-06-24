@@ -362,7 +362,7 @@
                     "이름": "fleet full",
                     "역할": "풀스택",
                     "구분": "mode",
-                    "상세": "roster `full` + fleet-full.md. 프론티어가 스스로 페이즈 전환 research→implement→(벽)→abstract→(escape)→falsify→research 순환. depletion 은 경험·추상 양축 모두 dry 일 때만."
+                    "상세": "roster `full` + fleet-full.md. 프론티어가 3 페이즈를 순서대로 전환 research→implement→(벽)→abstract→(escape)→falsify→research 순환 — implement 스킵 금지(research→abstract 직행은 lazy-ceiling · 약한 레버도 싼 로컬 probe 로 벽 측정 후에만 abstract). 기본 실행=순차(afg, 한 레인씩 foreground) · `parallel` 인자일 때만 Workflow fan-out. 게이트는 페이즈가 아니라 비용 — 싼/로컬 implement 자동, 비싼(pool/GPU rent/대규모) implement 만 4축+go. depletion 은 경험·추상 양축 모두 dry 일 때만."
                   }
                 ]
               },

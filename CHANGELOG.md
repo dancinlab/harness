@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## feat(sbs): restore full archive_sidecar fidelity in the /sbs runbook
+
+🧭 "60줄로 압축돼 정밀도를 잃었던 /sbs 런북을 archive_sidecar 0.15.0 (517+207줄) 수준으로 복원"
+
+- 동기: `dancinlab/archive_sidecar`(구 sidecar · private 아카이브)의 `step-by-step` 플러그인이 가진 정밀 런북을 현재 단일-CLI 아키텍처의 `templates/sbs.md` 로 1:1 이식. 기존 압축본이 잃었던 12개 블록 복원 — resolver-first parse 전수 우선순위·`auto ── manual` 다이어그램·7요소 chat-form·non-skippable 재스캔 hard gate·미지값 무날조(양 모드)·AskUserQuestion fallback·합의화면 응답처리(go/Qn=/새모호성)·plan.md `@L assert` 계약(grep/file/verdict 3종 + 후방호환)·백그라운드 Agent 발사·auto-QA 4축 hybrid fail 정책·status flip·9-section 인계 dossier·end-user dossier·Halt·Closure.
+- 현재 subsystem 적응 (archive 참조 → 현재 매핑): resolver-first 는 `modules/sbs.ts` 가 이미 CODE 로 `resolveMode` 호출(코드 무변경) · `hexa easy scaffold/lint` 빌트인 → `sidecar easy` styles SSOT(`~/.sidecar/cli/styles/easy.<lang>.md`) point+self-check · `sidecar handoff add <repo>` (retired) → `sidecar ing add --to <repo>`(handoff-guard 강제) · `plan-guard` 부재 → `@L` 계약 포맷은 문서화하되 advisory(미래 enforcer 들어오면 그대로 강제) · `/cycle`·`/domain` → `abg`·ING 보드.
+- 배선: `commands/sbs.md` description + `cli/index.ts` help 라인을 새 충실도로 갱신(picker/help lockstep). 설계 SSOT(subsystem·데이터흐름) 불변이라 ARCHITECTURE 무변경 — 런북 정밀도 복원이지 설계변경 아님.
+- 검증: `help` 로드 OK · `sbs manual/auto/auto:safe/no-token` smoke (resolver 엣지 — bare `auto`→FIXED complete 상속 · `auto:safe`→override · no-token→상속 모두 정확) · `toolkit write` 71 entries 카탈로그 100%.
+
 ## fix(rebrand): deplete remaining harness leftovers (identifiers · prose · uninstall bug)
 
 🧹 "rebrand sweep 가 놓친 harness 잔재를 dry 까지 소진"

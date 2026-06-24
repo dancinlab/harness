@@ -101,9 +101,9 @@ export function readSnapshot(): Snapshot | null {
 
 function line(s: Snapshot): string {
   const swap = s.swapUsedGiB >= 1 ? `${s.swapUsedGiB.toFixed(1)}G` : `${Math.round(s.swapUsedGiB * 1024)}M`;
-  const head = s.danger ? "⚠️ 부하" : "🖥️ 부하";
+  const head = s.danger ? "⚠️ " : "";
   return (
-    `${head} — CPU ${s.load1.toFixed(2)}/${s.cores} ${s.cpuLight} · ` +
+    `${head}CPU ${s.load1.toFixed(2)}/${s.cores} ${s.cpuLight} · ` +
     `RAM ${s.ramUsedPct}%(${s.pressureLabel}) ${s.ramLight} · ` +
     `swap ${swap} ${s.swapLight} · ` +
     `wt ${s.worktrees} ${light(s.worktrees, 3, 10)}`

@@ -455,7 +455,7 @@
                     "이름": "3축 신호등",
                     "역할": "CPU·RAM·swap·wt readout",
                     "구분": "detail",
-                    "상세": "CPU(load1÷cores · 🟢<0.7 🟡<1.0 🔴≥1.0), RAM((active+wired+compressor) used% + kern.memorystatus_vm_pressure_level normal/warn/critical), swap(vm.swapusage · 🟢<2G 🟡<6G 🔴≥6G), wt(추가 worktree 수 · main 제외 · 🟢0-2 🟡3-9 🔴≥10). 어느 축이든 🔴 또는 pressure≥warn 이면 `⚠️ 부하` + 가드 노트(대량빌드·병렬agent·GPU 자제)."
+                    "상세": "CPU(load1÷cores · 🟢<0.7 🟡<1.0 🔴≥1.0), RAM((active+wired+compressor) used% + kern.memorystatus_vm_pressure_level normal/warn/critical), swap(vm.swapusage · 🟢<2G 🟡<6G 🔴≥6G), wt(추가 worktree 수 · main 제외 · 🟢0-2 🟡3-9 🔴≥10). 라인은 라벨 접두사 없이 `CPU …` 로 시작(정상). 어느 축이든 🔴 또는 pressure≥warn 이면 선두에 `⚠️ ` 마커 + 가드 노트(대량빌드·병렬agent·GPU 자제)."
                   },
                   {
                     "이름": "동기·비용안전",

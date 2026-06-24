@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## chore(load): drop the `🖥️ 부하 —` prefix from the per-turn load line
+
+🖥️ "매 턴 부하 라인에서 라벨 접두사만 빼고 수치는 그대로"
+
+- 동기: 유저 요청 — 매 턴 상단 부하 보고에서 `🖥️ 부하 —` 접두사가 군더더기. 라인 자체(CPU·RAM·swap·wt)는 유지하되 접두사만 제거.
+- 변경(`modules/load.ts` `line()`): `head` 를 `정상=""` / `위험="⚠️ "` 로 바꿔 정상 상태는 `CPU …/… 🟢 · RAM … · swap … · wt …` 로 시작. 위험 상태는 `⚠️ ` 마커를 남겨 기존 자원위험 경고 라우팅 보존.
+- 검증: `load inject` 출력이 `CPU 2.33/10 🟢 · …` 로 접두사 없이 시작 확인. lockstep: ARCHITECTURE.json 3축-신호등 노드(`⚠️ 부하`→`⚠️ ` 마커 · 접두사 제거 명시).
+- 박제: sidecar/CLAUDE.md 작업규칙 강화 — "어떤 구현·수정이든 완료되면 사용자 지시 없어도 그 턴에 자동 `sidecar ship`(direct-execute · 4축/확인 없이)" 로 명문화(유저 요청).
+
 ## feat(lint): HELP-BACKTICK gate — ossify the recurring cli HELP backtick break
 
 🔒 "한 세션에 두 번 낸 'HELP 백틱→리터럴 깨짐' 실수를 commit 게이트로 박제"

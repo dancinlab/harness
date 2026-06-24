@@ -11,6 +11,6 @@ Claude Code plugin (`/plugin`).
 > · 이력 → [CHANGELOG.md](CHANGELOG.md) (append)
 
 ## 작업 규칙 (this repo)
-- do: 매 사이클 문서(CHANGELOG + 설계변경 시 ARCHITECTURE) → 검증 → **구현 후 항상 `sidecar ship`** = 전 설치 surface 한 번에 전파(pr-cycle 검증머지 → self-update 전역 CLI → shadow 슬래시 미러) · config/data-only 는 `sidecar ship --no-doc` (commons `cycle-docs-pr`)
+- do: **어떤 구현·수정이든 완료되면 사용자가 따로 시키지 않아도 그 턴에 자동으로 `sidecar ship`** (deterministic 명령 = direct-execute · 4축 박스/확인 없이 즉시) = 전 설치 surface 한 번에 전파(pr-cycle 검증머지 → self-update 전역 CLI → shadow 슬래시 미러) · 직전에 매 사이클 문서(CHANGELOG + 설계변경 시 ARCHITECTURE/README) → 검증 선행 · config/data-only 는 `sidecar ship --no-doc` (commons `cycle-docs-pr`)
 - do: 새 명령은 `modules/<name>.ts` + `cli/index.ts` 등록 + help 라인 + CHANGELOG (+ 런북형 `templates/<name>.md` · 슬래시 노출 `commands/<name>.md`) → `npx tsx cli/index.ts help` 로드 + `sidecar toolkit write`(카탈로그 100%) + 관련 스모크로 검증
 - dont: `shadow` 를 빠뜨리고 `pr-cycle`+`self-update` 만 돌리기 — 새 슬래시가 picker 에 안 떠 "반영 안됨" 이 재발한다(그래서 셋을 `ship` 한 명령으로 묶었다)

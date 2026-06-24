@@ -96,7 +96,7 @@ hook delegates (wire these into your agent's settings.json):
   fleet [name:goal,…|go|stop|status]   perpetual multi-lane orchestrator (runbook + roster)
   fleet lab [frontier:wall,…|go|…]      research-driven frontier lab (research-gate→implement→measure→SSOT→re-research; walls measured + reopenable)
   fleet abstract [layer:seed,…|go|…]    abstraction-driven layer dive (census LAWS→peel to shared trade-off/meta-law→invent escape→cast as falsifiable prediction; meta-laws reopenable · d6 honest)
-  fleet full [frontier:goal,…|go|…]     full-stack campaign — auto-phases research→implement→abstract→falsify per frontier (empirical wall → abstract escape → back to experiment; both axes must dry · c14)
+  fleet full [frontier:goal,…|parallel|go|…]  full-stack campaign — ALL 3 phases in order per frontier (research→implement→abstract→falsify · implement NEVER skipped, weak lever still measures a wall before abstract) · SEQUENTIAL by default (afg-style; pass 'parallel' to fan out) · cheap implement auto, only paid gates (c14)
   pr-cycle [--no-reap] [gh flags]   push branch → open PR → self-merge (squash·admin·delete-branch) → reap stale open PRs (auto-merge mergeable · report conflicting · --no-reap skips)
   pod                      GPU cloud pod dispatch runbook (preflight→fire→poll→harvest→down · cost-gated)
   dojo [<slug>] [--lang]   cloud training-job scaffolder (runbook + exports/dojo/<slug>/ emit)
@@ -141,7 +141,7 @@ reports:
                                write-time enforced in \`pre write\` (docs.enforce: warn[default]|block|off)
   lockdown {status|add <path...>|rm <path...>|check <path>}   manage L0 set (opt-in · none until designated)
                                add/rm mutate harness.config.json lockdown.files
-  folders [scan|scaffold <dir>]   per-subfolder CLAUDE.md coverage + scaffolding
+  folders [scan|scaffold <dir>]   per-subfolder CLAUDE.md coverage + scaffolding (enforced: lint blocks FOLDER-GUIDE-MISSING for the folder of any staged file lacking a guide · commons folder-docs)
   end                          session-closure safety check (uncommitted·unpushed·stash·PRs·branches·worktrees)
   worktree {scan|gc|guard <cmd>}   no-pileup/no-stranded enforcement — flag stranded worktrees · auto-sweep merged([gone]) + aged(>maxAgeDays, tip→refs/reaped)
                            (SessionStart-wire \`worktree gc\`; \`scan\` exit 1 gates new work on abandoned worktrees)

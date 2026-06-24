@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## feat(folder-docs): enforce per-folder CLAUDE.md at commit (existence-only) + commons rule
+
+📁 "작업한 폴더엔 로컬 CLAUDE.md 필수 — scan/넛지에 그치던 걸 commit-time block 게이트로 강제"
+
+- 동기: 폴더별 CLAUDE.md 가 `folders scan` + post-edit warn 넛지뿐이라 실질 강제가 없었다. 유저 요청 = 생성·관리 강제 + commons 등록.
+- lint 게이트(`FOLDER-GUIDE-MISSING` · block): `sidecar lint` 가 **staged 파일의 폴더**만 검사 — 그 폴더가 자격(`folderGuides` roots/depth/minFiles)인데 로컬 `CLAUDE.md` 없으면 커밋 차단(`folders scaffold <dir>`). 전체-repo 스캔이 아니라 staged-scoped 라 무관 폴더 누락이 무관 커밋을 막지 않는다("작업한 폴더만 관리").
+- **존재만 강제 · 내용 자유양식**: 가이드 파일 내부를 do/dont 등으로 강제하는 content lint 는 없음(유저 명시).
+- commons 등록: `## folder-docs` 규칙 신설(do/dont 한 쌍 — commons SSOT 포맷). severity-map(config/+.harness/) 에 `FOLDER-GUIDE-MISSING:block`.
+- repo 준수화: 누락이던 `lib/`·`modules/` 에 실제 내용 채운 `CLAUDE.md` 생성(목적·핵심파일·규칙·gotcha).
+- lockstep: ARCHITECTURE lint 노드(4h) · cli help · README folders 행. 검증: guide 치우고 staged → `[block] FOLDER-GUIDE-MISSING modules/` 발사·복원 시 소멸 · `help` 로드 OK · `folders scan` 0.
+
+## fix(fleet-full): stop the implement-skip collapse + make sequential the default
+
+🛰️ "fleet-full 이 패러다임 전환(abstract)만 돌던 구조적 누수를 막고 3 페이즈 전부 순서대로 통과시킴"
+
+- 증상: `/fleet-full` 이 research+implement+abstract 3 페이즈를 엮어야 하는데 실전에선 implement 를 건너뛰고 abstract(패러다임 전환)만 무한순환.
+- 루트커즈 2개: ① §3 `research→implement` 규칙이 "고신뢰 레버 없으면 implement 건너뛰고 abstract" 라 — 싼 research 는 대개 고신뢰 레버를 못 찾으니 매 라운드 abstract 로 직행. ② §5 비용 게이트가 implement **페이즈 전체**를 4축+go 로 막아 — 무비용 자동순환(research·abstract)이 게이트 걸린 implement 를 영구 회피.
+- 수정(templates/fleet-full.md): research→abstract 직행 **금지**(lazy-ceiling c14 d) — 레버 약해도 가장 싼 로컬 implement/probe 로 **벽을 측정한 뒤에만** abstract 승격(abstract 진입 전제 = 직전 implement 의 캡처 수치 c2). 게이트를 "페이즈"→"비용"으로 재정의: 싼/로컬 implement(무비용·작은 n·worktree)는 research·abstract 와 동급 자동 진행, **비싼(pool/GPU rent/대규모) implement 만** 4축+go.
+- 순차 기본: `parallel` 인자일 때만 Workflow fan-out, 미지정 시 **순차(afg-style · 한 레인씩 foreground await)**. §0/§1/§7 + 인트로 헤드라인 배선.
+- lockstep: commands/fleet-full.md description(805자<cap) · cli help 라인 · ARCHITECTURE `fleet full` 노드 · TOOLKIT 71 entries.
+- 검증: help 로드 OK(백틱 리터럴 깨짐 1건 fix) · `fleet full status` OK · ARCHITECTURE.json valid.
+
 ## feat(ing): age-aware pileup guard — stale/over-count items shout for a `done` scrub
 
 🧹 "완료된 ING 라인이 scrub 안 된 채 ACTIVE 로 썩는 적체를 매 턴 들춰내 강제"

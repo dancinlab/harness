@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## feat(architecture): convergence 레코드 CRUD 이빨 — `architecture convergence {list|add|rm|edit}`
+
+🗣️ "add remove edit 도 할수 있게 명령어 세팅 되잇나?"
+
+- 동기: 유저 — convergence 모듈 폐기 후 재발학습이 ARCHITECTURE.json `convergence.records[]` 단일 SSOT 에 살지만, 추가/삭제/수정이 손-JSON편집뿐이었다. CLI 이빨을 architecture 모듈에 붙임.
+- 신규(`modules/architecture.ts`): `sidecar architecture convergence {list|add|rm|edit}` — id-keyed · `add`=upsert(같은 id 면 update-in-place) · `edit <id> [--state|--value|--threshold|--source]` 부분 패치 · `rm <id>` · `list`. state 는 enum 검증(불량 거부). value/threshold 의 셸 특수문자는 `--value -`(또는 `--threshold -`)로 stdin 읽기(ing `--stdin` 패턴 동형). 쓰기는 ARCHITECTURE.json 파싱→records 교체→재기록(나머지 트리 보존).
+- 배선: cli help line(architecture) 갱신 · TOOLKIT 재생성. HELP 리터럴 백틱은 HELP_NO_RAW_BACKTICK 학습대로 작은따옴표로 회피(lint HELP-BACKTICK 0).
+- 검증: tsc clean · help 로드 · 임시 repo CRUD 라운드트립(add·upsert·edit·list·rm) PASS · invalid state 거부 · 변이 후 JSON valid.
+
 ## refactor(convergence): 모듈 폐기 → 재발학습을 ARCHITECTURE SSOT 로 + 파일-터치 시점 주입 (architecture 모듈 강화)
 
 🗣️ "컨버전스 모듈 제거하고 / 아키텍쳐 모듈을 강화 / ai agent 가 특정파일 터치할 때마다 inject"

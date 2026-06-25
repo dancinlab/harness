@@ -40,6 +40,7 @@ import { runToolkit } from "../modules/toolkit.ts";
 import { runCompanions } from "../modules/companions.ts";
 import { runWatch } from "../modules/watch.ts";
 import { runFolders } from "../modules/folders.ts";
+import { runNaming } from "../modules/naming.ts";
 import { runPrefs } from "../modules/prefs.ts";
 import { runEasy } from "../modules/easy.ts";
 import { runLoad } from "../modules/load.ts";
@@ -128,6 +129,7 @@ hook delegates (wire these into your agent's settings.json):
 
 gates & ledgers:
   lint [all|fast|verbose]  staged-L0 + freshness + convergence checks
+  naming audit [path] [--ing] [--gate]   repo-wide non-canonical name audit (version/copy/dup suffix backlog the write-guard never saw) · --ing = land summary on THIS repo's board · --gate = exit 1 on any hit
   ci [all|fast|list]       run configured verification commands in parallel (was verify; config key stays verify.checks)
   ci-track <pr|branch> [--watch] [--interval=60] [--timeout=1800] [--merge-on-green] [-R owner/repo]   track remote PR/CI checks (gh) → 🟢/🔴/🟡 verdict; --watch polls until terminal (no hand-rolled gh-poll loop · c19)
   verify [rubric|fence "<claim>"]   tier-rubric claim verification (badges · no self-judge)
@@ -305,6 +307,8 @@ async function main(): Promise<number> {
       return runConvergence(rest);
     case "sync":
       return runSync(rest);
+    case "naming":
+      return runNaming(rest);
     default:
       process.stderr.write(`unknown cmd: ${cmd}\n\n${HELP}`);
       return 1;

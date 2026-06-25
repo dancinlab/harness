@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## feat(naming): repo 전수 비-canonical 이름 audit 명령 — write-guard 의 backlog 짝 (canonical-naming 강제)
+
+🗣️ "리포들이 거버넌스 규칙대로 단순·일관·canonical·native naming 지키도록 강제 메커니즘 강화" (A) + "감사결과는 각 repo ING 에만" 
+
+- 동기: 유저 — canonical-naming/native-canonical-first 규칙이 repo 들에서 실제로 지켜지게 강제. 기존 write-time `naming-guard` 는 **새** 파일(`foo_v2.ts`)만 Write/Edit/bash 에서 차단할 뿐, 이미 커밋된 **backlog**(`config copy.json`·`utils_old.ts`·`model_v2/`)는 보지 못하는 갭이 있었다.
+- 신규 `modules/naming.ts` (`sidecar naming audit [path] [--ing] [--gate]`): `git ls-files` 트리를 전수 스캔해 버전/복사/중복 접미사 이름을 보고. 판정은 naming-guard 의 `offendingToken` 을 **export 해 재사용**(가드와 audit 이 동일 기준 — drift 없음). 기본 read-only(exit 0) · `--gate`=위반 시 exit 1(commit/CI 게이트) · `--ing`=요약 1줄을 **그 repo 자기 ING** 보드에 add(보드=내 repo 전용 · cross-repo 전달 없음 — 직전 `--to` 폐기와 정합). cross-repo 감사는 각 repo 안에서 이 명령을 돌려 그 repo ING 에 착지(B).
+- 배선: `cli/index.ts`(import+dispatch+help) · `commands/naming.md`(슬래시 노출) · ARCHITECTURE(naming 모듈 노드) · README(명령표) · TOOLKIT.jsonl 재생성(72엔트리).
+- 검증: tsc --noEmit clean · `toolkit check` in-sync · sidecar 자기 audit=194 이름 전부 canonical(clean) · 임시 repo: dir+file 위반 3건 정확 탐지·`--gate` exit 1·`--ing` 로컬 보드 착지 PASS.
+
 ## refactor(ing): cross-repo 전달(`--to <repo>`) 기능 폐기 — 보드는 내 repo 전용 (직접수정 원칙)
 
 🗣️ "ing 를 타세션에 넣는 기능은 폐기하자. 직접 수정원칙이니까"

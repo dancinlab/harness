@@ -21,7 +21,7 @@ const DUP = /( \d+|\(\d+\)|[ _-]copy)$/i;
 // an explicit opt-out: a name carrying this marker is intentional (e.g. real API versioning)
 const ALLOW = /@canonical-ok/;
 
-function offendingToken(name: string): string | null {
+export function offendingToken(name: string): string | null {
   if (!name) return null;
   const ext = extname(name);
   const stem = ext ? name.slice(0, -ext.length) : name;

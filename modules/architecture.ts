@@ -5,10 +5,11 @@
 // The design tree is the c4/c14 SSOT; keeping it salient means edits stay in
 // lockstep with the code instead of drifting.
 //
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { REPO_ROOT } from "../lib/paths.ts";
 import { readStdin } from "../lib/exec.ts";
+import { info, ok, loudFail } from "../lib/log.ts";
 
 // Cap injected size so a huge tree never blows the context window. ~80 KB is
 // well under a typical CLAUDE.md budget; past it we inject the head + a pointer.
@@ -27,6 +28,8 @@ function pick(): { path: string; rel: string } | null {
 export async function runArchitecture(args: string[]): Promise<number> {
   const sub = args[0] ?? "show";
   const found = pick();
+
+  if (sub === "convergence") return convergenceVerb(args.slice(1));
 
   if (sub === "show") {
     if (!found) {
@@ -97,7 +100,101 @@ export async function runArchitecture(args: string[]): Promise<number> {
     return hits.length ? 1 : 0;
   }
 
-  process.stdout.write("usage: sidecar architecture {inject|show|lint [--strict]}\n");
+  process.stdout.write("usage: sidecar architecture {inject|show|lint|convergence {list|add|rm|edit}}\n");
+  return 1;
+}
+
+// --- convergence record CRUD (sidecar architecture convergence …) -------------
+// Manage the recurrence-learning store in ARCHITECTURE.json `convergence.records[]`
+// via the CLI instead of hand-editing JSON. id-keyed: `add` upserts, `edit` patches,
+// `rm` deletes. Free-text value/threshold with shell-special chars: pass `--value -`
+// (or `--threshold -`) to read THAT field from stdin (agent-safe, mirrors `ing --stdin`).
+function flag(args: string[], name: string): string | undefined {
+  const i = args.indexOf(`--${name}`);
+  if (i < 0 || i + 1 >= args.length) return undefined;
+  const v = args[i + 1];
+  return v === "-" ? readStdin().trim() : v;
+}
+
+function writeConvergence(records: ConvergenceRecord[]): boolean {
+  const found = pick();
+  if (!found || !found.rel.endsWith(".json")) {
+    loudFail("architecture convergence: ARCHITECTURE.json (JSON tree) required");
+    return false;
+  }
+  let root: Record<string, unknown>;
+  try {
+    root = JSON.parse(readFileSync(found.path, "utf8"));
+  } catch {
+    loudFail("architecture convergence: ARCHITECTURE.json is not valid JSON");
+    return false;
+  }
+  const conv = (root.convergence as { note?: string; records?: ConvergenceRecord[] }) ?? {};
+  conv.records = records;
+  root.convergence = conv;
+  writeFileSync(found.path, JSON.stringify(root, null, 2) + "\n");
+  return true;
+}
+
+async function convergenceVerb(args: string[]): Promise<number> {
+  const verb = args[0] ?? "list";
+  const records = loadConvergence();
+
+  if (verb === "list") {
+    if (!records.length) return info("convergence: no records"), 0;
+    for (const r of records) info(`  [${r.state}] ${r.id}  (${r.source ?? "-"})  ${r.value ?? ""}`);
+    info(`convergence: ${records.length} record(s)`);
+    return 0;
+  }
+
+  if (verb === "add") {
+    const id = flag(args, "id");
+    const state = flag(args, "state") ?? "ossified";
+    const value = flag(args, "value");
+    if (!id || !value) {
+      info('usage: sidecar architecture convergence add --id <ID> --state <s> --value "<핵심>" [--threshold "<재발조건>"] [--source <file>]');
+      info("  (value/threshold 에 셸 특수문자: --value - 로 stdin 읽기)");
+      return 1;
+    }
+    if (!CONV_STATES.has(state)) return loudFail(`invalid state '${state}' (allowed: ${[...CONV_STATES].join("·")})`), 1;
+    const rec: ConvergenceRecord = { id, state, value, threshold: flag(args, "threshold") ?? "", source: flag(args, "source") ?? "" };
+    const idx = records.findIndex((r) => r.id === id);
+    if (idx >= 0) records[idx] = rec; // upsert (update-in-place)
+    else records.push(rec);
+    if (!writeConvergence(records)) return 1;
+    ok(`convergence: ${idx >= 0 ? "updated" : "added"} ${id} (${records.length} total)`);
+    return 0;
+  }
+
+  if (verb === "edit") {
+    const id = args[1] && !args[1].startsWith("--") ? args[1] : flag(args, "id");
+    const rec = records.find((r) => r.id === id);
+    if (!rec) return loudFail(`convergence edit: no record id=${id ?? "?"}`), 1;
+    const st = flag(args, "state");
+    if (st !== undefined) {
+      if (!CONV_STATES.has(st)) return loudFail(`invalid state '${st}'`), 1;
+      rec.state = st;
+    }
+    for (const f of ["value", "threshold", "source"] as const) {
+      const v = flag(args, f);
+      if (v !== undefined) rec[f] = v;
+    }
+    if (!writeConvergence(records)) return 1;
+    ok(`convergence: edited ${rec.id}`);
+    return 0;
+  }
+
+  if (verb === "rm") {
+    const id = args[1];
+    if (!id) return info("usage: sidecar architecture convergence rm <id>"), 1;
+    const kept = records.filter((r) => r.id !== id);
+    if (kept.length === records.length) return loudFail(`convergence rm: no record id=${id}`), 1;
+    if (!writeConvergence(kept)) return 1;
+    ok(`convergence: removed ${id} (${kept.length} remain)`);
+    return 0;
+  }
+
+  info("usage: sidecar architecture convergence {list|add|rm <id>|edit <id> [--state|--value|--threshold|--source]}");
   return 1;
 }
 

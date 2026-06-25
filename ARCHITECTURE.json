@@ -229,6 +229,12 @@
                 "상세": "CHANGELOG·ARCHITECTURE(.json|.md)·README 미동반=block (pr-cycle은 ing 보드 현행화도 gate). 4f SHADOW-DESC(warn·sidecar s18 포팅): commands/*.md description 이 ≤1400자 skill-listing cap + `Triggers —` 절 보유인지 검사 — 누락 시 bare /cmd 자연어 인지가 죽으므로 환기(sidecar-repo 한정 · commands/ 존재 시). 4g COMMONS-PROSE/COMMONS-NO-DODONT(block): commons.md(또는 .harness override) 각 `## slug` 섹션 본문이 `- do:`/`- dont:` 줄만(섹션마다 ≥1)인지 검사 — 거버넌스 SSOT 산문 재비대 차단(`commons.ts:lintCommonsFormat`). 4h FOLDER-GUIDE-MISSING(block): staged 폴더(folderGuides)에 CLAUDE.md 없으면 차단(존재만·folder-docs). 4i HELP-BACKTICK(block): cli/index.ts HELP 리터럴 내 이스케이프 안 된 백틱 차단(help/build 깨짐 재발 박제·텍스트스캔)"
               },
               {
+                "이름": "naming",
+                "역할": "repo 전수 비-canonical 이름 audit (write-guard 의 backlog 짝)",
+                "구분": "module",
+                "상세": "`audit [path] [--ing] [--gate]` — git ls-files 트리에서 버전/복사/중복 접미사 이름(`offendingToken` 재사용 = naming-guard 와 동일 판정) 전수 스캔. write-time naming-guard 는 새 파일만 막아 기존 backlog(이미 커밋된 `_v2`·`config copy` 등)는 못 보던 갭을 메움. 기본 read-only 보고(exit 0) · `--gate` 면 위반 시 exit 1(commit/CI 게이트) · `--ing` 면 요약 1줄을 **그 repo 자기 ING** 보드에 add(보드=내 repo 전용 · cross-repo 전달 없음). cross-repo naming 감사는 각 repo 안에서 이 명령을 돌려 그 repo ING 에 착지"
+              },
+              {
                 "이름": "install",
                 "역할": "공용(전역) 부트스트랩 — clone+래퍼+전역훅 (init=per-repo 와 별개)",
                 "구분": "module",

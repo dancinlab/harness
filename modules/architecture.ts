@@ -9,7 +9,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { REPO_ROOT, LOG_DIR } from "../lib/paths.ts";
 import { readStdin } from "../lib/exec.ts";
-import { resolveRuleFile } from "../lib/config.ts";
+import { resolveRuleFile, config } from "../lib/config.ts";
 import { lastAssistantText } from "./recommend.ts";
 import { info, ok, loudFail, warn } from "../lib/log.ts";
 
@@ -314,15 +314,16 @@ export interface ArchLintHit {
   msg: string;
 }
 
-// A single leaf string past this should be decomposed into child nodes. Normal
-// cells run a few hundred chars; past ~700 a cell is a subsection in disguise —
-// break it into one child node per logical sub-point (c4). Tightened from 1500
-// to force a finely-split tree instead of paragraph-leaves.
-const MAX_CELL_CHARS = 700;
+// A single leaf string past this is a paragraph-in-disguise — keep only the
+// crisp kernel (the prose/mechanism/precedent belongs in code + CHANGELOG + git
+// per single-doc) or split it into one child node per logical sub-point (c4).
+// Config-driven (lint.archCellCap); tightened 1500→700→300 to force a crisp tree
+// of short cells, not prose-leaves. 0 = off.
+const MAX_CELL_CHARS = config().lint?.archCellCap ?? 300;
 // A leaf gluing more than this many dot-joined items is a child list flattened
 // into one string - it belongs in a list block or nested nodes, not one cell.
-// Tightened from 10 → 6 so piled enumerations decompose into child nodes.
-const MAX_PILED_ITEMS = 6;
+// Config-driven (lint.archPiledMax, default 6 — tightened from 10). 0 = off.
+const MAX_PILED_ITEMS = config().lint?.archPiledMax ?? 6;
 // Keys that smuggle change-history into a current-state snapshot tree.
 const HISTORY_KEYS = new Set(["previous", "deprecated", "history", "changelog", "이전"]);
 const PILE_SEP = " · ";
@@ -339,15 +340,15 @@ export function lintArchitectureTree(): ArchLintHit[] {
   const hits: ArchLintHit[] = [];
   const walk = (node: unknown, path: string): void => {
     if (typeof node === "string") {
-      if (node.length > MAX_CELL_CHARS) {
+      if (MAX_CELL_CHARS > 0 && node.length > MAX_CELL_CHARS) {
         hits.push({
           rule: "ARCH-BIG-CELL",
           path,
-          msg: `${node.length}-char leaf - split into child nodes (c4: one logical item per node)`,
+          msg: `${node.length}-char leaf > ${MAX_CELL_CHARS} cap — keep the crisp kernel (prose/precedents → CHANGELOG/git) or split into child nodes (c4)`,
         });
       }
       const items = node.split(PILE_SEP).length;
-      if (items > MAX_PILED_ITEMS) {
+      if (MAX_PILED_ITEMS > 0 && items > MAX_PILED_ITEMS) {
         hits.push({
           rule: "ARCH-PILED",
           path,

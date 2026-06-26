@@ -352,13 +352,13 @@
                 "이름": "naming-guard",
                 "역할": "비-canonical 작명 차단(생성) + 터치 시 넛지",
                 "구분": "guard",
-                "상세": "버전/복사 접미사 파일·폴더명(`_v2`·`_final`·`_copy`·`foo 2`…). **새 생성** BLOCK → canonical 단일파일 update-in-place 강제 · Write/Edit(`detectVersionedName`) + Bash mv/cp/touch/mkdir(`detectVersionedNameBash`, 목적지만 검사). **기존 비표준 파일 터치는 warn-only 넛지**(생성만 막던 갭 — backlog 가 손 안 닿음): preWrite 가 `existsSync` 면 block 대신 warn(편집은 허용해 고칠 수 있게) · preTouch(Read)도 `offendingToken(basename)` 로 warn(`NAMING-TOUCH-VERSION-SUFFIX`). c25 · 이력은 git history · `@canonical-ok`(write)/`# canonical-ok`(bash) 면제 · test/spec 제외"
+                "상세": "버전/복사 접미사 파일·폴더명(`_v2`·`_copy`·`foo 2`…). 새 생성 BLOCK → canonical update-in-place 강제(Write/Edit + Bash mv/cp/touch/mkdir). 기존 비표준 파일 터치는 warn-only 넛지(생성만 막던 갭 — 편집 허용해 고치게). c25 · `@canonical-ok`/`# canonical-ok` 면제 · test/spec 제외"
               },
               {
                 "이름": "state-guard",
                 "역할": "산출물 흩뿌림 차단",
                 "구분": "guard",
-                "상세": "scatter 디렉토리(`.verdicts`·`bench`·`experiments`·`scripts/scratch`…) 생성 BLOCK → 작업산출물은 단일 git-tracked `state/` 루트로 강제(commons preserve-state) · Write/Edit(`detectBannedStateDir`) + Bash mkdir/touch/cp/mv(`detectBannedStateDirBash`) 양쪽 · `state/`·`build/`·`.harness/` 하위는 통과 · `@state-ok`(write)/`# state-ok`(bash) 면제"
+                "상세": "scatter 디렉토리(`.verdicts`·`bench`·`experiments`·`scripts/scratch`…) 생성 BLOCK → 산출물은 단일 git-tracked `state/` 루트 강제(commons preserve-state)·Write/Edit + Bash mkdir/touch/cp/mv 양쪽·`state/`·`build/`·`.harness/` 하위 통과·`@state-ok`/`# state-ok` 면제"
               },
               {
                 "이름": "single-doc(scatter) 가드",
@@ -372,7 +372,7 @@
             "이름": "PreToolUse(Write)",
             "역할": "쓰기 직전 → pre write",
             "구분": "surface",
-            "상세": "경로·내용·우회패턴 매칭 + write-time hard-deny 묶음(상세는 각 4g/4h check 노드): SKILL-DESC-CAP/CMD-DESC-LONG(명령 desc 1400 천장 + 320 미니멀 cap) · COMMONS-PROSE/NO-DODONT/DODONT-INCOMPLETE(commons.md+루트 CLAUDE.md do/dont-only 양식) · DODONT-LONG(do/dont 길이 cap) · SECRET-LITERAL · HANDOFF-SCATTER. stdout JSON(deny)/stderr(warn)"
+            "상세": "경로·내용·우회패턴 매칭 + write-time hard-deny(상세는 각 4g/4h 노드): SKILL-DESC-CAP/CMD-DESC-LONG(명령 desc 1400 천장+320 미니멀) · COMMONS-PROSE/NO-DODONT/DODONT-INCOMPLETE · DODONT-LONG · SECRET-LITERAL · HANDOFF-SCATTER. stdout JSON(deny)/stderr(warn)"
           },
           {
             "이름": "PostToolUse",
@@ -396,7 +396,7 @@
                 "이름": "convergence stop-check",
                 "역할": "에이전트 출력의 재발-신호 → SSOT 기록 넛지",
                 "구분": "guard",
-                "상세": "**warn-only(stderr · non-block)** — `ing staleness-check` 와 동형(decision:block 아님 · advisory 가 매 턴 'stop hook error' 로 턴을 막던 문제 제거). **에이전트 자신의 마지막 메시지**(user 입력 아님)를 재발-신호 키워드(config/convergence-triggers.json · 또/다시/실패/동일/재발/segfault/panic/🔴… · per-repo .harness override)로 스캔 → 매치 시 SSOT 기록 넛지(`architecture convergence add`)를 stderr 로 표면화. 키워드=넓은 그물(정밀도는 에이전트 판단 — 진짜 재발이면 기록·오탐이면 무시). once-가드=**신호별 1회**(transcript+matched 키 · convergence-nudge.json) → 오탐 '또'가 진짜 'segfault' 넛지를 소진 안 함. 무매치/파싱실패 silent. 폐기된 구 prompt-scan recurrence-trigger(user 입력 + 인라인 @convergence 마커)를 에이전트-출력 surface + SSOT 기록으로 복원. (modules/architecture.ts)"
+                "상세": "warn-only(stderr·non-block) — `ing staleness-check` 동형(decision:block 아님). 에이전트 자신의 마지막 메시지를 재발-신호 키워드(config/convergence-triggers.json)로 스캔 → 매치 시 SSOT 기록 넛지를 stderr 표면화. 키워드=넓은 그물·정밀도는 에이전트 판단. once-가드=신호별 1회 → 오탐이 진짜 넛지 소진 안 함"
               },
               {
                 "이름": "ing staleness-check",
@@ -410,7 +410,7 @@
             "이름": "PreCompact·PostCompact",
             "역할": "자동 컴팩션 전/후 → 세션-스코프 inject 재주입(컴팩션 생존)",
             "구분": "surface",
-            "상세": "매-턴 inject(commons·recommend·prefs·easy)는 UserPromptSubmit 라 컴팩션 후에도 복귀하지만, 세션-스코프 inject(architecture·git-context·toolkit·companions·ing)는 SessionStart 에서만 떠 컴팩션 시 증발 → 설계트리·명령카탈로그·ING 보드가 세션 중반 사라진다. PreCompact(요약기가 보도록)+PostCompact(새 윈도우 열린 직후 신선 재주입)에 그 6개를 다시 건다. sidecar `project-tape` 의 PreCompact+PostCompact 재주입과 동형. additionalContext 로 주입(`hookEventName` echo)"
+            "상세": "매-턴 inject(commons·recommend·prefs·easy)는 UserPromptSubmit 라 컴팩션 후 복귀하지만, 세션-스코프 inject(architecture·git-context·toolkit·companions·ing)는 SessionStart 에서만 떠 컴팩션 시 증발 → PreCompact(요약기가 보도록)+PostCompact(새 윈도우 직후)에 그 6개 재주입. additionalContext(`hookEventName` echo)"
           },
           {
             "이름": "체크포인트",
@@ -636,7 +636,7 @@
                 "이름": "ship",
                 "역할": "구현 후 모든 설치 surface 에 한 번에 전파 (orchestrator)",
                 "구분": "module",
-                "상세": "pr-cycle(검증 머지) → self-update(전역 CLI ~/.sidecar/cli git-pull) → shadow(commands/ → ~/.claude/commands/ 재미러) 를 한 명령으로 묶어 올바른 순서로 실행, 단계 실패 시 즉시 중단(머지 실패 → CLI·shadow 미실행). @convergence SHIP_PROPAGATE_ALL_SURFACES: pr-cycle+self-update 만 돌리고 shadow 를 빠뜨리면 새 슬래시 명령이 picker 에 안 떠 '반영 안됨' 이 재발 → 셋을 ship 으로 묶어 락스텝. CLAUDE.md 작업규칙='구현 후 항상 ship'. 플러그인(/plugin) 설치본은 별도 surface 라 버전 bump + `/plugin update` 로 갱신(ship 범위 밖, 메시지로 안내). `--no-doc` 는 pr-cycle 로 forward"
+                "상세": "pr-cycle(검증 머지) → self-update(전역 CLI git-pull) → shadow(commands/ 재미러) 를 한 명령으로 올바른 순서 실행, 단계 실패 시 즉시 중단. shadow 빠뜨리면 새 슬래시가 picker 에 안 떠 '반영 안됨' 재발 → 셋을 묶어 락스텝. 플러그인(/plugin) 설치본은 별도 surface · `--no-doc` pr-cycle 로 forward"
               },
               {
                 "이름": "verify",
@@ -648,7 +648,7 @@
                 "이름": "ci",
                 "역할": "검증 명령 병렬 실행 + Blacksmith CI scaffold",
                 "구분": "module",
-                "상세": "`ci [all|fast|list]` = config `verify.checks` 병렬 실행(실패 1개라도 exit 1 · 옛 `verify` 별칭). **`ci scaffold [--force]`** = **Blacksmith** GitHub Actions `.github/workflows/ci.yml` 방출(create-if-absent) — checkout → stack setup(config `ci.setup` · 없으면 package.json/hexa.toml/pyproject 자동감지) → sidecar 설치 → `sidecar ci`(repo verify.checks) + `sidecar lint`. 러너=config `ci.runner`(기본 `blacksmith-4vcpu-ubuntu-2204` · **항상 blacksmith**, 비-blacksmith override 시 경고). `ciWorkflowYaml`/`defaultCiSetup` export → `init` 도 동일 생성기로 ci.yml 자동 scaffold(single source). gamebox/hexa-lang 의 Blacksmith CI 를 하네스가 모든 repo 에 표준화. (modules/ci.ts)"
+                "상세": "`ci [all|fast|list]` = config `verify.checks` 병렬(실패 1개라도 exit 1·옛 `verify` 별칭). `ci scaffold` = Blacksmith `.github/workflows/ci.yml` 방출(create-if-absent·러너=config `ci.runner` 기본 blacksmith-4vcpu·항상 blacksmith). `ciWorkflowYaml`/`defaultCiSetup` export → `init` 도 동일 생성기로 자동 scaffold"
               },
               {
                 "이름": "paper",
@@ -669,7 +669,7 @@
                   {
                     "이름": "배포 수명주기 (Zenodo/arXiv)",
                     "구분": "detail",
-                    "상세": "publish/update/unpublish/status `--to zenodo|arxiv|both` · 키는 secret(zenodo.token / --sandbox=zenodo.sandbox_token · 인라인 금지) · 발행원장 PAPERS/<slug>/publish.json. Zenodo=완전 REST(deposition→main.pdf[+--source tarball] 업로드→메타[PAPER.md @title+main.tex 추출·LaTeX 스트립·zenodo.json override]→발행→DOI · update=new-version · unpublish=DRAFT 삭제, 발행본 영구). arXiv=제출 API 없음(SWORDv1 폐지)→arxiv-submission.tar.gz 패키징 + 제출 가이드(가짜 자동제출 안 함)."
+                    "상세": "publish/update/unpublish/status `--to zenodo|arxiv|both` · 키는 secret · 원장 PAPERS/<slug>/publish.json. Zenodo=완전 REST(업로드→메타→발행→DOI · update=new-version · unpublish=DRAFT 삭제). arXiv=제출 API 없음(SWORD 폐지)→tar.gz 패키징 + 제출 가이드(가짜 자동제출 안 함)"
                   }
                 ]
               },
@@ -677,13 +677,13 @@
                 "이름": "imagine",
                 "역할": "AI 이미지+영상 생성 (fal/openai · 키 secret 경유)",
                 "구분": "module",
-                "상세": "출력 확장자로 분기: 이미지(.png/.jpg)=fal queue `openai/gpt-image-2`(image2·핀) 또는 -b openai `gpt-image-1`; 영상(.mp4/.mov/.webm)=fal queue Seedance 2.0(핀·fast 티어=…/fast/…) — `-i <image>` 없으면 `bytedance/seedance-2.0/text-to-video`, 있으면 `bytedance/seedance-2.0/image-to-video`(이미지 애니메이트·로컬파일은 base64 data-URI, http URL은 그대로 image_url). 동일 queue+poll(영상은 폴링 길게)·결과 URL은 images[].url|video.url 추출. 프롬프트는 FILE·키는 secret get fal/openai.api_key·-K curl config로 argv 누출 방지. -m 로 모델 override"
+                "상세": "출력 확장자로 분기: 이미지(.png/.jpg)=fal `openai/gpt-image-2`(또는 -b openai); 영상(.mp4/.mov)=fal Seedance 2.0(`-i` 없으면 text-to-video·있으면 image-to-video). 동일 queue+poll · 프롬프트는 FILE · 키는 secret get·-K curl 로 argv 누출 방지 · -m override"
               },
               {
                 "이름": "email (alias mail)",
                 "역할": "Postmark 트랜잭션 메일 발송 (토큰 secret 경유)",
                 "구분": "module",
-                "상세": "`POST /email`(Postmark REST). 서버 토큰=`secret get postmark.server_token`·`-K` curl config로 헤더에 실어 argv 누출 0(imagine 키-은닉 동형). send: --to/--from(미지정시 `secret get postmark.from`)/--subject + 본문(--text/--html=FILE·provenance, -m=인라인 텍스트) + --cc/--bcc/--reply-to/--tag/--stream + --attach(base64·MIME 추정) + --dry(발송없이 payload 렌더·첨부는 파일명만). history=Postmark outbound API(또는 --local 원장)·list=토큰/From/스트림 점검. 성공 조용·실패 큰소리 + email.jsonl 로컬 원장"
+                "상세": "`POST /email`(Postmark REST). 서버 토큰=`secret get postmark.server_token`·`-K` curl 로 argv 누출 0. send: --to/--from/--subject + 본문(--text/--html=FILE·-m 인라인) + cc/bcc/reply-to/tag/stream + --attach + --dry. history=outbound API·list=토큰 점검. 성공 조용·실패 큰소리 + email.jsonl 원장"
               },
               {
                 "이름": "kick (alias drill)",
@@ -725,7 +725,7 @@
                     "이름": "fleet full",
                     "역할": "풀스택",
                     "구분": "mode",
-                    "상세": "roster `full` + fleet-full.md. 프론티어가 3 페이즈를 순서대로 전환 research→implement→(벽)→abstract→(escape)→falsify→research 순환 — implement 스킵 금지(research→abstract 직행은 lazy-ceiling · 약한 레버도 싼 로컬 probe 로 벽 측정 후에만 abstract). 기본 실행=순차(afg, 한 레인씩 foreground) · `parallel` 인자일 때만 Workflow fan-out. 게이트는 페이즈가 아니라 비용 — 싼/로컬 implement 자동, 비싼(pool/GPU rent/대규모) implement 만 4축+go. depletion 은 경험·추상 양축 모두 dry 일 때만."
+                    "상세": "roster `full` + fleet-full.md. 프론티어가 3 페이즈 순환 research→implement→(벽)→abstract→falsify — implement 스킵 금지(약한 레버도 싼 probe 로 벽 측정 후 abstract). 기본 순차(afg)·`parallel` 일 때만 Workflow fan-out. 게이트는 비용 — 싼/로컬 자동·비싼(pool/GPU)만 4축+go. depletion=양축 dry"
                   }
                 ]
               },
@@ -750,7 +750,7 @@
                   {
                     "이름": "저장 = ing ref (worktree 아님)",
                     "구분": "detail",
-                    "상세": "done=scrub. 보드는 refs/heads/ing 에 plumbing(hash-object→mktree→commit-tree→update-ref) 저장 + best-effort push origin ing → branch-switch/reset 무관·공유·protected-main-safe. 보드 cwd(BOARD_ROOT)는 `git rev-parse --show-toplevel`(REPO_ROOT fallback)로 해석 — linked worktree 에서 ancestry-walk 가 config-less worktree 를 지나쳐 엉뚱한 sibling repo ref 에 쓰던 누수 차단."
+                    "상세": "done=scrub. 보드는 refs/heads/ing 에 plumbing(hash-object→mktree→commit-tree→update-ref) 저장 + best-effort push origin ing → branch-switch/reset 무관·공유·protected-main-safe. 보드 cwd=`git rev-parse --show-toplevel`(REPO_ROOT fallback)로 해석 — config-less worktree 가 sibling repo ref 에 쓰던 누수 차단"
                   },
                   {
                     "이름": "verb 의미 · stdin",
@@ -786,19 +786,19 @@
                 "이름": "architecture",
                 "역할": "설계 SSOT 주입 (SessionStart + 매 UserPromptSubmit)",
                 "구분": "module",
-                "상세": "repo-root ARCHITECTURE.json(우선)/.md 를 additionalContext 로 주입 — SessionStart 1회 + claudemd 처럼 매 UserPromptSubmit 재주입으로 설계 트리를 commons급 salience 로 상주. 매-턴 재주입은 **`convergence` 배열을 제외**(records 는 파일-터치 시 타깃 주입되므로 매 턴 통째 주입은 토큰낭비 · 한 줄 omitted 표기만 남김 = 매 턴 ~21KB 절감). 80KB 초과 시 head+포인터로 절단. 부재 시 무음. (이벤트 게이트 없음 — 받은 hook_event_name 을 그대로 echo). 트리 **뒤**에 턴-마감 게이트 한 줄을 붙임(recency=최다주목) — 이번 턴에 코드/구조/데이터흐름을 바꿨으면 해당 노드를 제자리 갱신하고 `🏛️ ARCHITECTURE 갱신: …` 한 줄 보고를 의무화(무변경 시 무음). ing inject 도 동형 게이트(`🔵 ING 갱신: …`)",
+                "상세": "ARCHITECTURE.json(우선)/.md 를 additionalContext 로 주입 — SessionStart 1회 + 매 UserPromptSubmit 재주입으로 설계 트리를 commons급 상주. 매-턴 재주입은 `convergence` 배열 제외(매 턴 ~21KB 절감)·80KB 절단·부재 무음. 트리 뒤에 턴-마감 게이트(`🏛️ ARCHITECTURE 갱신: …`) 부착",
                 "children": [
                   {
                     "이름": "lint (트리 위생 · c4 강제)",
                     "역할": "fine-decomposition 게이트",
                     "구분": "detail",
-                    "상세": "`architecture lint` = 셀 길이>700자(ARCH-BIG-CELL), piled ` · ` 항목>6(ARCH-PILED), history 키(previous/deprecated/history/changelog/이전 = ARCH-HISTORY) 검사. severity-map 에서 ARCH-*=block 이라 `sidecar lint`(pre-commit) 가 위반 시 커밋을 막는다 → 트리가 산문 leaf 로 비대해지지 않고 노드로 잘게 분해되도록 강제. 위반 노드는 상세를 요약으로 줄이고 세부는 children 으로 쪼갠다. ※ 최상위 `convergence` 배열은 트리 위생 검사에서 제외(재발학습 store · 자체 validator)."
+                    "상세": "`architecture lint` = 셀 길이 cap(ARCH-BIG-CELL · `lint.archCellCap` 기본 300), piled ` · ` 항목>`archPiledMax`(6)(ARCH-PILED), history 키(previous/deprecated/… = ARCH-HISTORY) 검사. severity-map ARCH-*=block 라 `sidecar lint` 가 위반 차단 → 트리가 산문 leaf 로 비대 안 됨. 위반은 커널만 남기거나 children 으로 분해. 최상위 `convergence` 제외"
                   },
                   {
                     "이름": "convergence 재발학습 store (구 convergence 모듈 흡수)",
                     "역할": "재발방지 학습 SSOT — 인라인 @convergence 마커 폐기",
                     "구분": "detail",
-                    "상세": "재발방지 학습은 코드 인라인 마커가 아니라 repo-root ARCHITECTURE.json 최상위 `convergence.records[]`(id·state·value·threshold·source) 한곳에 산다(single-doc). CRUD=`sidecar architecture convergence {list|add|rm|edit}`(id-keyed · add=upsert · value/threshold 셸특수문자는 `--value -` stdin · 손-JSON편집 불필요). 소비: `lintConvergenceRecords()` = 커밋 게이트(id+유효 state · CONVERGENCE-MALFORMED block). `convergenceForFile(path)`(파일 터치 시 학습 주입)은 **현재 비활성**(pre.ts 에서 호출 주석 처리 — 매-터치 노이즈/토큰 대비 효용 불확실 · 함수·store·CRUD·lint 는 유지, 주석 해제로 재활성). 구 convergence 모듈(scan·due-check·캡처토큰)은 제거."
+                    "상세": "재발방지 학습은 인라인 마커가 아니라 ARCHITECTURE.json 최상위 `convergence.records[]`(id·state·value·threshold·source) 한곳에 산다(single-doc). CRUD=`architecture convergence {list|add|rm|edit}`(id-keyed·upsert). `lintConvergenceRecords`=커밋 게이트(CONVERGENCE-MALFORMED). `convergenceForFile`(터치 시 주입)은 현재 비활성(pre.ts 주석)"
                   }
                 ]
               },
@@ -812,7 +812,7 @@
                 "이름": "claudemd",
                 "역할": "프로젝트 규칙 매턴 재주입",
                 "구분": "module",
-                "상세": "repo-root CLAUDE.md 를 매 UserPromptSubmit 마다 additionalContext 로 재주입 — commons inject 와 같은 운반 장치. CLAUDE.md 는 Claude Code 기본으로 SessionStart 1회만 들어가 대화가 길어지면 묻히는데, 매턴 재주입으로 프로젝트 규칙을 commons 급 salience 로 유지(MUST-FOLLOW 헤더 prepend). 선택적 `<!-- enforce:start/end -->` 블록이 있으면 그 hard-rules 섹션만 재주입(전체 맵 재전송 회피), 없으면 전체. 80KB 초과 절단. 부재 시 무음. **CLAUDE.md = 진입 포인터**(프로젝트 설명 + SSOT 포인터 + 작업규칙): 디렉토리·모듈 트리는 ARCHITECTURE.json 단일 SSOT 라 CLAUDE.md 에 중복하지 않는다 — `docs.ts:claudeMdViolations` 의 CLAUDE-MD-NO-TREE 검사는 구조 SSOT(ARCHITECTURE.json/.md) 존재 시 면제(트리 중복 drift 방지). `sidecar init` 도 CLAUDE.md 를 이 진입-포인터 형태(트리 없음)로, 구조 트리는 ARCHITECTURE.json 스켈레톤으로 scaffold 한다(.md 아님)"
+                "상세": "repo-root CLAUDE.md 를 매 UserPromptSubmit 마다 additionalContext 로 재주입(SessionStart 1회로는 긴 대화에서 묻힘) → 프로젝트 규칙을 commons급 salience 로 상주(MUST-FOLLOW 헤더 prepend). `<!-- enforce:start/end -->` 있으면 그 섹션만·없으면 전체·80KB 절단·부재 무음. 디렉토리·모듈 트리는 ARCHITECTURE.json SSOT 라 CLAUDE.md 에 중복 안 함"
               },
               {
                 "이름": "load",
@@ -824,7 +824,7 @@
                     "이름": "3축 신호등",
                     "역할": "CPU·RAM·swap·wt readout",
                     "구분": "detail",
-                    "상세": "CPU(load1÷cores · 🟢<0.7 🟡<1.0 🔴≥1.0), RAM((active+wired+compressor) used% + kern.memorystatus_vm_pressure_level normal/warn/critical), swap(vm.swapusage · 🟢<2G 🟡<6G 🔴≥6G), wt(추가 worktree 수 · main 제외 · 🟢0-2 🟡3-9 🔴≥10). 라인은 라벨 접두사 없이 `CPU …` 로 시작(정상). 어느 축이든 🔴 또는 pressure≥warn 이면 선두에 `⚠️ ` 마커 + 가드 노트(대량빌드·병렬agent·GPU 자제)."
+                    "상세": "CPU(load1÷cores·🟢<0.7 🟡<1.0 🔴≥1.0), RAM((active+wired+compressor)%+pressure), swap(🟢<2G 🟡<6G 🔴≥6G), wt(추가 worktree·🟢0-2 🟡3-9 🔴≥10). 어느 축이든 🔴/pressure≥warn 이면 선두 `⚠️` 마커 + 가드 노트(대량빌드·병렬agent·GPU 자제)"
                   },
                   {
                     "이름": "동기·비용안전",
@@ -838,13 +838,13 @@
                 "이름": "toolkit",
                 "역할": "명령 카탈로그 — agent 가 전 명령을 인지·사용하도록 SessionStart 주입 (sidecar TOOLKIT 패리티)",
                 "구분": "module",
-                "상세": "list|inject|json|write|check. 단일 출처 = cli/index.ts 의 `HELP` 텍스트(엔트리 모듈 import 부작용 회피 위해 텍스트로 읽어 파싱). keyword 트리거를 매핑해 각 명령에 ⟨triggers⟩ 부착. **inject**=SessionStart 에 전 명령 surface 를 compact 카탈로그(`id — use ⟨triggers⟩`)로 주입 — keyword 반응형의 사각지대(트리거 없는 research/secret/imagine 등)를 능동적으로 메워 agent 가 명령 존재를 알게 함. **write**=TOOLKIT.jsonl(repo-root 커밋 산출물) 생성. **check**=① dispatch 의 모든 `case` 가 카탈로그에 있는지 커버리지 검사(별칭 제외 0 이어야 통과) + ② HELP-파생 카탈로그와 커밋본 스냅샷 diff → 미수록/ drift 시 exit 1. `sidecar lint` 가 **TOOLKIT-DRIFT(warn)** 로 표면화(inject 는 HELP 에서 라이브 생성이라 agent 는 항상 최신 → block 아닌 warn)"
+                "상세": "list|inject|json|write|check. 단일 출처=cli/index.ts `HELP` 텍스트 파싱 + keyword 트리거 매핑. inject=SessionStart 에 전 명령을 compact 카탈로그(`id — use ⟨triggers⟩`)로 주입(키워드 사각지대 보완). write=TOOLKIT.jsonl 산출. check=dispatch case 커버리지 + 커밋본 drift(`lint` TOOLKIT-DRIFT warn)"
               },
               {
                 "이름": "companions",
                 "역할": "이웃 CLI 명령 surface 주입 — agent 가 sibling 툴체인(hexa 등)을 더듬지 않고 인지하게 SessionStart 주입",
                 "구분": "module",
-                "상세": "list|inject. toolkit 의 자매 — toolkit 이 sidecar **자신**의 명령을 주입하면 companions 는 **이웃 CLI**(hexa 등)의 카탈로그를 주입한다. DOMAIN-AGNOSTIC: 어떤 CLI 를 띄울지는 데이터(repo `harness.config.json` 의 `companions` + host-wide `~/.sidecar/companions.json` 을 cmd 기준 union, repo 우선)라 엔진엔 hexa 를 박지 않는다 → 전역 config 1곳으로 모든 repo 세션이 자동 인지. inject 는 각 companion 의 카탈로그 명령(default `--help`, hexa 는 `tool list`)을 execArgs(8s)로 실행해 lines 캡으로 절단·stderr 주입하고, 부재/실패면 그 항목 skip·전부 없으면 무음. 동기 @convergence COMPANION_SURFACE_NOT_INJECTED: hexa cloud 가 동작하는데 toolkit 이 sidecar 명령만 주입해 agent 가 매 세션 재탐색하던 누수 차단"
+                "상세": "toolkit 의 자매 — toolkit 이 sidecar 자신 명령을 주입하면 companions 는 이웃 CLI(hexa 등) 카탈로그를 주입. DOMAIN-AGNOSTIC: 어떤 CLI 는 데이터(harness.config.json `companions` + host `~/.sidecar/companions.json` union)라 엔진에 hexa 안 박음. 각 companion 카탈로그(default `--help`) 실행·절단·주입·부재/실패 skip"
               },
               {
                 "이름": "sync",
@@ -856,7 +856,7 @@
                 "이름": "pool",
                 "역할": "호스트 로스터 + 원격 실행 + 자원 프로브",
                 "구분": "module",
-                "상세": "shared:false 제한 호스트는 allow 컨텍스트 밖에서 on/status 차단. allow 마커가 cwd 세그먼트와 일치하면 in-context 해제 — status 는 이때 🔓 마커+'제한 호스트·현재 해제(via)' 로 표기해 진짜 공용 호스트(🟢)와 구분(list 와 parity). ssh는 execArgs로 직접 spawn(로컬 $ 전개 방지). specs 가 코어/메모리/GPU 를 POSIX-sh 프로브(Linux+macOS)해 로스터에 캐시 → list·status 에 인라인 표기. list 는 추가로 라이브 부하(CPU loadavg÷cores % + nvidia-smi GPU util·VRAM)를 매번 SSH 병렬 프로브해 ⚡뱃지로 표기(캐시 안 함 — 초단위 변동). 제한 호스트는 프로브 제외"
+                "상세": "shared:false 제한 호스트는 allow 컨텍스트 밖에서 on/status 차단(allow 마커가 cwd 일치 시 해제·status 🔓 표기). ssh=execArgs 직접 spawn(로컬 $ 전개 방지). specs 가 코어/메모리/GPU 를 POSIX-sh 프로브해 캐시 · list 는 라이브 부하(CPU%·GPU util)를 SSH 병렬 프로브 ⚡뱃지(캐시 안 함)"
               }
             ]
           },
@@ -898,7 +898,7 @@
         "이름": "plugin — 배포 (자기완결 · 공용셋)",
         "역할": "sidecar 를 Claude Code 플러그인으로 배포 — 훅 + 슬래시 명령 + CLI 본체가 ONE 유닛. 프로젝트 무관·중앙 1곳",
         "구분": "group",
-        "상세": "SELF-CONTAINED: .claude-plugin/marketplace.json(plugins[].source=`.` = repo 루트가 곧 플러그인) → .claude-plugin/plugin.json(`commands: []` = 플러그인 명령 네임스페이스 OFF, 중복 방지). 루트가 페이로드라 bin/·cli/·lib/·modules/·config/·commands/ 가 플러그인에 같이 실린다. 훅은 ${CLAUDE_PLUGIN_ROOT}/bin/sidecar(번들 CLI)를 실행 → `/plugin update`+reload 로 CLI+hooks 동시 갱신(별도 self-update 불필요). 슬래시 명령은 `sidecar shadow` 가 commands/ → ~/.claude/commands/ 로 bare /cmd 미러(플러그인 네임스페이스 `/sidecar:cmd` 미사용 — picker 1줄). 전역 `sidecar` 는 폴백.",
+        "상세": "SELF-CONTAINED: marketplace.json(source=`.`=repo 루트가 플러그인) → plugin.json(`commands: []`=명령 네임스페이스 OFF, 중복 방지). 훅은 `${CLAUDE_PLUGIN_ROOT}/bin/sidecar` 실행 → `/plugin update`+reload 로 CLI+hooks 동시 갱신. 슬래시는 `shadow` 가 bare /cmd 미러·전역 `sidecar` 는 폴백",
         "children": [
           {
             "이름": "hooks/hooks.json + hooks/run.sh",
@@ -910,7 +910,7 @@
             "이름": "commands/*.md",
             "역할": "슬래시-명령 위임자 셋 (bare /cmd · shadow 가 미러하는 SOURCE)",
             "구분": "config",
-            "상세": "프런트매터(description+Triggers+argument-hint+allowed-tools) + `!`sidecar <cmd> $ARGUMENTS`` 위임자. **플러그인 명령으로 로드 안 됨** — plugin.json `commands: []` 가 기본 commands/ 스캔을 빈 목록으로 대체(Claude Code 는 플러그인 명령을 무조건 `/plugin:cmd` 네임스페이스로 노출하므로, 이걸 끄지 않으면 `sidecar shadow` 의 bare `/fleet` 와 플러그인 `/sidecar:fleet` 가 picker 에 2줄로 중복). 대신 `sidecar shadow` 가 이 파일들을 ~/.claude/commands/ 에 bare `/cmd` user-scope 위임자로 미러 → picker 에 bare 1줄만. 공용셋=프로젝트 무관. hook-내부(pre/post/prompt) 제외"
+            "상세": "프런트매터(description+Triggers+argument-hint+allowed-tools) + `!sidecar <cmd> $ARGUMENTS` 위임자. 플러그인 명령으로 로드 안 됨(plugin.json `commands: []` → bare /cmd 와 `/sidecar:cmd` picker 중복 방지). `shadow` 가 ~/.claude/commands/ 에 bare /cmd 미러. 공용셋·프로젝트 무관 · hook-내부 제외"
           }
         ]
       },

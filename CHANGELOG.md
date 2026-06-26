@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## fix(commons): do/dont 길이 cap 을 commons.md 전용으로 — CLAUDE.md 는 자유양식(scope 제외)
+
+🗣️ "do , dont 를 안쓰는데" (anima·hexa-lang CLAUDE.md 는 do/dont 형식 미사용)
+
+- 배경: `DODONT-LONG` 길이 cap 이 commons.md **+ CLAUDE.md** 를 scope 로 잡았는데, folder-docs 규칙상 CLAUDE.md 는 **자유양식("do/dont 강제 아님")**이다. do/dont-전용 길이 cap 을 자유양식 문서에 거는 건 모순 — repo 의 CLAUDE.md 가 do/dont 를 아예 안 쓰면(anima 등) 무의미하고, 캐주얼하게 `- do:` 를 써도 오발동.
+- 수정: `dodontInScope`(modules/commons.ts) 에서 CLAUDE.md 분기 제거 → **commons.md(config/ 또는 .harness/ override) 전용**. lint.ts 4h 의 staged 필터도 `base==="CLAUDE.md"` 제거. write-가드·commit-lint 양쪽 일치.
+- 불변(이미 맞았음): COMMONS-NO-DODONT/INCOMPLETE/PROSE(둘 다 필수+산문금지)는 처음부터 commons.md 전용이라 CLAUDE.md 무관.
+- 결과: CLAUDE.md = 완전 자유양식(do/dont 길이 규제 0) · commons.md 는 do/dont-only + cap 유지.
+- 검증: tsc clean · 스모크 — CLAUDE.md 긴 `- do:` 줄 Write → 통과 · config/commons.md 긴 do줄 → 여전히 DODONT-LONG block · lint ok.
+
+
 ## feat(naming-guard): 비표준 이름 파일 터치 시에도 발동 (생성 BLOCK + 터치 WARN)
 
 🗣️ "_v2 등 네이밍 관련도 생성말고도 터치시에도 발동되게"

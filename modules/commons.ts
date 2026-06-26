@@ -117,7 +117,8 @@ export function commonsWriteViolation(filePath: string, content: string): { rule
 // each do/dont line and is DIFF-AWARE: legacy long lines are grandfathered (keyed
 // by slug|kind|idx vs the baseline), only a NEW or LENGTHENED line blocks — so you
 // can edit around the long ones and shrink them, but can't add/grow over the cap.
-// Scope: commons.md (bundled config/ or .harness/ override) + CLAUDE.md. cap=0 off.
+// Scope: commons.md only (bundled config/ or .harness/ override). cap=0 off.
+// (CLAUDE.md is free-form per folder-docs — not in scope.)
 const DODONT_RE = /^- (do|dont):\s?(.*)$/;
 const cpLen = (s: string): number => [...s].length; // codepoints (Korean = 1/char)
 
@@ -162,10 +163,12 @@ export function newOverCapDodont(proposed: string, baseline: string, cap: number
 
 const dodontCap = (): number => config().lint?.dodontCap ?? 200;
 
-// In scope for the length cap: commons.md (bundled/override) + any CLAUDE.md.
+// In scope for the length cap: commons.md ONLY (bundled config/ or .harness/ override).
+// CLAUDE.md is deliberately OUT — folder-docs makes CLAUDE.md free-form ("do/dont 강제
+// 아님"), so a do/dont-specific length cap doesn't belong there (a repo's CLAUDE.md may
+// not use do/dont at all). do/dont discipline lives where do/dont is the format: commons.md.
 function dodontInScope(filePath: string): boolean {
-  if (filePath.endsWith("config/commons.md") || filePath.endsWith(".harness/commons.md")) return true;
-  return (filePath.split("/").pop() ?? "") === "CLAUDE.md";
+  return filePath.endsWith("config/commons.md") || filePath.endsWith(".harness/commons.md");
 }
 
 // Write-time guard — full-content Write only (an Edit passes new_string, not the

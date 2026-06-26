@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## feat(architecture): ARCH-BIG-CELL cap 700→300 (config-driven) + 22개 산문 셀 커널 트림
+
+🗣️ "아키텍쳐 json 도 중요한 내용만 딱딱 남기도록 / 너무 산문인데" — 설계 트리 셀이 700자 cap 아래에서도 문단 덩어리로 남던 문제.
+
+- `architecture lint` 의 셀 길이 cap 을 **700→300**(`lint.archCellCap` · config-driven · 0=off)으로 조이고 piled-item cap 도 `lint.archPiledMax`(6)로 config 화 — cmdDescCap/dodontCap 와 동형. 의미: 산문/메커니즘/precedent 는 트리가 아니라 CHANGELOG/git/코드에 살고, 트리 셀엔 커널만(single-doc c4).
+- sidecar 자기 ARCHITECTURE.json 의 **over-300 셀 22개 전부 트림**(max 658→≤300): claudemd·convergence·ci·toolkit·companions·architecture·naming-guard·plugin·imagine·ship·pool·fleet full·… 각 노드를 그 노드가 무엇인지 + 핵심 메커니즘 1–2개로 압축, @convergence precedent·파일ref·괄호 디테일은 제거(git/CHANGELOG 보존). diff = 22 치환만(재포맷 0).
+- 검증: tsc clean · `architecture lint` ok · `sidecar lint` 그린(22→0) · median 셀 31자 유지.
 ## feat(lint): CMD-DESC-LONG — 플러그인 커맨드 description 미니멀 cap (write+commit 강제)
 
 🗣️ "sidecar 내부에 구현된 플러그인 커맨드 주입등등도 전부 미니멀화 lint 적용" — CLAUDE.md/commons do/dont 미니멀화의 연장.

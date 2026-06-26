@@ -64,6 +64,12 @@ export interface SidecarConfig {
     // into the body or `--help`). Separate from the 1400 Claude Code skill-listing
     // ceiling (SHADOW-DESC): this is the much tighter "minimal" line. 0 = off.
     cmdDescCap?: number;
+    // ARCHITECTURE.json design-tree hygiene (c4): max chars for a single leaf
+    // cell (상세/역할/note) before it must be trimmed to its crisp kernel or split
+    // into child nodes (ARCH-BIG-CELL) · max " · "-joined items in one leaf before
+    // it must decompose (ARCH-PILED). 0 = off.
+    archCellCap?: number;
+    archPiledMax?: number;
   };
   // optional shared-file sync: a shell script the repo runs to fan files out
   sync?: { script: string };
@@ -206,7 +212,7 @@ const DEFAULTS: SidecarConfig = {
   severityMapFile: ".harness/severity-map.json",
   verify: { checks: [] },
   ci: { runner: "blacksmith-4vcpu-ubuntu-2204", setup: [] },
-  lint: { freshnessFiles: [], dodontCap: 200, cmdDescCap: 320 },
+  lint: { freshnessFiles: [], dodontCap: 200, cmdDescCap: 320, archCellCap: 300, archPiledMax: 6 },
   upstreams: [{ name: "hexa-lang", repo: "dancinlab/hexa-lang" }],
   guides: ["CLAUDE.md", "AGENTS.md", "README.md"],
   folderGuides: {

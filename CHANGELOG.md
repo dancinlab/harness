@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## feat(commons): do/dont 양식 강제를 루트 CLAUDE.md 로 확장 (B — 전 섹션 do/dont-only)
+
+🗣️ "양식으로 무조건 고정해줘 ## SLUG, do, dont" + "B" (commons.md + 루트 CLAUDE.md 전 섹션 do/dont-only)
+
+- 기존: COMMONS-PROSE/NO-DODONT/DODONT-INCOMPLETE 양식 강제가 commons.md 전용. 유저 선택 B = **루트 CLAUDE.md(프로젝트 규칙 SSOT)도** 각 `## <slug>` 섹션을 do/dont-only(둘 다 필수·산문 금지)로 잠금.
+- 수정 (modules/commons.ts): `commonsWriteViolation` 스코프에 `isRootClaudeMd` 추가(rel="CLAUDE.md") · `lintCommonsFormat` 가 commons 뒤 루트 CLAUDE.md 도 `lintCommonsText` 로 스캔. 첫 `## ` 앞 preamble 은 면제(lintCommonsText `cur===null`) · **서브폴더 CLAUDE.md**(folder-docs)는 자유양식이라 제외(루트만).
+- 2층 강제 동형 유지: write-time deny + commit-lint 4g backstop · 코어 `lintCommonsText` 공유.
+- sidecar 자기 루트 CLAUDE.md 는 이미 호환(preamble + `## 작업 규칙` do/do/dont) → 무수정 통과.
+- 검증: tsc clean · 스모크 — 현 lint 그린 · 루트 CLAUDE.md 산문 ## 섹션 Write→deny · preamble-only→통과 · 서브폴더 CLAUDE.md 산문→면제.
 ## feat(lint): `CI-NON-BLACKSMITH` 게이트 — 비-Blacksmith CI 러너 차단 (commons blacksmith-ci 이빨)
 
 🗣️ "claude.md 도 … 강제해줘 lint" (commons `blacksmith-ci` 를 기계적으로 강제)

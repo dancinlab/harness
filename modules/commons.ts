@@ -5,7 +5,8 @@
 // mechanically enforced by sidecar hooks (root-cause/pre write · verify ·
 // bypass · docs · tmp-guard · handoff-guard · git-guard · recommend · askq);
 // this is the salient single SSOT, re-injected like recommend.
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { resolveRuleFile, config } from "../lib/config.ts";
 import { readStdin } from "../lib/exec.ts";
 import { REPO_ROOT } from "../lib/paths.ts";
@@ -87,7 +88,18 @@ export function lintCommonsFormat(): Array<{ rule: string; file: string; msg: st
     return [];
   }
   const rel = f.includes(".harness/") ? ".harness/commons.md" : "config/commons.md";
-  return lintCommonsText(text, rel);
+  const out = lintCommonsText(text, rel);
+  // root CLAUDE.md (project-rules SSOT) is do/dont-only too — same format check.
+  // Preamble before the first `## ` is exempt (handled in lintCommonsText).
+  const cm = resolve(REPO_ROOT, "CLAUDE.md");
+  if (existsSync(cm)) {
+    try {
+      out.push(...lintCommonsText(readFileSync(cm, "utf8"), "CLAUDE.md"));
+    } catch {
+      /* unreadable — skip */
+    }
+  }
+  return out;
 }
 
 // write-time guard (sidecar-style) — when a commons.md (bundled config/ or a
@@ -98,13 +110,14 @@ export function lintCommonsFormat(): Array<{ rule: string; file: string; msg: st
 // context to validate a fragment against). Mirrors descWriteViolation.
 export function commonsWriteViolation(filePath: string, content: string): { rule: string; block: string } | null {
   if (!content) return null;
-  const isBundled = filePath.endsWith("config/commons.md");
   const isOverride = filePath.endsWith(".harness/commons.md");
-  if (!isBundled && !isOverride) return null;
+  const isBundled = filePath.endsWith("config/commons.md");
+  const isClaude = isRootClaudeMd(filePath); // root CLAUDE.md = do/dont-only too (project-rules SSOT)
+  if (!isBundled && !isOverride && !isClaude) return null;
   // a full-document write has the preamble + ## sections; a tiny fragment with no
   // `## ` header would be all-preamble (exempt) → only validate real documents.
   if (!content.includes("## ")) return null;
-  const rel = isOverride ? ".harness/commons.md" : "config/commons.md";
+  const rel = isClaude ? "CLAUDE.md" : isOverride ? ".harness/commons.md" : "config/commons.md";
   const v = lintCommonsText(content, rel);
   if (!v.length) return null;
   const prose = v.filter((x) => x.rule === "COMMONS-PROSE");
@@ -116,7 +129,7 @@ export function commonsWriteViolation(filePath: string, content: string): { rule
   if (incomplete.length) parts.push(`${incomplete.length} section(s) missing do or dont — e.g. ${incomplete[0].msg}`);
   return {
     rule: prose.length ? "COMMONS-PROSE" : nodo.length ? "COMMONS-NO-DODONT" : "COMMONS-DODONT-INCOMPLETE",
-    block: `commons.md is do/dont-only (slug-keyed rules): every \`## <slug>\` section body = \`- do:\` AND \`- dont:\` lines only (both required · no prose). ${parts.join(" · ")}. 산문은 코드 hook + CHANGELOG/git 으로, commons 엔 do/dont 핵심만.`,
+    block: `${rel} is do/dont-only (slug-keyed rules): every \`## <slug>\` section body = \`- do:\` AND \`- dont:\` lines only (both required · no prose · preamble before the first \`## \` exempt). ${parts.join(" · ")}. 산문은 코드 hook + CHANGELOG/git 으로, 규칙엔 do/dont 핵심만.`,
   };
 }
 

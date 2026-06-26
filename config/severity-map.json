@@ -5,6 +5,7 @@
   "rules": {
     "lint_rule": {
       "L0-LOCKDOWN": "block",
+      "CI-NON-BLACKSMITH": "block",
       "STALE": "block",
       "TOOLKIT-DRIFT": "warn",
       "CHANGELOG-MISSING": "block",

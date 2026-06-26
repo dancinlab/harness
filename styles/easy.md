@@ -9,7 +9,6 @@
 - CLI tool stdout / stderr that carries a narrative
 - docs / README cold-entry
 - error message trailer body (reason + fix lines)
-- commit-message body user-summary section (NOT title — title stays terse)
 
 ## Out-of-scope
 

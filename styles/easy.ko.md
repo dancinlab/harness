@@ -9,7 +9,6 @@
 - 내러티브가 있는 CLI 도구 stdout / stderr
 - docs / README 콜드 엔트리
 - 에러 메시지 trailer 본문 (원인 + 해결 줄)
-- 커밋 메시지 본문의 user-summary 섹션 (제목 아님 — 제목은 간결 유지)
 
 ## 적용 제외
 

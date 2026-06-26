@@ -9,7 +9,6 @@
 - 带叙述的 CLI 工具 stdout / stderr
 - docs / README 冷启动入口
 - 错误消息 trailer 正文 (原因 + 修复行)
-- 提交消息正文的 user-summary 段落 (非标题 —— 标题保持简洁)
 
 ## 不适用
 

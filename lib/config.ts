@@ -47,7 +47,7 @@ export interface SidecarConfig {
   // CI scaffold (`sidecar ci scaffold` / `init`) — emits a Blacksmith GitHub
   // Actions workflow that runs `sidecar ci` (verify.checks) on `runner`. `setup`
   // = the stack-specific steps (node/hexa/python …) injected before the verify.
-  ci: { runner: string; setup: CiStep[] };
+  ci: { runner: string; setup: CiStep[]; enforceRunner?: boolean };
   lint: {
     freshnessFiles: FreshnessFile[];
     // staged code changes REQUIRE the changelog file to also be staged

@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## feat(lint): `CI-NON-BLACKSMITH` 게이트 — 비-Blacksmith CI 러너 차단 (commons blacksmith-ci 이빨)
+
+🗣️ "claude.md 도 … 강제해줘 lint" (commons `blacksmith-ci` 를 기계적으로 강제)
+
+- 신규 lint 검사 4i (modules/lint.ts): staged `.github/workflows/*.yml` 의 `runs-on:` 값이 `blacksmith-*` 가 아니면 `CI-NON-BLACKSMITH` **block**(github-hosted `ubuntu-latest`·`macos-*` 등). commons `blacksmith-ci`(직전 추가)의 always-on 규칙에 commit-time 이빨을 붙임.
+- 정밀: `${{ }}` 표현식(matrix/var)은 정적 미해결이라 skip · `runs-on: [a, b]` 배열은 라벨별 검사 · 줄 끝 `# 주석` 무시.
+- 토글: config `ci.enforceRunner` — 기본 강제(undefined/true), `false` 면 per-repo off (canonical 토글 패턴 · 인라인 탈출구 없음). severity-map `CI-NON-BLACKSMITH=block`(번들 + .harness).
+- 검증: tsc clean · 매치 로직 스모크(ubuntu-latest→block · blacksmith-*→OK · `${{matrix}}`→skip · 배열 혼합→비-blacksmith만 flag · 주석 무시) · 현재 트리 lint 그린(sidecar ci.yml=blacksmith).
 ## feat(commons): `blacksmith-ci` 규칙 추가 — CI 는 항상 Blacksmith 러너
 
 🗣️ "commons 기록해줘 CI 는 Blacksmith CI 사용"

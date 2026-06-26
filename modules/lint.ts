@@ -228,6 +228,34 @@ export async function runLint(args: string[]): Promise<number> {
     }
   }
 
+  // 4i. blacksmith-ci — every CI `runs-on:` in a staged workflow must be a
+  // blacksmith-* runner (commons blacksmith-ci). github-hosted runners block.
+  // `${{ }}` expressions (matrix/var) are skipped (can't resolve statically).
+  // Toggle off per-repo via config ci.enforceRunner=false.
+  if (cfg.ci?.enforceRunner !== false) {
+    for (const f of staged) {
+      if (!/^\.github\/workflows\/.+\.ya?ml$/.test(f)) continue;
+      let txt = "";
+      try {
+        txt = readFileSync(repoPath(f), "utf8");
+      } catch {
+        continue;
+      }
+      txt.split("\n").forEach((ln, i) => {
+        const m = ln.match(/^\s*runs-on:\s*(.+?)\s*(#.*)?$/);
+        if (!m) return;
+        const v = m[1].trim();
+        if (v.includes("${{")) return; // expression / matrix — unresolved
+        const labels = v.replace(/^\[|\]$/g, "").split(",").map((s) => s.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
+        for (const lbl of labels) {
+          if (!lbl.includes("${{") && !lbl.startsWith("blacksmith-")) {
+            violations.push({ rule: "CI-NON-BLACKSMITH", file: f, msg: `line ${i + 1}: runs-on '${lbl}' is not a Blacksmith runner — use blacksmith-* (commons blacksmith-ci · \`sidecar ci scaffold\`)` });
+          }
+        }
+      });
+    }
+  }
+
   appendJsonl(LOGS.lint, { kind: "lint", mode: args[0] ?? "all", violations: violations.length, items: violations });
 
   if (violations.length === 0) {

@@ -1,8 +1,22 @@
 # CHANGELOG
 
-## feat(lab): scaffolded CLAUDE.md documents the hexa-lang stdlib + QFORGE conventions
+## chore(changelog+styles): retire the user-request quote convention + explicit slug-block severity
 
-🗣️ "demiurge 참고하면 hexa-lang 에서 stdlib 로 관리하도록 되있거든 … QFORGE 에 대해서도 기록 필요"
+The owner asked to drop the speaker-emoji user-request quote line that CHANGELOG entries had been opening
+with, and to check the plugin wasn't *forcing* it. Audit: no hook/lint/template hard-mandated it — the only
+soft nudge was the easy response-style listing "commit-message body user-summary section" as a Tier-A scope,
+which pulled friendly user-summary prose (and the habitual user-request quote) into commit/CHANGELOG bodies.
+
+- **easy styles** — removed the "commit-message body user-summary section" scope line from all five
+  `styles/easy*.md` (en/ko/ja/zh/ru). Easy prose no longer applies to commit bodies, so nothing nudges a
+  user-summary/quote there. (Self-update propagates the global `~/.sidecar/cli/styles/` copies.)
+- **CHANGELOG** — scrubbed all 51 historical user-request quote lines; the convention is retired, not
+  authored going forward.
+- **severity-map** — mapped `ARCH-SLUG-MISSING` / `ARCH-SLUG-DUPE` / `ARCH-SLUG-FORMAT` to explicit `block`
+  (was fallback-block only), so a slug-less / dup / malformed-slug tree node is a first-class hard block at
+  commit time (git hook + global settings.json commit-lint gate). Verified: missing slug → `[block]`, exit 1.
+
+## feat(lab): scaffolded CLAUDE.md documents the hexa-lang stdlib + QFORGE conventions
 
 `/lab init`'s generated `CLAUDE.md` now carries two demiurge cross-repo conventions up front,
 so every new lab repo states them from day one (lifted from `demiurge/CLAUDE.md` d3 / d_qforge_*):
@@ -17,8 +31,6 @@ so every new lab repo states them from day one (lifted from `demiurge/CLAUDE.md`
 - `tool/` gotcha clarified: thin verification harness only, not a home for reusable impl.
 
 ## feat(lab): `/lab init` — scaffold the lumen/rtsc/carbon-capture sibling-repo skeleton
-
-🗣️ "현재구조를 생성하도록 /lab init 사이드카 플러그인 구현"
 
 The lumen / rtsc / carbon-capture sibling repos all share one skeleton (src/ · state/ · ARCHITECTURE.json +
 architecture.html viewer + serve.py · CLAUDE/README/CHANGELOG · HYPOTHESES/ pre-register→falsify→run→verdict ·
@@ -35,8 +47,6 @@ tool/<slug>.py shared harness). It was hand-rebuilt each time. `/lab init` mints
   serve.py parses · harness imports · no unrendered tokens · non-clobber + `--force` both correct.
 
 ## feat(pre): global commit-lint gate — enforce the lint gate via settings.json, not a per-repo git hook
-
-🗣️ "enforce 게이트를 공용 settings.json 로 강제할수는 없나?"
 
 The lint commit-gate lived ONLY in a per-repo `.git/hooks/pre-commit` (installed by `sidecar init`), so a
 repo that was never init-ed (e.g. anima) committed completely un-gated — its 89 oversized ARCHITECTURE
@@ -57,8 +67,6 @@ PreToolUse(Bash), an agent `git commit` can be intercepted there to run the SAME
 
 ## feat(architecture): retire 구분/type field → searchable per-node slug + `architecture search`
 
-🗣️ "type 은 굳이 필요없어 보이는데 slug 있으면 … 검색가능하게 하고 검색 서브커맨드 만들면될듯"
-
 The ARCHITECTURE.json tree nodes carried a `구분` (type/category) column that wasn't grep-friendly and
 the owner found dispensable. Replaced it with a stable, searchable `slug` per node + a search verb:
 - **Schema migration** — every tree node (126) now has a unique kebab-case `slug`; the `구분` field is
@@ -74,7 +82,6 @@ the owner found dispensable. Replaced it with a stable, searchable `slug` per no
 
 ## feat(commons): retire the poll discipline — drop poll-min-30m/poll-max-10m rules, both guards, the /poll runbook
 
-🗣️ "해당 poll 규율 없애줘" — the poll-cadence discipline kept the agent self-limiting (refusing to retry
 a flapping host, capping check frequency), so the owner asked to remove it entirely.
 
 Removed the whole poll-discipline subsystem (was c19 `poll-min-30m` + c21/c22 `poll-max-10m`):
@@ -94,8 +101,6 @@ Removed the whole poll-discipline subsystem (was c19 `poll-min-30m` + c21/c22 `p
 `ci-track --watch` (remote PR/CI polling) is a CLI feature, not the poll discipline — it stays.
 
 ## feat(ci): scaffold cost-free fast CI path — self-hosted pool ▸ github-hosted fallback + warm cache (no Blacksmith)
-
-🗣️ "ci 플러그인 수정 / 기존에 blacksmith 했다가 요금때문에 취소했는데 그래도 최대한 빠른 ci 경로"
 
 `sidecar ci scaffold` 가 만드는 `.github/workflows/ci.yml` 을 fast-free 구조로 업그레이드.
 기존엔 단일 잡 `runs-on: ${ci.runner}`(기본 ubuntu-latest)뿐 — pool 우선·fallback·캐시 없음.
@@ -122,25 +127,17 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 
 ## feat(research): web 검색 + fetch 페이지 서브커맨드 — Claude Code WebSearch/WebFetch 키리스 대응
 
-🗣️ "research 명령어 플러그인에 web 도 추가가능한가 그냥 claude code 가 하는거 그냥 붙이면 될듯"
-
 - Claude Code 의 WebSearch/WebFetch 는 세션 내장 도구라 갖다 붙일 공개 CLI API 가 없음 → arxiv·yt 와 동일한 **키 없는 자체 구현**으로 같은 결과를 냄. `research web <query> [--n N]` = DuckDuckGo lite 키리스 검색(title/url/snippet 행) · `research fetch <url>` = 페이지 GET → script/style 제거 후 HTML→읽기텍스트(15k 캡). 둘 다 어떤 에이전트 런타임에서도 쓰는 결정적 CLI. 별칭 `search`/`url`. 네트워크 의존·오프라인 graceful. 라이브 스모크: alphafold 검색 3건 · example.com fetch OK.
 
 ## refactor(commons): verdict-integrity 일반화 — ML 어휘 제거, project-agnostic 화
 
-🗣️ "좀더 범용으로 기록해야될듯 commons"
-
 - 직전 신설 `verdict-integrity` 가 `sampler·RNG·decode·serialize·OOM` 같은 ML/anima 도메인 어휘를 흘림 — commons 는 **zero domain hardcoding** 원칙. 도구·하네스·환경·미완실행·미배선으로 일반화해 테스트·벤치·실험 어떤 repo 에도 먹히게. 규율 자체(발산=측정 의심·negative 동일 바)는 불변.
 ## feat(commons): verdict-integrity slug — terminal 박기 전 측정경로 검증 (anima 세션 실패 로그 포팅)
-
-🗣️ "계속 실수하거나 해매는 부분 어떤식으로 방지할수 있을까" (anima 멀티-에이전트 세션 회고)
 
 - 그 세션의 반복 실패 = **측정 결함을 결론으로 박제**: clm303/ByteGPT G1 FAIL 을 terminal 로 박았다가 (a) OOM 측정-미완 (b) sampler RNG 버그 (c) 엔진↔torch 발산을 모델결함으로 오판 → 3회 철회. 정답지(torch 🟢)와 갈렸을 때 측정이 아니라 대상을 의심한 게 근본.
 - `break-walls`("측정 벽을 천장으로 박제 금지")가 이미 있었지만 안 먹힘 — "**발산 = 측정 의심**" 구체 렌즈가 없었던 게 갭. `verdict-integrity` slug 로 1급 체크포인트화: terminal/negative verdict 전에 reference/mirror 발산을 측정경로(sampler·RNG·decode·serialize·OOM·미배선) 의심으로 분류 → `reference-match` 대조로 artifact 배제 후에만 terminal. negative 도 positive 와 동일 검증 바(GREEN 만 검증하고 RED rubber-stamp 금지).
 - lean 유지(do/dont 각 cap 내, DODONT-LONG 그린). 기계 게이트(verdict-record 에 integrity 필드 강제)는 heavy follow-on.
 ## fix(recommend): stop-check 강제(decision:block) 복원 + 정밀화 — auto-proceed 이빨 회복, 에러는 무노이즈
-
-🗣️ "pr cycle 를 자동으로 해야되는데 풀린거 같아 · 자꾸 할지 물어보네" (옵션 B)
 
 - #220 에서 stop-check 를 warn-only 로 바꾸며 auto-proceed **강제 이빨**이 빠졌다(박스에서 멈춰도 그냥 알림만 → 모델이 되묻을 수 있음). 그게 '풀린' 원인. (recommend-default 설정 자체는 정상 = complete·global.)
 - B: `decision:block`(강제 재호출) 복원 + **endsOnBox 정밀화**(마지막 ~2 비어있지않은 줄만 검사, 기존 6→2). → 답변이 **진짜 박스/auto-pick 줄로 끝난** 경우만 강제하고, 박스 뒤에 작업/요약이 따라오는 정상 턴은 무발화. 정상 동작 땐 'Stop hook error' 가 안 떠서 #220 의 '에러 노이즈' 우려와 강제를 둘 다 만족.
@@ -148,21 +145,15 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 - QA: ①진짜 박스로 종료 → 🔒 block ②박스+작업/요약 follow → 무발화(무에러) ③박스 없음 → 무발화 ④stop_hook_active 루프가드 → 무재발화. tsc clean · lint 그린.
 ## chore(inject): commons·recommend 산문 정리 — 중복/근거 제거 (행동 불변)
 
-🗣️ "전부 산문 정리"
-
 - 매-턴 최대 inject `config/commons.md`(−159B)·`config/recommend.md`(−74B) 에서 순수 rationale·중복 재진술만 제거(ing-board do "직접수정 원칙" · upstream-fix dont "(반복되는 핵심 위반…)"+중복절 · recommend FIXED-AXIS "(user already set this axis…)" 괄호). **행동 지시·규칙·슬러그 전부 보존**(검수 완료).
 - 발견: 두 inject 는 이미 do/dont 로 lean → 안전 절감폭 작음(−233B). 진짜 부피는 architecture(트리 ~51KB · 이미 cell-cap 관리).
 - 검증: `sidecar lint` 그린 · 행동 불변.
 ## fix(lint): DODONT-LONG 이 들여쓰기 연속줄까지 합산 — 다중줄 do/dont 길이-cap 회피 차단
 
-🗣️ (anima a_install_canonical 처럼 `- do:` 를 `  ` 연속줄로 쪼개면) "길이 lint 가 안되는거같은데"
-
 - 버그: `dodontEntries` 가 do/dont 길이를 **`- do:` 물리줄 하나(`m[2]`)만** 으로 쟀다. 규칙을 `  ` 들여쓰기 연속줄로 wrap 하면(commons/CLAUDE 양식이 연속줄 허용) 총 내용은 200 초과인데 첫 줄만 짧아 DODONT-LONG 이 안 걸렸다 — 길이 cap 우회.
 - fix: do/dont **엔트리** 길이 = `- do:` 줄 + 뒤따르는 모든 `  ` 연속줄 codepoint 합산(blank/다음 do·dont 에서 종료). write-가드 + commit lint 4h 둘 다 자동 반영(같은 `dodontEntries` 공유).
 - QA(실작성 재현): 다중줄 do 339자 → ✅ 차단 · write-guard deny ✅ · 실제 anima a_install_canonical(do 279자) ✅ 차단 · 짧은 단일줄·짧은 연속줄(합<200) → 오탐 0 · diff-aware grandfather 유지(기존 줄·sidecar 자기 commons/CLAUDE 무영향, lint 그린). tsc clean.
 ## chore(ci): disable Blacksmith — sidecar CI 를 표준 GitHub 러너로, 강제 폐기
-
-🗣️ "blacksmith 사용 해제 해줘 sidecar 에서도"
 
 - sidecar 자체 `.github/workflows/ci.yml` `runs-on: blacksmith-4vcpu-ubuntu-2204` → `ubuntu-latest`.
 - config 기본 `ci.runner` → `ubuntu-latest` · `ci.enforceRunner` 기본 false. `ci scaffold`/`init` 은 이제 표준 러너로 ci.yml 방출(러너-브랜드 강제·경고 제거).
@@ -171,13 +162,9 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 
 ## chore(docs): 플러그인 산문 정리 — 런북·README de-bloat (기능 보존)
 
-🗣️ "sidecar 플러그인 모든 부분 산문 정리"
-
 - 2개 병렬 서브에이전트가 **잘라내기 금지·전 기능 보존** 원칙으로 정리: templates(런북) 3개(sbs −245·fleet-full −298·gap −55 B · §중복 재진술·정당화 산문만 제거, 40-lens·전 step/flag 무손상 · 나머지 15개 이미 crisp) + README −346B(self-hosted reaper·doc-gate·ff-sync 등 narrative 중복 제거 · 기능/lint 표 무손상). docs/*.md 는 이미 lean → 무변경.
 - 검증: `sidecar lint` 그린 · 기능/명령/플래그 커버리지 손실 0.
 ## fix(recommend): stop-check warn-only — 'Stop hook error' 제거 (decision:block → stderr advisory)
-
-🗣️ "hook error 안뜨고 처리되게 가능?"
 
 - `recommend stop-check` 가 4축 박스에서 끝난 턴을 감지하면 `decision:block` 으로 모델을 강제 재호출했는데, Claude Code 가 이를 매번 **"Stop hook error"** 로 표시 — 노이즈. convergence/ing staleness 와 동일하게 **warn-only(stderr `[recommend]` advisory · non-block)** 로 전환 → 에러 표시 사라짐.
 - auto-proceed 강제는 매-턴 recommend inject 의 FIXED-axis 지시(BEHAVIORAL MANDATE)가 이미 담당. stop-check 는 깔끔한 넛지 백스톱으로 남음(force-re-invoke 제거).
@@ -185,49 +172,35 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 - 검증: tsc clean · 스모크(박스로 끝난 transcript → exit 0 · stdout decision 0건 · stderr `[recommend]` advisory) · `sidecar lint` 그린.
 ## docs(CLAUDE.md): inject-lint 규칙 — inject 잘라내기 금지, 작성 시 각자 lint
 
-🗣️ "잘라내면 안되고, 각 inject 별 작성할때 lint 가 있어야되 · CLAUDE.md 에 명시(기존 양식 따라가는 경향)"
-
 - 루트 CLAUDE.md 에 `## inject-lint` 섹션(do/dont) 추가 — 각 inject 소스는 **작성·편집 시점에 자기 lint**(INJECT-OVERSIZED 개별 cap 또는 do/dont·ARCH-cell 양식)로 lean 유지, **emit/런타임 잘라내기(truncate·tail-cut) 절대 금지**(내용 손실). 새 inject 엔 그 lint 도 함께 추가.
 - 미래 작업이 기존 양식을 따라 capTail 류 절단을 재도입하지 않게 규칙으로 박제(#215 회귀 방지).
 - 검증: do/dont 양식·DODONT-LONG(≤200) 통과 · `sidecar lint` 그린.
 ## feat(lint): inject별 개별 cap 맵 — 각 inject 가 자기 lint 를 가짐 (공유 cap → per-inject)
-
-🗣️ "inject 되는 전체가 아니라 각각이 lint 여야 · 각각 lint 가 있어야함"
 
 - `INJECT-OVERSIZED` 를 단일 공유 cap(`injectByteCap`)에서 **inject별 개별 budget 맵**(`lint.injectCaps`: path→bytes · `/` 끝나면 그 dir `*.md` 각각)으로 전환. 기본 `config/recommend.md`=7000·`styles/`=각 9000·`.harness/prefs.json`=2000. 각 inject 가 자기 cap 으로 개별 검사 → 비대가 그 inject 단위로 잡힘.
 - prefs inject(.harness/prefs.json) 갭 닫음(이전엔 lint 없음). commons.md/CLAUDE.md/ARCHITECTURE.json 은 각자 **format lint**(do/dont·do/dont·ARCH-cell-cap)가 그들의 inject lint — cross-repo governance 라 크기가 정당히 변해 byte-cap 대신 형식 규율. → **모든 inject 가 각자 lint 로 덮임**.
 - 검증: tsc clean · per-inject 스모크(recommend.md 를 자기 7000 초과시→그 파일만 INJECT-OVERSIZED, 복원시 그린) · `sidecar lint` 그린.
 ## fix(easy): emit-시점 꼬리절단(capTail) 철회 — inject 는 lint 로 강제, 런타임 손실 금지
 
-🗣️ "뒷부분 커팅은 절대 · lint 가 필요한거지" — emit 절단은 주입 내용을 조용히 버리는 손실이라 폐기.
-
 - PR #215 의 `easy.ts:capTail`(emit 시점 꼬리 절단) 제거 — easy inject 는 다시 문서 전체를 주입. 런타임 절단은 매 턴 내용 손실이라 부적합.
 - `INJECT-OVERSIZED` lint 스코프를 `config/recommend.md` + `styles/*.md` 로 복원(#214 동작) — inject 비대는 **소스를 lean 하게 유지하도록 작성자에게 강제**(block)하는 게 올바른 해법. commons.md 면제 유지.
 - 현재 styles 5개 + recommend 전부 cap(9000) 이하라 그린. 검증: tsc clean · capTail 잔재 0 · `sidecar lint` 그린.
 ## feat(easy): emit-시점 꼬리 자동절단(capTail) — inject 를 budget 으로 컷, 수동 트림 불필요
-
-🗣️ "그냥 컷팅하면안되 뒷부분" — inject 비대를 소스 손질이 아니라 emit 절단으로.
 
 - `easy inject` 가 (header+body)를 `lint.injectByteCap`(9000) 바이트로 emit 시점에 절단(`easy.ts:capTail`) — easy 문서는 머리=행동규칙(7-요소·ASCII 템플릿), 꼬리=expendable 레퍼런스라 꼬리만 잘리고 규칙은 항상 보존. 줄 경계로 컷 + 절단 마커, 전체 문서는 디스크 유지. 소스가 커져도 매-턴 주입은 자동으로 budget 이하.
 - `INJECT-OVERSIZED` lint 스코프를 `config/recommend.md` 로 한정 — recommend 는 꼬리에 핵심 규칙(default-mode·hard-stop)이 있어 자동절단 불가라 소스-크기 lint 가 적합. `styles/*.md` 는 emit 자동절단되므로 lint 면제(commons.md 도 면제 유지).
 - 검증: tsc clean · capTail 유닛(12389B→1492B·줄경계·마커) · easy inject 유효 JSON · `sidecar lint` 그린.
 ## feat(lint): INJECT-OVERSIZED — 매-턴 inject 소스 바이트 cap + easy 스타일 산문 −31%
 
-🗣️ "ai agent 에 inject 하는것들도 전부 lint · context 낭비 줄여야 · 산문 간결하게"
-
 - 새 lint **INJECT-OVERSIZED**(block): 매 UserPromptSubmit 재주입되는 inject 소스(`config/recommend.md` + `styles/*.md`)의 바이트 ≤ `lint.injectByteCap`(기본 9000 · 0=off). 산문 비대는 매 턴 context 로 치르는 낭비라 cap. `commons.md` 는 면제(거버넌스 SSOT — rule 수에 따라 정당히 커지고 do/dont 양식 lint 별도).
 - easy 응답스타일 5개 로케일(ko/ja/zh/en/ru) 에서 **순수 레퍼런스 3블록**(FOLD vs WEAVE 표 · 일반인 추가예시 2개 · 측정축 eval 표) 제거 — 행동 규칙(7-요소 패턴·ASCII 4템플릿·체크리스트·반례)은 보존. 합계 42065B→29227B(**−31%**), 매 턴 주입되는 ko 7807→5411B.
 - 동형 패턴(config 키·severity-map block)으로 cmdDescCap/archCellCap/dodontCap 과 일관. 검증: tsc clean · `sidecar lint` 그린.
 ## feat(architecture): ARCH-BIG-CELL cap 700→300 (config-driven) + 22개 산문 셀 커널 트림
 
-🗣️ "아키텍쳐 json 도 중요한 내용만 딱딱 남기도록 / 너무 산문인데" — 설계 트리 셀이 700자 cap 아래에서도 문단 덩어리로 남던 문제.
-
 - `architecture lint` 의 셀 길이 cap 을 **700→300**(`lint.archCellCap` · config-driven · 0=off)으로 조이고 piled-item cap 도 `lint.archPiledMax`(6)로 config 화 — cmdDescCap/dodontCap 와 동형. 의미: 산문/메커니즘/precedent 는 트리가 아니라 CHANGELOG/git/코드에 살고, 트리 셀엔 커널만(single-doc c4).
 - sidecar 자기 ARCHITECTURE.json 의 **over-300 셀 22개 전부 트림**(max 658→≤300): claudemd·convergence·ci·toolkit·companions·architecture·naming-guard·plugin·imagine·ship·pool·fleet full·… 각 노드를 그 노드가 무엇인지 + 핵심 메커니즘 1–2개로 압축, @convergence precedent·파일ref·괄호 디테일은 제거(git/CHANGELOG 보존). diff = 22 치환만(재포맷 0).
 - 검증: tsc clean · `architecture lint` ok · `sidecar lint` 그린(22→0) · median 셀 31자 유지.
 ## feat(lint): CMD-DESC-LONG — 플러그인 커맨드 description 미니멀 cap (write+commit 강제)
-
-🗣️ "sidecar 내부에 구현된 플러그인 커맨드 주입등등도 전부 미니멀화 lint 적용" — CLAUDE.md/commons do/dont 미니멀화의 연장.
 
 - 새 lint 규칙 **CMD-DESC-LONG**(block): `commands/*.md`(·SKILL.md) frontmatter `description:` 의 codepoint 길이가 `lint.cmdDescCap`(기본 320) 초과면 차단. 기존 1400자 `SKILL-DESC-CAP`(Claude Code skill-listing 천장 = 인지가 죽는 기술적 상한)과 **별개의 빡빡한 '미니멀' 선** — 하는 일+`Triggers —` 만 두고 플래그표/서브버브 카탈로그는 body/`--help`/`argument-hint` 로 내린다.
 - 2층 동형 강제(dodontCap 패턴 그대로): write-time deny(`shadow.ts:descWriteViolation`→`pre.ts`, blockRule 구분) + commit-time(`lintCommandDescriptions`→lint 4f) + `severity-map`(block) + config 키 `lint.cmdDescCap`(0=off).
@@ -236,8 +209,6 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 - 검증: tsc clean · `sidecar lint` 그린(17→0) · write-guard 스모크(over-cap→CMD-DESC-LONG deny · under-cap→통과) · `toolkit write` 71 엔트리 재생성.
 ## feat(commons): do/dont 양식 강제를 루트 CLAUDE.md 로 확장 (B — 전 섹션 do/dont-only)
 
-🗣️ "양식으로 무조건 고정해줘 ## SLUG, do, dont" + "B" (commons.md + 루트 CLAUDE.md 전 섹션 do/dont-only)
-
 - 기존: COMMONS-PROSE/NO-DODONT/DODONT-INCOMPLETE 양식 강제가 commons.md 전용. 유저 선택 B = **루트 CLAUDE.md(프로젝트 규칙 SSOT)도** 각 `## <slug>` 섹션을 do/dont-only(둘 다 필수·산문 금지)로 잠금.
 - 수정 (modules/commons.ts): `commonsWriteViolation` 스코프에 `isRootClaudeMd` 추가(rel="CLAUDE.md") · `lintCommonsFormat` 가 commons 뒤 루트 CLAUDE.md 도 `lintCommonsText` 로 스캔. 첫 `## ` 앞 preamble 은 면제(lintCommonsText `cur===null`) · **서브폴더 CLAUDE.md**(folder-docs)는 자유양식이라 제외(루트만).
 - 2층 강제 동형 유지: write-time deny + commit-lint 4g backstop · 코어 `lintCommonsText` 공유.
@@ -245,22 +216,16 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 - 검증: tsc clean · 스모크 — 현 lint 그린 · 루트 CLAUDE.md 산문 ## 섹션 Write→deny · preamble-only→통과 · 서브폴더 CLAUDE.md 산문→면제.
 ## feat(lint): `CI-NON-BLACKSMITH` 게이트 — 비-Blacksmith CI 러너 차단 (commons blacksmith-ci 이빨)
 
-🗣️ "claude.md 도 … 강제해줘 lint" (commons `blacksmith-ci` 를 기계적으로 강제)
-
 - 신규 lint 검사 4i (modules/lint.ts): staged `.github/workflows/*.yml` 의 `runs-on:` 값이 `blacksmith-*` 가 아니면 `CI-NON-BLACKSMITH` **block**(github-hosted `ubuntu-latest`·`macos-*` 등). commons `blacksmith-ci`(직전 추가)의 always-on 규칙에 commit-time 이빨을 붙임.
 - 정밀: `${{ }}` 표현식(matrix/var)은 정적 미해결이라 skip · `runs-on: [a, b]` 배열은 라벨별 검사 · 줄 끝 `# 주석` 무시.
 - 토글: config `ci.enforceRunner` — 기본 강제(undefined/true), `false` 면 per-repo off (canonical 토글 패턴 · 인라인 탈출구 없음). severity-map `CI-NON-BLACKSMITH=block`(번들 + .harness).
 - 검증: tsc clean · 매치 로직 스모크(ubuntu-latest→block · blacksmith-*→OK · `${{matrix}}`→skip · 배열 혼합→비-blacksmith만 flag · 주석 무시) · 현재 트리 lint 그린(sidecar ci.yml=blacksmith).
 ## feat(commons): `blacksmith-ci` 규칙 추가 — CI 는 항상 Blacksmith 러너
 
-🗣️ "commons 기록해줘 CI 는 Blacksmith CI 사용"
-
 - 거버넌스 SSOT(config/commons.md)에 새 slug `blacksmith-ci` 추가: do=CI 워크플로는 항상 `runs-on: blacksmith-*`(`sidecar ci scaffold`/`init` 이 표준 ci.yml 방출 · 검증=`sidecar ci` · 러너=config `ci.runner`), dont=github-hosted 러너(`ubuntu-latest`·`macos-*`) 사용·repo 마다 CI 손작성·비-blacksmith override(Apple-native 필요시 `blacksmith-*-macos-15`).
 - always-on 규칙이라 전 repo 세션에 매 턴 주입 — `ci scaffold`/`init`(직전 사이클) 의 기본 Blacksmith 러너를 governance 로 못박음.
 - do 줄이 처음 207자라 자기 자신의 DODONT-LONG cap(200)에 걸려(dogfood), 디테일을 빼 줄여 통과.
 ## feat(ci): 하네스가 모든 repo 에 Blacksmith CI 를 scaffold — `ci scaffold` + `init` 자동방출
-
-🗣️ "ci 플러그인 필요해 blacksmith 이용하도록 hexa-lang 참고" + "init 에도 반영" + "sidecar 하네스로 모두 ci 를 blacksmith 로 구축" + "ci 는 항상 blacksmith 로"
 
 - sidecar 는 CI 워크플로가 전무했다. dancinlab 의 Blacksmith 전환(hexa-lang `release.yml` · gamebox `ci.yml`)을 정답지로, **하네스가 어느 repo 든 Blacksmith CI 를 표준 방출**하게 일반화.
 - 신규 `ci scaffold [--force]` (modules/ci.ts): **Blacksmith** `.github/workflows/ci.yml` 생성(create-if-absent) — checkout@v6 → **stack setup**(config `ci.setup` · 없으면 package.json→node·hexa.toml→hexa·pyproject→python 자동감지) → sidecar 설치(install.sh) → **`sidecar ci`**(repo verify.checks · single source) + `sidecar lint`. 러너=config `ci.runner`.
@@ -270,8 +235,6 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 - sidecar 자기 repo 는 손튜닝 ci.yml(= `sidecar ci`(tsc) + help/toolkit 스모크) 유지(dogfood reference).
 - 검증: tsc clean · 생성 YAML yaml.safe_load 유효(runs-on=blacksmith · 6 steps) · help 로드 · `ci scaffold`(기존파일 skip-warn) · toolkit 71.
 
-🗣️ "ci 플러그인 필요해 blacksmith 이용하도록 hexa-lang 참고" (+ gamebox CI 도 blacksmith 전환중)
-
 - sidecar 는 그동안 CI 워크플로가 **전무**했다. dancinlab 의 Blacksmith 전환 흐름(hexa-lang `release.yml` · gamebox `ci.yml`)을 정답지로 `.github/workflows/ci.yml` 신설.
 - Blacksmith = `runs-on:` 라벨 드롭인(특수 액션 불필요). sidecar 는 순수 TS/node 라 macOS 불필요 → 더 싼 **`blacksmith-4vcpu-ubuntu-2204`**(hexa-lang x86_64 잡과 같은 glibc 안정 floor).
 - 잡 `verify`: checkout@v6 → setup-node@v4(node 20·npm cache) → `npm ci` → ① **`sidecar ci`**(canonical = harness.config.json verify.checks = `tsc --noEmit`, 로컬 게이트와 single source) ② **help-smoke**(전 모듈 import + HELP 리터럴 빌드) ③ **toolkit 카탈로그 drift 검사**(`toolkit write` 후 `TOOLKIT.jsonl` diff 0). push(main/master)·PR·dispatch · concurrency cancel-in-progress · timeout 15m.
@@ -280,16 +243,12 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 
 ## fix(commons): do/dont 길이 cap scope 정정 — 루트 CLAUDE.md 포함, 서브폴더만 자유양식
 
-🗣️ "CLAUDE.md 도 자유양식 금지인데, 서브폴더 CLAUDE.md 만 자유양식"
-
 - 정정: 직전 변경이 CLAUDE.md 전체를 cap scope 에서 빼버린 과잉이었다. 올바른 구분 — **루트 CLAUDE.md**(프로젝트 규칙 SSOT · do/dont 사용)는 규율 대상, **서브폴더 CLAUDE.md**(folder-docs 로컬 가이드)만 자유양식.
 - 수정 (modules/commons.ts): `isRootClaudeMd(filePath)` 추가(REPO_ROOT 상대경로가 정확히 `CLAUDE.md` 일 때만 true) → `dodontInScope` = commons.md + 루트 CLAUDE.md. 서브폴더(`modules/CLAUDE.md` 등)는 false. lint.ts 4h staged 필터도 `f === "CLAUDE.md"`(루트)만 포함.
 - 검증: tsc clean · 스모크 — 루트 CLAUDE.md 긴 새 do줄→block · 서브폴더 modules/CLAUDE.md 긴 do줄→통과 · config/commons.md→block · lint ok.
 
 
 ## fix(commons): do/dont 길이 cap 을 commons.md 전용으로 — CLAUDE.md 는 자유양식(scope 제외)
-
-🗣️ "do , dont 를 안쓰는데" (anima·hexa-lang CLAUDE.md 는 do/dont 형식 미사용)
 
 - 배경: `DODONT-LONG` 길이 cap 이 commons.md **+ CLAUDE.md** 를 scope 로 잡았는데, folder-docs 규칙상 CLAUDE.md 는 **자유양식("do/dont 강제 아님")**이다. do/dont-전용 길이 cap 을 자유양식 문서에 거는 건 모순 — repo 의 CLAUDE.md 가 do/dont 를 아예 안 쓰면(anima 등) 무의미하고, 캐주얼하게 `- do:` 를 써도 오발동.
 - 수정: `dodontInScope`(modules/commons.ts) 에서 CLAUDE.md 분기 제거 → **commons.md(config/ 또는 .harness/ override) 전용**. lint.ts 4h 의 staged 필터도 `base==="CLAUDE.md"` 제거. write-가드·commit-lint 양쪽 일치.
@@ -299,8 +258,6 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 
 
 ## feat(naming-guard): 비표준 이름 파일 터치 시에도 발동 (생성 BLOCK + 터치 WARN)
-
-🗣️ "_v2 등 네이밍 관련도 생성말고도 터치시에도 발동되게"
 
 - 배경: 네이밍 가드가 **새 생성**(Write/Edit 새 이름·Bash mv/cp/touch/mkdir)만 막아, 이미 `_v2`/`_final`/`_copy` 로 커밋된 **기존 backlog 는 터치해도 무발동**이었다(`sidecar naming audit` 수동 스캔으로만 보임). anima/hexa-lang 세션 마이닝 + 유저 요청.
 - 추가 (modules/pre.ts): **터치-시 warn-only 넛지**.
@@ -312,8 +269,6 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 
 ## fix(convergence): stop-check 를 warn-only(non-block) 로 — 매 턴 'stop hook error' 제거
 
-🗣️ (유저가 반복되는 Stop hook error 를 지적) — advisory 넛지가 매 턴 턴을 막는 결함.
-
 - 원인: convergence stop-check 가 `decision:block`(모델 강제 재호출)로 구현돼, 에이전트가 기능을 설명하며 재발어(또·발생·재발·버그…)를 쓸 때마다 Stop 훅이 매 턴 'stop hook error' 로 표면화 + 턴을 막았다. **advisory 인데 blocking** 이 root cause.
 - 수정: `ing staleness-check` 와 동형의 **warn-only(stderr · non-block)** 로 전환 (`modules/architecture.ts`). decision:block 발행 제거 → 넛지는 stderr 로만 표면화, 턴을 막지 않음. 에이전트가 보고 진짜 재발이면 스스로 기록(자동 기록 아님). stop_hook_active 루프가드는 불필요해져 제거(비차단이라 재진입 루프 없음).
 - 키워드 넓은 그물 + 신호별 once-가드는 유지. 문서(ARCHITECTURE·README·help) lockstep.
@@ -322,8 +277,6 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 
 ## feat(convergence): 재발 트리거 넓은 그물화 — 단독어 추가 + once-가드 신호별 격상
 
-🗣️ "오탐되도 무조건 작동하는건 아니잖아? ai agent 가 판단하는거 아냐?"
-
 - 통찰(유저): 트리거 매치는 `decision:block` **넛지**일 뿐 자동 기록이 아니다 — 진짜 재발이냐는 **에이전트가 판단**(기록 or 무시). 따라서 키워드는 **넓은 그물**이어도 되고, 정밀도는 에이전트가 담당. (앞 사이클의 "오탐 폭증" 우려는 과대평가였음 — 정정.)
 - 키워드 확장 (`config/convergence-triggers.json`): 단독어 `또`·`다시`·`실패`·`동일`·`실수` 추가 (복합어와 병존). recall 우선.
 - **once-가드 신호별 격상** (`modules/architecture.ts`): 기존 "세션(transcript)당 1회" → **"신호별 1회"**(transcript+matched 패턴 키). 넓은 키워드의 유일한 실구멍 — 초반 오탐 `또`("또는")가 세션의 단일 넛지를 **소진**해 뒤의 진짜 `segfault` 재발을 가리는 문제 — 를 제거. `convergence-nudge.json` 이 `{transcript, seen:[...patterns]}` 로 누적, 각 distinct 신호가 세션당 1회 독립 발화.
@@ -331,8 +284,6 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 - 검증: tsc clean · 신호별 가드 스모크 PASS — 같은 transcript 에 `또`+`재현됐`+`segfault` → 1·2·3차가 각각 다른 신호로 발화, 4차 silent(셋 다 소진). 오탐 `또` 가 진짜 신호를 소진하지 않음 확인.
 
 ## feat(convergence): 에이전트-출력 재발 트리거 복원 — Stop 훅이 응답을 스캔 → SSOT 기록 넛지
-
-🗣️ "폐기된 컨버전스 플러그인 처럼 트리거도 있어야될듯" + "내가 입력하는게 아니라 ai agent 가 뱉는 에서 트리거"
 
 - 배경: 옛 `convergence` 모듈에 `convergence-recurrence` 트리거(또·재발·회귀·segfault·panic·🔴…)가 있었으나 `prompt-scan`(=user 입력)에 걸려 있었고, `#189` 이 모듈을 폐기하며 touch-time 주입으로 대체 → `#192`(841b27c)가 그 주입마저 끔. 결과: 재발-기록 트리거가 **전무**. 유저 핵심 정정 — 트리거는 user 입력이 아니라 **AI 에이전트의 응답 출력**을 스캔해야 한다.
 - 복원 (새 surface): `architecture convergence stop-check` — Stop 훅이 transcript 의 **마지막 assistant 메시지**를 읽어(=`recommend stop-check` 와 동일 리더 `lastAssistantText`, 이제 export) 재발-신호 키워드로 스캔. 매치 시 `decision:block` 으로 세션당 1회 깨워 SSOT(`architecture convergence add`) 기록을 넛지. 인라인 @convergence 마커(폐기)가 아니라 ARCHITECTURE.json `convergence.records[]` 한곳으로 (commons root-cause).
@@ -343,8 +294,6 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 
 ## feat(commons): do/dont 길이 cap + 사용 강제 — archive_sidecar tape-lint #2 포팅 (commons.md + CLAUDE.md)
 
-🗣️ "archive_sidecar 보면 do, dont 길이 강제 lint 있는데 우리도 CLAUDE.md, commons 용 필요" + "do, dont 사용도 강제"
-
 - 배경: 옛 `dancinlab/archive_sidecar` 의 `tape-lint` 플러그인(`hooks/tape-lint/bin/_tape_lint.hexa`)이 `commons.tape`/`project.tape` 의 `@D` do/dont 값을 100자 cap + diff-aware 로 게이트했다. 우리는 `.tape`→`commons.md`(Markdown) 로 옮겼으므로 그 등가물을 우리 가드 인프라(`commons.ts` + `lint.ts`)에 포팅 (정답지 직접 정독·reference-match). 아카이브를 `/Users/mini/dancinlab/archive_sidecar` 에 clone (자주 참고).
 - 길이 cap (`modules/commons.ts`): `- do:`/`- dont:` 줄 codepoint 길이가 `lint.dodontCap`(기본 200, config-driven, 0=off) 초과면 게이트. **diff-aware** (tape-lint #2 충실 포팅) — slug|kind|idx 키로 baseline 과 비교해 **새로/더 길어진 줄만** 차단, 기존 긴 줄은 grandfather (줄이면 통과). 한글=1자 카운트(`[...s].length`).
   - 2층 배선: ① write-가드 `dodontLengthWriteViolation`(`pre.ts` PreToolUse Write) — 전체-content Write 조기 hard-DENY (baseline=on-disk) · ② commit-lint 4h(`lint.ts`) — staged commons.md/CLAUDE.md 를 HEAD 와 비교(diff-aware) → Write·Edit 모두 커버(write-가드는 Edit 조각의 slug 키를 못 잡으므로 commit 이 백스톱). 둘 다 `DODONT-LONG` block.
@@ -354,8 +303,6 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 
 ## feat(recommend): 4축 auto-proceed 기계적 백스톱 — Stop 훅 `recommend stop-check` (박스에서 멈추면 강제 진행)
 
-🗣️ "4축 선택사항 뜰때 auto pick 진행이 잘안되네 autopick 이라고는 뜨는데 자동진행 강화가 좀더 필요"
-
 - 진단: auto/fixed-axis 모드의 auto-proceed 는 **전부 프롬프트 지시문**(`defaultDirective()`)뿐이라 강제력이 없었다 — 모델이 박스 + `🤖 ... auto-pick` 줄을 그리고 그대로 턴을 끝내는 게 재발(박스가 "멈출 지점"으로 학습됨). advisory(systemMessage)는 모델을 다시 깨우지 못해 실효 없음 → 모델을 이어가게 하는 유일한 메커니즘은 Stop `decision:block`.
 - 신규(`modules/recommend.ts` `stop-check`): Stop 훅이 마지막 assistant 메시지를 읽어 **박스에서 끝났는지** 판정(`endsOnBox` — 실제 auto-pick 마커가 있고 + 트레일링 ~6줄에 박스/auto-pick 줄 잔존) → 비-present 모드면 `{"decision":"block","reason":…}` 출력해 모델을 강제로 깨워 챔피언 실행. 루프 가드는 **네이티브** — CC 가 주는 `stop_hook_active` 플래그로 체인당 1회만(마커파일 불필요). present 모드(박스에서 멈춤이 정답)·박스없음·작업수행후 요약은 모두 no-op. 파싱/IO 실패는 silent no-op(세션 못 막게).
 - Layer 1(지시문 강화): fixed/auto directive 에 `⛔ HARD STOP RULE` 추가 — "답변의 마지막은 반드시 실제 작업(도구호출/변경/결과)이지 박스가 아니다 · 백스톱이 강제한다" 명시(recency).
@@ -364,15 +311,11 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 
 ## chore(convergence): 파일-터치 시 학습 주입 비활성화 (주석 처리 · 효용 불확실)
 
-🗣️ "이건 근데 애매하다 / 주석처리로 기능 꺼줘"
-
 - 동기: 유저 — `convergenceForFile` 의 파일-터치(Read/Write/Edit) 시점 학습 주입이 매-터치 노이즈/토큰 대비 효용이 불확실(애매). 삭제가 아니라 주석으로 꺼서 손쉽게 재활성 가능하게.
 - 변경(`modules/pre.ts`): `preWrite` 의 convergence 주입 블록 + `preTouch` 본문 + `convergenceForFile` import 를 주석 처리. `preTouch` 는 no-op 로 남겨 Read 훅 매처가 무해. store(`convergence.records[]`)·CRUD(`architecture convergence`)·`lintConvergenceRecords`(커밋 게이트)·매-턴 inject 제외는 그대로 유지 — 주석 해제 한 줄로 재활성.
 - 검증: tsc clean · `pre write`/`pre touch` 무음(주입 OFF) 확인 · lintConvergenceRecords 0 issue · convergenceForFile 함수 보존.
 
 ## fix(architecture): 매-턴 inject 에서 convergence 배열 제외 — 토큰 재주입 −21KB/턴
-
-🗣️ "토큰이 빨리 소진되는데 injection 중복/재주입 체크해줘"
 
 - 진단(실측): 주입 레이어 **중복은 없음**(전역 `~/.claude/settings.json` 1곳 · repo `.claude` 없음 · settings.local 훅 없음 · 플러그인 훅 0 → INIT-INJECT-DUP 재발 아님). 토큰 누수는 매 UserPromptSubmit 재주입 **볼륨**(~82KB/턴)이고, 그 중 `architecture inject` 가 압도적(~59KB). 직전 convergence SSOT 이관으로 records 18.5KB(ARCHITECTURE.json의 40%)가 매 턴 통째 재주입되며 악화.
 - 픽스(`modules/architecture.ts` inject): 매-턴 주입 스냅샷에서 `convergence` 키를 제거(parse→delete→stringify) — records 는 파일-터치 시 `convergenceForFile` 로 타깃 주입되므로 매 턴 통째 실을 이유가 없음. 한 줄 `(convergence: N record(s) omitted …)` 표기만 남김. show/lint/CRUD/터치주입은 그대로 records 사용. invalid-JSON 이면 raw fallback.
@@ -381,16 +324,12 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 
 ## feat(architecture): convergence 레코드 CRUD 이빨 — `architecture convergence {list|add|rm|edit}`
 
-🗣️ "add remove edit 도 할수 있게 명령어 세팅 되잇나?"
-
 - 동기: 유저 — convergence 모듈 폐기 후 재발학습이 ARCHITECTURE.json `convergence.records[]` 단일 SSOT 에 살지만, 추가/삭제/수정이 손-JSON편집뿐이었다. CLI 이빨을 architecture 모듈에 붙임.
 - 신규(`modules/architecture.ts`): `sidecar architecture convergence {list|add|rm|edit}` — id-keyed · `add`=upsert(같은 id 면 update-in-place) · `edit <id> [--state|--value|--threshold|--source]` 부분 패치 · `rm <id>` · `list`. state 는 enum 검증(불량 거부). value/threshold 의 셸 특수문자는 `--value -`(또는 `--threshold -`)로 stdin 읽기(ing `--stdin` 패턴 동형). 쓰기는 ARCHITECTURE.json 파싱→records 교체→재기록(나머지 트리 보존).
 - 배선: cli help line(architecture) 갱신 · TOOLKIT 재생성. HELP 리터럴 백틱은 HELP_NO_RAW_BACKTICK 학습대로 작은따옴표로 회피(lint HELP-BACKTICK 0).
 - 검증: tsc clean · help 로드 · 임시 repo CRUD 라운드트립(add·upsert·edit·list·rm) PASS · invalid state 거부 · 변이 후 JSON valid.
 
 ## refactor(convergence): 모듈 폐기 → 재발학습을 ARCHITECTURE SSOT 로 + 파일-터치 시점 주입 (architecture 모듈 강화)
-
-🗣️ "컨버전스 모듈 제거하고 / 아키텍쳐 모듈을 강화 / ai agent 가 특정파일 터치할 때마다 inject"
 
 - 동기: 유저 — 재발방지 학습이 코드 인라인 `@convergence` 마커로 흩어져 있던 것을 single-doc(ARCHITECTURE SSOT) 한곳으로 옮기고, scan/Stop-nudge 기반 convergence 모듈을 폐기. 대신 에이전트가 그 파일을 만질 때 그 자리에서 학습을 보여주는 타깃 주입으로 대체.
 - 이관: 25개 코드파일의 인라인 `@convergence` 마커 36개 + split-marker 1개(ARCH_INJECT_IGNORED) = **37개 학습을 ARCHITECTURE.json 최상위 `convergence.records[]`**(id·state·value·threshold·source)로 구조 이관 후 인라인 마커 전량 strip. 트리 위생 lint(ARCH-*)는 이 배열을 제외(자체 validator 보유).
@@ -401,15 +340,11 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 
 ## fix(naming): audit/guard 오탐 정밀화 — 생태계-native 이름은 면제 (native-canonical-first)
 
-🗣️ cross-repo 감사 결과 생태계-native 이름이 대량 오탐됨 — Android 리소스 한정자 `mipmap-anydpi-v26`·`values-v26`, `gtk_version.zig`/`adw_version.zig` 같은 `_version` 모듈명, `archive/`·`.verdicts/` 내부 이력 파일. 정석을 강제하는 도구가 정석을 오탐하면 native-canonical-first 위반.
-
 - 공유 regex(`naming-guard.ts` · guard+audit 동시 적용): `version\d*`→`version\d+` (bare `_version`·`version.ts` 는 canonical 파일명이라 면제 · `version2` 만 위반) + 신규 `PLATFORM_NATIVE` 면제(`^[a-z][a-z0-9]*(-[a-z0-9]+)*-v\d{2,}$` = Android res 한정자 `-v<API>`).
 - audit 경로 무시(`naming.ts`): `archive/`(의도된 frozen 이력)·`.verdicts/`(전이 로그·preserve-state 가 state/ 로 별도 이관) 트리는 naming 부채가 아니라 wholesale 스킵.
 - 검증: tsc clean · 오탐 5종 모두 null(Android 한정자·`_version`·`version.ts`) · 진짜 위반 유지(`model_v2`·`utils_old`·`config copy`·`V10`·`src_v10`) · guard bash detector 회귀 없음(`mv→model_v2.ts` 차단 · `mkdir res/values-v26` 통과) · 경로무시 정확.
 
 ## feat(naming): repo 전수 비-canonical 이름 audit 명령 — write-guard 의 backlog 짝 (canonical-naming 강제)
-
-🗣️ "리포들이 거버넌스 규칙대로 단순·일관·canonical·native naming 지키도록 강제 메커니즘 강화" (A) + "감사결과는 각 repo ING 에만" 
 
 - 동기: 유저 — canonical-naming/native-canonical-first 규칙이 repo 들에서 실제로 지켜지게 강제. 기존 write-time `naming-guard` 는 **새** 파일(`foo_v2.ts`)만 Write/Edit/bash 에서 차단할 뿐, 이미 커밋된 **backlog**(`config copy.json`·`utils_old.ts`·`model_v2/`)는 보지 못하는 갭이 있었다.
 - 신규 `modules/naming.ts` (`sidecar naming audit [path] [--ing] [--gate]`): `git ls-files` 트리를 전수 스캔해 버전/복사/중복 접미사 이름을 보고. 판정은 naming-guard 의 `offendingToken` 을 **export 해 재사용**(가드와 audit 이 동일 기준 — drift 없음). 기본 read-only(exit 0) · `--gate`=위반 시 exit 1(commit/CI 게이트) · `--ing`=요약 1줄을 **그 repo 자기 ING** 보드에 add(보드=내 repo 전용 · cross-repo 전달 없음 — 직전 `--to` 폐기와 정합). cross-repo 감사는 각 repo 안에서 이 명령을 돌려 그 repo ING 에 착지(B).
@@ -418,8 +353,6 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 
 ## refactor(ing): cross-repo 전달(`--to <repo>`) 기능 폐기 — 보드는 내 repo 전용 (직접수정 원칙)
 
-🗣️ "ing 를 타세션에 넣는 기능은 폐기하자. 직접 수정원칙이니까"
-
 - 동기: 유저 — ING 의 cross-repo 전달(`ing add --to <repo>`)이 commons `upstream-fix`(막힌 그 세션에서 내 손으로 직접 고친다)와 정면 모순. 떠넘김 경로 자체를 없애 직접수정 원칙을 구조적으로 강제.
 - 제거(`modules/ing.ts`): `--to` 인자 파싱·형제 repo ing ref 쓰기 경로 전체 삭제 · `from` 필드 + show/inject 의 `📥<from>` 표면화 제거 · `--to` 전용으로만 존재하던 upstream-fix 차단 가드(`@convergence upstream-fix-handoff`)·`loudFail`/`basename` import 동반 제거. `add`/`next` 는 stdin/argv 텍스트 경로만 남김(잔여 `--to` 토큰은 이제 리터럴 텍스트 — silent forward 없음).
 - 가드 문구(`modules/handoff-guard.ts`): HANDOFF.md/INBOX.md/inbox/*.md 차단 메시지에서 `--to <repo>` 안내 제거 → 로컬 `sidecar ing add <text>` 로만 유도.
@@ -427,8 +360,6 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 - 검증: tsc --noEmit clean · `toolkit check` in-sync · 전 JSON valid · 임시 repo 라운드트립(add/show/done by-id) PASS · 실보드 show/inject 회귀 없음.
 
 ## feat(commons): native-canonical-first 규칙 — 정석(native·canonical) 방식 최우선 + 위반 발견 시 개선
-
-🗣️ "commons 에 강화해줘 => native, canonical 방식 최우선, 위반 발견시 개선"
 
 - 동기: 유저 — 구현·해결 시 생태계의 native·canonical(정석) 경로를 1순위로 쓰고, 작업 중 비정석 우회(기존 위반)를 발견하면 그 자리에서 고치라는 always-on 거버넌스 원칙을 commons SSOT 에 박음.
 - 신규 slug `native-canonical-first`(canonical-* 패밀리 옆 배치):
@@ -439,16 +370,12 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 
 ## fix(recommend): FIXED-AXIS 행동명령 front-load — 고정축 선택이 박스에서 멈추던 회귀
 
-🗣️ "진행중 추천4축 질의시에 선택이 있으면 선택으로 바로 진행되도록 해줘" (선택 = standing 고정축)
-
 - 증상: `recommend set-default complete`(또는 임의 고정축)인데 4축 박스만 그리고 멈춤 — auto-proceed 안 됨. #183 이 `/sbs` 에서 고친 박스-then-stop 증상이 recommend 본체에도 그대로 남아 있었다.
 - 진단(근본원인): FIXED-AXIS 문구가 "박스 그려라"(★표시·4줄 렌더)를 **먼저**, "AUTO-PROCEED(decide, do NOT wait)"를 **뒤에** 두는 순서라, 모델이 박스를 그린 뒤 턴을 종료/대기하는 쪽으로 떨어졌다. prose 순서가 행동을 지배.
 - 픽스(#183 의 front-load 패턴을 recommend 에 적용): 행동명령을 **맨 앞으로** — "선택(standing 고정축)이 이미 있으니 박스는 정보용일 뿐 멈춤 지점이 아님 → 같은 턴에 그 champion 으로 바로 실행, 박스에서 턴 종료 금지·'진행할까요?' 금지·재선택 대기 금지", 그 다음에야 박스를 trade-off 가시화용으로 렌더. `config/recommend.md` r4(스펙 carrier) + `modules/recommend.ts` `defaultDirective()`(매 턴 주입 디렉티브) 둘 다 lockstep 갱신.
 - 검증: `recommend show`=새 front-load 문구 렌더 · `resolve-mode`(sbs 상속) 무변경(inherit complete / explicit manual) · `inject` 유효 JSON emit.
 
 ## fix(sbs): AUTO 모드 행동배너 front-load — 고정축(완성도) 자동진행이 런북 prose 에 묻히던 회귀
-
-🗣️ "sbs go 했을 때 recommend 에 완성도로 고정해뒀는데 자동진행이 안 된다"
 
 - 증상: `recommend set-default complete` (FIXED 완성도)인데 `/sbs` 가 라운드별로 사용자에게 묻는 MANUAL 식으로 동작. 자동 auto-pick 이 안 됨.
 - 진단(근본원인): 결정적 레이어는 멀쩡했다 — `recommend resolve-mode` 가 `mode: auto (complete forced) ← inherited` 를 정확히 출력하고 전역 CLI 도 최신이었다. 문제는 그 다음, agent 가 받는 **런북 전문의 프레이밍**: `mode: auto` 결론 바로 아래에 거대한 §1 파싱-우선순위 벽글 + §2 "한 번에 하나씩 물어"(MANUAL) 프레이밍이 지배하고, AUTO 의 "즉시 auto-pick·일시정지 없음"은 sub-bullet 로 파묻혀 있었다. agent 가 prose 를 skim 하며 지배적 MANUAL 프레이밍으로 떨어졌다.
@@ -457,8 +384,6 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 - 검증: `help` 로드 · `recommend resolve-mode go` 출력 **무변경**(후방호환) · `sbs go`→AUTO 배너 front-load(complete inherited) · `sbs manual`→배너 없음 · 엣지 `auto:complete=2,simple=3`(가중치 early-return 경로)·`auto:safe`(명시 단일축) 배너 정확.
 
 ## feat(paper): publish lifecycle — Zenodo REST (DOI) + arXiv submission package, keys via secret
-
-🗣️ "paper 명령에 arxiv·zenodo 배포·수정·삭제를 붙여라 — 키는 secret CLI 연결"
 
 - 동기: 유저 — `paper` 가 scaffold→build→cover 까지였는데 배포 surface 가 없었다. 배포(publish)·수정(update)·삭제(unpublish) 전체 수명주기를 도구에 박아 손-제출 회귀를 없앰. 자격증명은 commons `git-safety` 대로 `secret` CLI 경유(인라인·로그 금지).
 - 정직한 제약(commons honesty): **arXiv 는 프로그래밍 제출 API 가 없다**(SWORDv1 폐지 · web 업로드만) → 자동 제출을 가짜로 만들지 않고, 제출용 tarball 패키징 + 업로드 가이드만 출력. **Zenodo 는 완전한 REST 수명주기** → 실제 배포.
@@ -473,16 +398,12 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 
 ## feat(commons+ing): upstream-fix teeth — block forwarding a defect fix to an upstream repo
 
-🗣️ "hexa-lang 막히면 ING로 떠넘기지 말고 그 세션에서 직접 다 고쳐라 — 규칙을 강화하고, 떠넘기기 자체를 명령에서 막았다"
-
 - 동기: 유저 — 에이전트가 hexa-lang upstream 결함을 자꾸 `ing add --to hexa-lang` 으로 인계하려 함. commons `upstream-fix` 가 이미 "직접 고쳐라"였지만 약했다 → ① 규칙 강화 ② 실제 차단 이빨.
 - commons(`config/commons.md` `upstream-fix`): 문구 강화 — "막힌 그 세션에서 clone/worktree→수정→그 repo 빌드/CI 검증→거기서 `pr-cycle` 머지까지 직접 완료, ING 은 내 repo 의 `↩resume` 메모로만". dont 에 **`ing add --to hexa-lang` 류 결함수정 인계 절대 금지**(반복 위반 명시) + "upstream 이라 못 고친다 핑계" 추가. `ing add --to <repo>` 는 진짜 신규 TODO 전용임을 못박음.
 - 이빨(`modules/ing.ts` `add/next --to`): 대상이 upstream(`hexa`/`hexa-lang`/`demiurge`[+`-wt-*`])이고 텍스트가 결함수정(fix·bug·broken·repair·patch·crash·regress·error·fail / 버그·고쳐·막힘·깨짐·에러·오류·실패·수정)으로 보이면 **차단(exit 2)** + 그 세션에서 직접 고치는 절차 안내. 신규 TODO(비-fix 표현)는 통과. opt-out 플래그 없음(no-escape-hatch). `@convergence upstream-fix-handoff` 마커로 박제.
 - 검증: `ing add --to hexa-lang "fix broken seed"`/`"시드 깨짐 고쳐줘"` → exit 2 차단·안내 출력 · regex 단위 6/6(en·ko fix=block · `add new deck domain`/타 repo=pass · `hexa-lang-wt-*`=block · `demiurge 오류 수정`=block).
 
 ## chore(paper): raise default min-figures floor 4 → 9 (= NeuroLM bar)
-
-🗣️ "결과그림 기본 하한을 정답지(NeuroLM)와 동일하게 9장으로 — 4장은 너무 헐거웠다"
 
 - 동기: 유저 결정 — 직전 사이클에서 둔 result-figure 기본 하한 4를 NeuroLM 정답지의 실제 그림 밀도(9+)에 맞춰 **9** 로 상향. 도구가 "정답지만큼" 요구하게.
 - 변경(`modules/paper.ts`): `DEFAULT_MIN_FIGURES` 4 → 9. 게이트 로직·`--min-figures N`(0=해제)은 그대로 — 기본값만 상향. 헤더 주석·PAPER.md 체크리스트(≥9)·usage `defaults` 라인 lockstep.
@@ -491,16 +412,12 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 
 ## feat(paper): HARD content-floor gates — ≥10 pages AND ≥4 result figures
 
-🗣️ "논문이 덜 됐으면 빌드를 통과 못 시킨다 — 페이지수도, 결과그림 개수도 강제 (둘 중 하나라도 미달이면 exit 3)"
-
 - 동기: NeuroLM 정답지를 템플릿에 박은 데 이어, 유저 요청 — 결과그림 개수와 페이지수를 **경고가 아니라 하드 게이트**로. 덜 채운 논문이 "빌드 성공"으로 새지 않게 한다.
 - 변경(`modules/paper.ts` `build`): ① 페이지 floor 를 경고→**하드 실패**(기존 g51 10p, `pages < min` 이면 return 3). ② **결과그림 게이트 신설** — main.tex 의 `\begin{figure}` 수에서 cover(`\label{fig:cover}`) 를 빼 result-figure 수를 세고 `< min` 이면 실패. 기본 `min-figures=4`(NeuroLM 바=9+). 둘 다 `--min-pages N`/`--min-figures N` 로 조정, `0` 이면 해제. pdfinfo 없으면 페이지 게이트는 측정불가로 skip(명시 로그).
 - `new` 배려: 갓 만든 TODO 스캐폴드는 당연히 floor 미달 → 프리뷰 빌드가 `3` 이어도 `new` 는 "컴파일됨·floor 아직 미달(정상)" 안내로 처리하고 0 반환(컴파일 실패 1/2 는 그대로 전파).
 - 검증(smoke-paper · 3p·2figs): 기본 빌드 → `content-floor gate FAILED — 3 pages < 10 · 2 result figs < 4` **real exit 3** · `--min-pages 0 --min-figures 0` → PASS exit 0 · `--min-pages 3 --min-figures 2` → PASS. `paper help`/`defaults` 라인에 min-figures 노출 확인.
 
 ## feat(paper): NeuroLM quality-target template + bundled reference sample (cover still allowed)
-
-🗣️ "남이 쓴 좋은 논문 한 편(NeuroLM)을 정답지로 옆에 두고, paper new 가 그 구조를 따라 나오게 했다 — 표지는 우리 식대로 허용"
 
 - 동기: 유저가 `paper` 명령을 "참고해서 구현"하라며 가리킨 레퍼런스 = `demiurge/PAPERS/_reference_samples/2409.00101_neurolm.pdf` (NeuroLM, Jiang et al., ICLR 2025 — 제3자 arxiv 논문, 우리가 쓴 게 아님). dancinlab 자작 샘플이 아닌 **외부 품질 정답지**를 sidecar 로 가져와 `paper new` 산출물이 그 바를 따르게 한다.
 - 레퍼런스 반입: `templates/paper/_reference_samples/` 에 NeuroLM PDF(22쪽·1.8MB·읽기전용) + 무엇을 보고 맞출지 적은 README 동봉.
@@ -509,8 +426,6 @@ public repo 무료(GitHub docs). 따라서 "Blacksmith 없이 최대한 빠른 C
 - 검증: 스캐폴드 후 정상 PNG cover 로 `paper build` → `3 pages · 1 refs · 37KB` 컴파일 성공(cover+TikZ+pgfplots+8섹션+bib 전부) · `paper help` 로드 OK · g51 10쪽 미달은 TODO 스캐폴드라 경고만(빌드 성공).
 
 ## fix(brainstorm): quote `$ARGUMENTS` + rewrite runbook to subagent-dispatch form
-
-🗣️ "발산을 메인 대화가 아니라 서브에이전트 한 명에게 던진다 — 게다가 괄호 든 seed 도 안 깨진다"
 
 - 동기: 유저가 `/brainstorm` 을 괄호 든 seed 로 호출 → 셸이 `( )` 를 glob 으로 해석해 명령이 깨지고, fallback echo 가 "sidecar CLI not found" 라고 **오진** 메시지를 띄움(실제 CLI 는 정상 설치). 더해 런북이 inline형이라 발산 라운드가 전부 메인 컨텍스트에 쌓였다.
 - 원인 1 (glob 깨짐): `commands/brainstorm.md` 가 `sidecar brainstorm $ARGUMENTS` 로 **따옴표 없이** 인자를 넘김 → `"$ARGUMENTS"` 로 인용해 root-cause fix(ING 보드의 stdin-safe 가이드와 동일 정신). `argument-hint: "[seed]"` 추가.

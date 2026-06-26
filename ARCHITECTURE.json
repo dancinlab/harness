@@ -390,7 +390,7 @@
                 "이름": "recommend stop-check",
                 "역할": "4축 박스 종료 감지 → auto-proceed 리마인더 (warn-only)",
                 "구분": "guard",
-                "상세": "**warn-only(stderr·non-block)** — non-present default mode 인데 답변이 4축 박스/auto-pick 줄에서 끝나면 `[recommend]` advisory. 구 `decision:block` 은 Claude Code 가 'Stop hook error' 로 띄워 convergence/ing 처럼 warn-only 전환 — auto-proceed 강제는 매-턴 inject FIXED-axis 가 담당, 이건 넛지. 루프가드=stop_hook_active. (modules/recommend.ts)"
+                "상세": "**warn-only(stderr·non-block)** — non-present default mode 인데 답변이 4축 박스/auto-pick 줄에서 끝나면 `[recommend]` advisory. 구 `decision:block` 은 Claude Code 가 'Stop hook error' 로 띄워 convergence/ing 처럼 warn-only 전환 — auto-proceed 강제는 매-턴 inject FIXED-axis 가 담당, 이건 넛지. (modules/recommend.ts)"
               },
               {
                 "이름": "convergence stop-check",

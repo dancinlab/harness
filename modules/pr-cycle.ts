@@ -160,7 +160,9 @@ export async function runPrCycle(args: string[]): Promise<number> {
     .filter((a) => !OWN_FLAGS.has(a))
     .map((a) => JSON.stringify(a))
     .join(" ");
-  const create = await git(`gh pr create --fill ${extra}`.trim());
+  // Pass --head explicitly: `gh pr create --fill` fails to infer the head branch when run
+  // from a git worktree (it reads the main checkout's HEAD), so name the branch directly.
+  const create = await git(`gh pr create --fill --head ${JSON.stringify(branch)} ${extra}`.trim());
   if (create.code !== 0 && !/already exists/i.test(create.out)) {
     loudFail("pr-cycle: gh pr create failed");
     info(create.out);
@@ -248,7 +250,16 @@ export async function runPrCycle(args: string[]): Promise<number> {
       info(`  ✓ 로컬 ${base} ← origin/${base} sync (pull --ff-only)`);
     } else {
       const ff = await git(`git fetch origin ${JSON.stringify(base + ":" + base)}`);
-      info(ff.code === 0 ? `  ✓ 로컬 ${base} ← origin/${base} sync (ff)` : `  ⚠ 로컬 ${base} sync 실패(non-ff?) — 수동 확인`);
+      if (ff.code === 0) {
+        info(`  ✓ 로컬 ${base} ← origin/${base} sync (ff)`);
+      } else if (/worktree|checked out|is already used/i.test(ff.out)) {
+        // local <base> is checked out in ANOTHER worktree (e.g. a concurrent live session) —
+        // git refuses to update a ref checked out elsewhere. Expected + harmless: the merge is
+        // already verified on origin/<base> above, and that worktree fast-forwards on its own pull.
+        info(`  ℹ 로컬 ${base} 는 다른 worktree 가 사용 중 — ref 업데이트 건너뜀 (머지는 origin/${base} 에 검증됨)`);
+      } else {
+        info(`  ⚠ 로컬 ${base} sync 실패(non-ff?) — 수동 확인`);
+      }
     }
   }
 

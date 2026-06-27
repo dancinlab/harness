@@ -24,6 +24,20 @@ interface Entry {
 
 const FILE = () => resolve(REPO_ROOT, "CHANGELOG.jsonl");
 
+const DEFAULT_KEEP = 30;
+
+// keep-N for auto-prune: harness.config.json `lint.changelog.keep`, fallback 30.
+// Old entries beyond keep-N are trimmed from the working file; full history stays in git.
+function keepN(): number {
+  try {
+    const cfg = JSON.parse(readFileSync(resolve(REPO_ROOT, "harness.config.json"), "utf8"));
+    const k = cfg?.lint?.changelog?.keep;
+    return typeof k === "number" && k > 0 ? k : DEFAULT_KEEP;
+  } catch {
+    return DEFAULT_KEEP;
+  }
+}
+
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
@@ -108,8 +122,11 @@ export async function runChangelog(args: string[]): Promise<number> {
     }
     const entries = load();
     entries.unshift({ ts: today(), title, body }); // newest-first
+    const keep = keepN();
+    const trimmed = entries.length > keep ? entries.length - keep : 0;
+    if (trimmed) entries.length = keep; // auto-prune oldest beyond keep-N (history stays in git)
     save(entries);
-    ok(`changelog: + "${title}" (${entries.length} entries)`);
+    ok(`changelog: + "${title}" (${entries.length} entries${trimmed ? `, pruned ${trimmed} old` : ""})`);
     return 0;
   }
 
@@ -170,6 +187,18 @@ export async function runChangelog(args: string[]): Promise<number> {
     return 0;
   }
 
-  info("usage: sidecar changelog {add \"<title>\"|list [N]|render [N]|prune --keep N|--older-than D|migrate}");
+  if (sub === "autoprune") {
+    // SessionStart-wired: trim the working file to keep-N if it has grown past it. Silent
+    // no-op when under the cap (so it stays quiet at session start); full history is in git.
+    const entries = load();
+    const keep = Number(flag(args, "--keep")) > 0 ? Number(flag(args, "--keep")) : keepN();
+    if (entries.length <= keep) return 0;
+    const removed = entries.length - keep;
+    save(entries.slice(0, keep));
+    info(`changelog: autopruned ${removed} old entr${removed === 1 ? "y" : "ies"} → kept newest ${keep} (older preserved in git history)`);
+    return 0;
+  }
+
+  info("usage: sidecar changelog {add \"<title>\"|list [N]|render [N]|prune --keep N|--older-than D|autoprune|migrate}");
   return 1;
 }

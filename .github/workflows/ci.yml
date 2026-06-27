@@ -34,14 +34,18 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # No `cache: npm` and `npm install` (not `npm ci`): the repo gitignores
+      # package-lock.json by policy (regenerable — see .gitignore), so both the
+      # npm cache and `npm ci` (which REQUIRE a committed lock file) hard-fail at
+      # setup before any check runs. This made CI red on every push/PR. Lockless
+      # install keeps the gate actually green-able while honoring that policy.
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: npm
 
       - name: Install deps
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       # ── Typecheck — the real gate. Uses the canonical `sidecar ci` so the cloud
       # check and the local `sidecar ci` gate run the SAME verify.checks (tsc --noEmit).

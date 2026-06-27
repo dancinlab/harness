@@ -117,7 +117,7 @@ function starterConfig(project: string, stack: Stack): string {
   const lint: Record<string, unknown> = {
     freshnessFiles: [],
     changelog: {
-      file: "CHANGELOG.md",
+      file: "CHANGELOG.jsonl",
       triggerPattern: changelogTrigger(stack.exts),
       ignore: ["(^|/)(tests?|__tests__|spec)/", "\\.(test|spec)\\.[a-z]+$", "(^|/)\\.harness(-engine)?/"],
     },
@@ -246,16 +246,16 @@ export async function runInit(args: string[]): Promise<number> {
       "ARCHITECTURE.json"
     );
     write(
-      resolve(REPO_ROOT, "CHANGELOG.md"),
-      `# CHANGELOG\n\n> 추가형(append-only) 이력. 현재상태 SSOT 는 ARCHITECTURE.json.\n\n## (unreleased)\n- \n`,
-      "CHANGELOG.md"
+      resolve(REPO_ROOT, "CHANGELOG.jsonl"),
+      `{"ts":null,"title":"init","body":"append-only history as JSONL (newest-first · ts+title+body). add: sidecar changelog add \\"<title>\\" · prune: sidecar changelog prune --keep N. 현재상태 SSOT 는 ARCHITECTURE.json."}\n`,
+      "CHANGELOG.jsonl"
     );
     write(
       resolve(REPO_ROOT, "CLAUDE.md"),
       `# ${proj}\n\n${proj} — (한 줄 프로젝트 설명을 여기에).\n\n` +
         `> 📍 SSOT 포인터 (이 파일 = 진입점):\n` +
         `> · 구조·설계 → [ARCHITECTURE.json](ARCHITECTURE.json) — 디렉토리·모듈 트리 단일 SSOT (\`sidecar architecture inject\` 가 SessionStart 주입 · 사람은 \`python3 serve.py\` HTML 뷰어)\n` +
-        `> · 이력 → [CHANGELOG.md](CHANGELOG.md) (append)\n\n` +
+        `> · 이력 → [CHANGELOG.jsonl](CHANGELOG.jsonl) (append-only JSONL · \`sidecar changelog add/prune\`)\n\n` +
         `## 작업 규칙 (this repo)\n- do: (프로젝트별 do/dont 규칙을 여기에)\n`,
       "CLAUDE.md"
     );

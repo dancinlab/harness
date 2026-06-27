@@ -181,8 +181,27 @@ export function runShadow(args: string[]): number {
     written++;
   }
 
+  // Prune ORPHANS — marker-tracked shadows whose source command was retired (e.g.
+  // a `bitter-gate` removal). Without this, regen only ever ADDS, so a deleted
+  // command's bare /cmd lingers in the picker. Only ever touches sidecar-generated
+  // shadows (marker); hand-authored user commands are never pruned.
+  const srcSet = new Set(src);
+  let pruned = 0;
+  const prunedNames: string[] = [];
+  if (existsSync(DEST_DIR)) {
+    for (const f of readdirSync(DEST_DIR).filter((f) => f.endsWith(".md"))) {
+      if (srcSet.has(f)) continue;
+      const p = resolve(DEST_DIR, f);
+      if (!isSidecarShadow(p)) continue; // never prune hand-authored commands
+      if (!plan) rmSync(p);
+      pruned++;
+      prunedNames.push(f.replace(/\.md$/, ""));
+    }
+  }
+
   const tag = plan ? "shadow plan (dry-run)" : "shadow";
   ok(`${tag}: ${plan ? "would write" : "wrote"} ${written} bare /cmd → ${DEST_DIR}`);
+  if (pruned) warn(`  ${plan ? "would prune" : "pruned"} ${pruned} orphan shadow(s) (source command retired): ${prunedNames.join(" · ")}`);
   if (forced) warn(`  --force overwrote ${forced} marker-less collision(s) from source: ${forcedNames.join(" · ")}`);
   if (skipped) warn(`  skipped ${skipped} (hand-authored, not overwritten — \`shadow --force\` to overwrite from source): ${skippedNames.join(" · ")}`);
   if (!plan) info("  reload Claude Code (/reload-plugins or restart) to pick up the bare commands");

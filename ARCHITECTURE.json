@@ -615,7 +615,7 @@
                 "name": "shadow",
                 "role": "sidecar commands/ → ~/.claude/commands/ 미러 (bare /cmd 생성)",
                 "id": "module-shadow",
-                "detail": "plan|remove|--force. 각 commands/*.md 를 ~/.claude/commands/ 에 얇은 /cmd 위임자로 복제 + SHADOW_MARKER 주석으로 추적 — 손수작성 동명파일은 skip. 사이드카 무의존·재생성 가능(플러그인 미설치 폴백).",
+                "detail": "plan|remove|--force. 각 commands/*.md 를 ~/.claude/commands/ 에 얇은 /cmd 위임자로 복제 + SHADOW_MARKER 주석으로 추적 — 손수작성 동명파일은 skip. regen 은 소스에 없는 marker-shadow(폐기된 명령)를 orphan-prune(손수작성은 보존) — 명령 폐기 시 bare /cmd 자동 청소. 사이드카 무의존·재생성 가능(플러그인 미설치 폴백).",
                 "children": [
                   {
                     "name": "--force heal",

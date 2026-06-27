@@ -103,7 +103,7 @@ sidecar/
 네임스페이스로 띄우므로, 그대로 두면 `sidecar shadow` 의 bare `/fleet` 와 플러그인 `/sidecar:fleet` 가 picker 에
 **2줄로 중복**된다. 그래서 `.claude-plugin/plugin.json` 이 **`commands: []`** (기본 `commands/` 스캔을 빈 목록으로
 대체)로 플러그인 명령 등록을 끄고, 슬래시 노출은 `sidecar shadow` 가 `commands/*.md` 를 `~/.claude/commands/` 에
-bare `/cmd` 위임자로 미러하는 단일 경로만 쓴다(마커 추적 · 손수 작성한 동명 파일은 보존 · `shadow remove` 로 정리)
+bare `/cmd` 위임자로 미러하는 단일 경로만 쓴다(마커 추적 · 손수 작성한 동명 파일은 보존 · 폐기된 명령의 orphan shadow 는 regen 시 자동 prune · `shadow remove` 로 전체 정리)
 → picker 에 bare 1줄. SHADOW_MARKER 추적 주석은 frontmatter 닫는 `---` **뒤**에 삽입한다 — Claude Code 는 `---` 가
 1행일 때만 `description:` 을 읽으므로, 앞에 붙이면 picker 가 마커 주석을 설명으로 표시한다. **`shadow --force`** 는
 마커-없는 충돌(마커 도입 *전* 생성된 stale shadow)도 source 로 덮어써 heal 한다 — 옛 shadow 가 손수작성으로 오판돼

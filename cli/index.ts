@@ -52,6 +52,7 @@ import { runDocs } from "../modules/docs.ts";
 import { runLockdown } from "../modules/lockdown-cmd.ts";
 import { runCommons } from "../modules/commons.ts";
 import { runArchitecture } from "../modules/architecture.ts";
+import { runDataset } from "../modules/dataset.ts";
 import { runChangelog } from "../modules/changelog.ts";
 import { runGitContext } from "../modules/git-context.ts";
 import { runClaudemd } from "../modules/claudemd.ts";
@@ -156,6 +157,7 @@ reports:
   ing [show|add|done|next|pod ...|inject]   in-progress board → ING.jsonl (작업·POD·next · done=scrub · SessionStart inject · 내 repo 전용 — cross-repo 전달 폐기)
   verdict {record <id> <cmd>|list|show <id>}   verification evidence ledger → .verdicts/ (PASS/FAIL)
   atlas {add <id> <claim>|link <id> <vid>|list}   claim registry → ATLAS.md (verified via PASS verdict)
+  dataset {list|show|add|set|feat|rm} [--lang ko|en] [--register general|sns]   dataset registry → ARCHITECTURE.json .datasets[] (4-cell lang×register · byte-invariant top-level splice · parallel to models)
   upstream {list|fix <name|repo>}   in-session upstream (hexa-lang…) fix runbook (no inbox-only defer)
   sync {run|diff}              run configured shared-file sync script
 
@@ -272,6 +274,8 @@ async function main(): Promise<number> {
       return runCommons(rest);
     case "architecture":
       return runArchitecture(rest);
+    case "dataset":
+      return runDataset(rest);
     case "changelog":
       return runChangelog(rest);
     case "git-context":

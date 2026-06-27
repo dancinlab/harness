@@ -859,6 +859,12 @@
                 ]
               },
               {
+                "이름": "dataset",
+                "역할": "데이터셋 레지스트리 = ARCHITECTURE.json .datasets[] (모델 레지스트리의 데이터-짝)",
+                "slug": "module-dataset",
+                "상세": "`dataset {list|show|add|set|feat|rm}` — 데이터셋을 ARCHITECTURE.json top-level `datasets[]`(`models[]` 평행)에 등록. 필드 id·repo_id·lang·register·rows·size·visibility·role·lang_verified·features[]. `list`=4칸 lang×register 그리드 · writer=byte-불변 top-level splice(블록만 교체)"
+              },
+              {
                 "이름": "git-context",
                 "역할": "stale-branch 함정 가드 (SessionStart inject)",
                 "slug": "module-git-context",

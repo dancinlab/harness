@@ -8,7 +8,7 @@ Claude Code plugin (`/plugin`).
 > 📍 SSOT 포인터 (이 파일 = 진입점 + 작업규칙만):
 > · **구조·설계 → [ARCHITECTURE.json](ARCHITECTURE.json)** — 디렉토리·모듈 트리는 **여기 단일 SSOT** (`sidecar architecture inject` 가 SessionStart 주입 · 사람은 `python3 serve.py` HTML 뷰어)
 > · 거버넌스 → [config/commons.md](config/commons.md) (always-on · slug-keyed do/dont)
-> · 이력 → [CHANGELOG.md](CHANGELOG.md) (append)
+> · 이력 → [CHANGELOG.jsonl](CHANGELOG.jsonl) (append)
 
 ## 작업 규칙 (this repo)
 - do: **어떤 구현·수정이든 완료되면 사용자가 따로 시키지 않아도 그 턴에 자동으로 `sidecar ship`** (deterministic 명령 = direct-execute · 4축 박스/확인 없이 즉시) = 전 설치 surface 한 번에 전파(pr-cycle 검증머지 → self-update 전역 CLI → shadow 슬래시 미러) · 직전에 매 사이클 문서(CHANGELOG + 설계변경 시 ARCHITECTURE/README) → 검증 선행 · config/data-only 는 `sidecar ship --no-doc` (commons `cycle-docs-pr`)

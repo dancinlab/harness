@@ -1,6 +1,6 @@
 {
   "project": "sidecar",
-  "_note": "self-dogfooding \u2014 \uc5d4\uc9c4=repo \uc790\uc2e0(submodule \uc5c6\uc74c). protectedBranches \ubbf8\uc124\uc815\uc73c\ub85c \uc790\uae30 \uac1c\ubc1c \ud750\ub984(main \uc9c1\uc811 push) \ubcf4\uc874. \ubc88\ub4e4 config/*.json \uc744 \uc9c1\uc811 \uaddc\uce59\uc73c\ub85c \uc0ac\uc6a9.",
+  "_note": "self-dogfooding — 엔진=repo 자신(submodule 없음). protectedBranches 미설정으로 자기 개발 흐름(main 직접 push) 보존. 번들 config/*.json 을 직접 규칙으로 사용.",
   "lockdown": {
     "files": [
       "cli/index.ts",
@@ -10,7 +10,7 @@
       "modules/pre.ts"
     ],
     "fromMarkdown": "README.md",
-    "onEditReminder": "sidecar \ucf54\uc5b4 \ud3b8\uc9d1 \u2014 CHANGELOG.md \ub3d9\uc2dc \uac31\uc2e0 + \uc784\uc2dc repo \uc2a4\ubaa8\ud06c \ud14c\uc2a4\ud2b8."
+    "onEditReminder": "sidecar 코어 편집 — CHANGELOG.md 동시 갱신 + 임시 repo 스모크 테스트."
   },
   "enforcementFile": "config/enforcement.json",
   "keywordsFile": "config/keywords.json",
@@ -27,7 +27,7 @@
   "lint": {
     "freshnessFiles": [],
     "changelog": {
-      "file": "CHANGELOG.md",
+      "file": "CHANGELOG.jsonl",
       "triggerPattern": "\\.(ts)$",
       "ignore": [
         "(^|/)styles/",
@@ -37,7 +37,9 @@
     }
   },
   "docs": {
-    "scopeDirs": ["docs"]
+    "scopeDirs": [
+      "docs"
+    ]
   },
   "guides": [
     "README.md",

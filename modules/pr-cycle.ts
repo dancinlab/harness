@@ -120,7 +120,7 @@ export async function runPrCycle(args: string[]): Promise<number> {
     const ignore = /(^|\/)(tests?|__tests__|spec)\/|\.(test|spec)\.[a-z]+$|(^|\/)\.harness(-engine)?\//i;
     const meaningful = changed.filter((f) => !ignore.test(f));
     const tracked = async (f: string) => (await git(`git ls-files ${f}`)).out.length > 0;
-    const hasChangelog = changed.some((f) => /(^|\/)CHANGELOG\.md$/.test(f));
+    const hasChangelog = changed.some((f) => /(^|\/)CHANGELOG\.(jsonl|md)$/.test(f));
     // ARCHITECTURE SSOT may be .json (tree) or .md (prose) — gate whichever is tracked.
     const archDoc = (await tracked("ARCHITECTURE.json"))
       ? "ARCHITECTURE.json"
@@ -133,7 +133,7 @@ export async function runPrCycle(args: string[]): Promise<number> {
     const ingExists = await tracked("ING.jsonl");
     const hasIng = changed.some((f) => /(^|\/)ING\.jsonl$/.test(f));
     const missing: string[] = [];
-    if (meaningful.length && !hasChangelog) missing.push("CHANGELOG.md (append)");
+    if (meaningful.length && !hasChangelog) missing.push("CHANGELOG.jsonl (sidecar changelog add)");
     if (meaningful.length && archDoc && !hasArch) missing.push(`${archDoc} (갱신형 SSOT 현행화)`);
     if (meaningful.length && readmeExists && !hasReadme) missing.push("README.md (현재상태 SSOT 현행화 · 이력 아님 = 제자리 덮어쓰기)");
     if (meaningful.length && ingExists && !hasIng) missing.push("ING.jsonl (진행상황 현행화 · 완료분 sidecar ing done)");

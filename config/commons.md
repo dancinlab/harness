@@ -23,7 +23,7 @@ Each rule = one `do:` / `dont:` pair; mechanism detail & precedents live in code
 - dont: 되돌리기 어려움/외부노출/유저결정이 아닌데 되묻기 · 선택지 박스로 punt
 
 ## single-doc — 산출 문서는 둘로 통합
-- do: AI 산출물은 **ARCHITECTURE**(갱신형 SSOT · `.md` 또는 `.json`+`.html` 뷰어 · 제자리 교체 update-in-place) + **CHANGELOG.md**(append) 둘로 · README 도 현재상태 SSOT 로 update-in-place · ARCHITECTURE.json 은 위계를 `children` 트리로 분해
+- do: AI 산출물은 **ARCHITECTURE**(갱신형 SSOT · `.md`/`.json`+`.html` 뷰어 · 제자리 update-in-place · `children` 트리) + **CHANGELOG.jsonl**(append·prune) 둘로 · README 도 현재상태 SSOT update-in-place
 - dont: 흩어진 `*-report/summary/notes` · 트리/README 에 변경이력·버전·날짜·`이전엔`/`deprecated` 누적 · 한 셀(특히 `상세`)에 여러 사실 욱여넣기(= 자식 노드로 분해 신호)
 
 ## preserve-state — 산출물은 `state/` 하나로

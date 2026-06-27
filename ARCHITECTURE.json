@@ -801,6 +801,12 @@
                 "상세": ""
               },
               {
+                "이름": "changelog",
+                "역할": "이력 SSOT = CHANGELOG.jsonl (append + prune)",
+                "slug": "module-changelog",
+                "상세": "이력을 freeform CHANGELOG.md 대신 `CHANGELOG.jsonl`(newest-first JSONL · {ts,title,body})로. `add`=append(body=stdin·ts=today)·`list`·`render`(markdown 뷰)·`prune --keep N|--older-than D`(오래된 엔트리 삭제)·`migrate`(md→jsonl 1회). CHANGELOG-MISSING 게이트(lint·pr-cycle·commit-gate)는 이제 CHANGELOG.jsonl staged 요구"
+              },
+              {
                 "이름": "architecture",
                 "역할": "설계 SSOT 주입 (SessionStart + 매 UserPromptSubmit)",
                 "slug": "module-architecture",

@@ -28,7 +28,7 @@ import { isTmpPath, detectTmpBashWrite } from "./tmp-guard.ts";
 import { detectHandoffScatter } from "./handoff-guard.ts";
 import { detectVersionedName, detectVersionedNameBash, offendingToken } from "./naming-guard.ts";
 import { existsSync } from "node:fs";
-import { basename } from "node:path";
+import { basename, isAbsolute, join } from "node:path";
 import { detectBannedStateDir, detectBannedStateDirBash } from "./state-guard.ts";
 import { memPreflight } from "./mem-guard.ts";
 
@@ -201,10 +201,13 @@ export async function preBash(_args: string[]): Promise<number> {
   // blocking, so a file restore (`git checkout README.md`) falls through.
   if (config().git.guardBranchSwitch) {
     const bs = detectBranchSwitch(cmd);
-    if (bs && (await isMainWorktree(cwd))) {
+    // a git-level `-C <path>` makes the command operate in <path>, not cwd — judge
+    // that directory's worktree so `git -C <main> checkout x` from anywhere is caught.
+    const effDir = bs?.dir ? (isAbsolute(bs.dir) ? bs.dir : join(cwd || ".", bs.dir)) : cwd;
+    if (bs && (await isMainWorktree(effDir))) {
       let block = !bs.needsVerify;
       if (bs.needsVerify && bs.target) {
-        const rev = await execShell(`git rev-parse --verify --quiet ${JSON.stringify(bs.target)}^{commit}`, { cwd: cwd || "." }).catch(() => null);
+        const rev = await execShell(`git rev-parse --verify --quiet ${JSON.stringify(bs.target)}^{commit}`, { cwd: effDir || "." }).catch(() => null);
         block = !!rev && rev.code === 0 && rev.stdout.trim().length > 0; // resolves to a commit → it's a switch, not a file
       }
       if (block) {

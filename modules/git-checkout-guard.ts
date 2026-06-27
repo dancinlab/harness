@@ -40,21 +40,31 @@ export interface BranchSwitch {
   needsVerify: boolean;
   target?: string;
   label: string;
+  // directory the command operates in, from a git-level `-C <path>` (resolved by
+  // the caller against cwd). Undefined → the command runs in cwd. The caller uses
+  // this so `git -C <main> checkout x` from anywhere is judged against <main>'s
+  // worktree, not the agent's cwd — closing the `-C` targeting gap.
+  dir?: string;
 }
 
 export function detectBranchSwitch(rawCmd: string): BranchSwitch | null {
   const toks = tokens(stripQuotes(rawCmd));
   const n = toks.length;
 
-  // find `git … (checkout|switch)`, allowing git-level options (`-c key=val`,
-  // `--flag`) between `git` and the subcommand — parity with detectForcePush.
+  // find `git … (checkout|switch)`, allowing git-level options between `git` and
+  // the subcommand — parity with detectForcePush, plus the value-taking options
+  // `-c key=val` / `--config` and `-C <path>` (the latter also captured as dir).
   let sc = -1;
   let sub = "";
+  let dir: string | undefined;
   for (let i = 0; i < n; i++) {
     if (toks[i] !== "git") continue;
     let j = i + 1;
+    dir = undefined;
     while (j < n && toks[j].startsWith("-")) {
-      if (toks[j] === "-c" || toks[j] === "--config") j++; // -c takes a value
+      if (toks[j] === "-c" || toks[j] === "--config") j++; // takes a value
+      else if (toks[j] === "-C") { dir = toks[j + 1]; j++; } // -C <path>: run as if in <path>
+      else if (toks[j].startsWith("-C") && toks[j].length > 2) dir = toks[j].slice(2); // attached -C<path>
       j++;
     }
     if (j < n && (toks[j] === "checkout" || toks[j] === "switch")) {
@@ -76,7 +86,7 @@ export function detectBranchSwitch(rawCmd: string): BranchSwitch | null {
     const hasDash = args.includes("-"); // `git switch -` → previous branch
     if (positionals.length > 0 || hasCreate || hasDetach || hasDash) {
       const tgt = positionals[0] ?? (hasDash ? "-" : undefined);
-      return { needsVerify: false, target: tgt, label: `git switch${tgt ? ` ${tgt}` : ""}` };
+      return { needsVerify: false, target: tgt, label: `git switch${tgt ? ` ${tgt}` : ""}`, dir };
     }
     return null; // bare `git switch` with no target → git errors, harmless
   }
@@ -87,19 +97,19 @@ export function detectBranchSwitch(rawCmd: string): BranchSwitch | null {
   const hasCreate = args.some((t) => t === "-b" || t === "-B" || t === "--orphan");
   if (hasCreate) {
     const tgt = positionals[0];
-    return { needsVerify: false, target: tgt, label: `git checkout -b ${tgt ?? "<branch>"} (create+switch)` };
+    return { needsVerify: false, target: tgt, label: `git checkout -b ${tgt ?? "<branch>"} (create+switch)`, dir };
   }
   const hasDetach = args.some((t) => t === "--detach");
   if (hasDetach) {
     const tgt = positionals[0];
-    return { needsVerify: false, target: tgt, label: `git checkout --detach${tgt ? ` ${tgt}` : ""}` };
+    return { needsVerify: false, target: tgt, label: `git checkout --detach${tgt ? ` ${tgt}` : ""}`, dir };
   }
-  if (args.includes("-")) return { needsVerify: false, target: "-", label: "git checkout - (previous branch)" }; // prev branch
+  if (args.includes("-")) return { needsVerify: false, target: "-", label: "git checkout - (previous branch)", dir }; // prev branch
 
   // A LONE positional with no `--` is the ambiguous `git checkout <ref>` form:
   // a branch name (switch) or a single filename (restore). Two+ positionals are
   // the `<tree-ish> <pathspec>` restore form — never a switch. Defer to the
   // caller to disambiguate the lone case via `git rev-parse`.
-  if (positionals.length === 1) return { needsVerify: true, target: positionals[0], label: `git checkout ${positionals[0]}` };
+  if (positionals.length === 1) return { needsVerify: true, target: positionals[0], label: `git checkout ${positionals[0]}`, dir };
   return null;
 }

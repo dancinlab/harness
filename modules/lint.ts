@@ -96,11 +96,14 @@ export async function collectViolations(stagedOverride?: string[]): Promise<Viol
     const codeChanges = staged.filter(
       (f) => f !== file && trigRe.test(f) && !igRe.some((r) => r.test(f))
     );
-    if (codeChanges.length > 0 && !staged.includes(file)) {
+    // fragment mode: a staged CHANGELOG.d/<id>.jsonl fragment also satisfies the
+    // gate (towncrier/changesets-style — the shared file is folded later at render).
+    const stagedFragment = staged.some((f) => f.startsWith("CHANGELOG.d/"));
+    if (codeChanges.length > 0 && !staged.includes(file) && !stagedFragment) {
       violations.push({
         rule: "CHANGELOG-MISSING",
         file,
-        msg: `${codeChanges.length} code file(s) staged without ${file} (e.g. ${codeChanges[0]})`,
+        msg: `${codeChanges.length} code file(s) staged without ${file} or a CHANGELOG.d/ fragment (e.g. ${codeChanges[0]})`,
       });
     }
     // 1c. doc SSOTs: existing ARCHITECTURE (.json tree or .md prose) / README.md

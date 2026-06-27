@@ -1,7 +1,7 @@
 // sidecar pool {list|add|rm|on|status|specs} — host roster + remote exec.
 // The host roster is machine-level, so it lives GLOBALLY at
 // ~/.sidecar/pool.json (shared across repos), not per-repo.
-//   list                 show roster (cached cores/mem/GPU + LIVE CPU/GPU load)
+//   list                 show roster (cached cores/mem/GPU + LIVE CPU/RAM/GPU load)
 //   add <name> [target]  add host (target = ssh alias or user@host; default = name)
 //   rm <name>            remove host
 //   on <name> <cmd...>   run a command on a host over ssh
@@ -103,21 +103,30 @@ const PROBE =
 interface Load {
   load1?: number; // 1-min loadavg
   cores?: number; // logical cores (to turn loadavg into a %)
+  ram?: { usedMiB: number; totalMiB: number }; // live system RAM occupancy
   gpu?: { util: number; memUsed: number; memTotal: number; n: number }; // MiB, n = #GPUs
 }
 
 // Remote LIVE-load probe. POSIX-sh, Linux + macOS aware. Emits ONE parseable line
-// `LOAD=<loadavg1>|CORES=<n>|GPU=<util,memUsedMiB,memTotalMiB,count|none>`. GPU
-// fields are averaged util + summed memory across all visible GPUs (nvidia-smi).
+// `LOAD=<loadavg1>|CORES=<n>|RAM=<usedMiB,totalMiB|none>|GPU=<util,memUsedMiB,memTotalMiB,count|none>`.
+// RAM occupancy = total − available (Linux /proc/meminfo MemAvailable · macOS vm_stat free+inactive).
+// GPU fields are averaged util + summed memory across all visible GPUs (nvidia-smi).
 const LOAD_PROBE =
   `L=$(awk '{print $1}' /proc/loadavg 2>/dev/null); ` +
   `[ -z "$L" ] && L=$(sysctl -n vm.loadavg 2>/dev/null | awk '{print $2}'); ` +
   `C=$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null); ` +
+  `if [ -r /proc/meminfo ]; then ` +
+  `R=$(awk '/^MemTotal:/{t=$2} /^MemAvailable:/{a=$2} END{if(t>0)printf "%d,%d",(t-a)/1024,t/1024; else printf "none"}' /proc/meminfo); ` +
+  `elif command -v vm_stat >/dev/null 2>&1; then ` +
+  `PS=$(sysctl -n hw.pagesize 2>/dev/null || echo 4096); TT=$(sysctl -n hw.memsize 2>/dev/null); ` +
+  `FI=$(vm_stat 2>/dev/null | awk '/Pages free/{gsub(/[.]/,"",$3);f=$3} /Pages inactive/{gsub(/[.]/,"",$3);i=$3} END{print f+i}'); ` +
+  `R=$(awk -v t="$TT" -v fi="$FI" -v ps="$PS" 'BEGIN{if(t>0){tot=t/1048576;av=fi*ps/1048576;u=tot-av;if(u<0)u=0;printf "%d,%d",u,tot}else printf "none"}'); ` +
+  `else R=none; fi; ` +
   `if command -v nvidia-smi >/dev/null 2>&1; then ` +
   `G=$(nvidia-smi --query-gpu=utilization.gpu,memory.used,memory.total --format=csv,noheader,nounits 2>/dev/null ` +
   `| awk -F', *' '{u+=$1;mu+=$2;mt+=$3;n++} END{if(n>0)printf "%d,%d,%d,%d",u/n,mu,mt,n; else printf "none"}'); ` +
   `else G=none; fi; ` +
-  `echo "LOAD=$L|CORES=$C|GPU=$G"`;
+  `echo "LOAD=$L|CORES=$C|RAM=$R|GPU=$G"`;
 
 // ssh-probe one host's live load. Returns null when unreachable or unparsable.
 async function probeLoad(h: Host): Promise<Load | null> {
@@ -132,6 +141,11 @@ async function probeLoad(h: Host): Promise<Load | null> {
   }
   const load1 = parseFloat(kv.LOAD ?? "");
   const cores = parseInt(kv.CORES ?? "", 10);
+  let ram: Load["ram"];
+  if (kv.RAM && kv.RAM !== "none") {
+    const [u, t] = kv.RAM.split(",").map((x) => parseInt(x, 10));
+    if (Number.isFinite(u) && Number.isFinite(t) && t > 0) ram = { usedMiB: u, totalMiB: t };
+  }
   let gpu: Load["gpu"];
   if (kv.GPU && kv.GPU !== "none") {
     const [u, mu, mt, n] = kv.GPU.split(",").map((x) => parseInt(x, 10));
@@ -142,17 +156,24 @@ async function probeLoad(h: Host): Promise<Load | null> {
   return {
     load1: Number.isFinite(load1) ? load1 : undefined,
     cores: Number.isFinite(cores) && cores > 0 ? cores : undefined,
+    ram,
     gpu,
   };
 }
 
-// Compact one-line live-load badge: `CPU 45% · GPU 30%·2.1/24GiB`.
+// Compact one-line live-load badge: `CPU 45% · RAM 18%·5.4/30G · GPU 30%·2.1/24GiB`.
 function fmtLoad(l?: Load | null): string {
   if (!l) return "";
   const parts: string[] = [];
   if (l.load1 != null) {
     const pct = l.cores ? ` ${Math.round((l.load1 / l.cores) * 100)}%` : "";
     parts.push(`CPU${pct}(${l.load1.toFixed(2)})`);
+  }
+  if (l.ram) {
+    const pct = Math.round((l.ram.usedMiB / l.ram.totalMiB) * 100);
+    const used = (l.ram.usedMiB / 1024).toFixed(1);
+    const total = (l.ram.totalMiB / 1024).toFixed(0);
+    parts.push(`RAM ${pct}%·${used}/${total}G`);
   }
   if (l.gpu) {
     const used = (l.gpu.memUsed / 1024).toFixed(1);

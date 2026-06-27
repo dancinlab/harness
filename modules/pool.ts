@@ -5,7 +5,7 @@
 //   add <name> [target]  add host (target = ssh alias or user@host; default = name)
 //   rm <name>            remove host
 //   on <name> <cmd...>   run a command on a host over ssh
-//   status               reachability check across all hosts
+//   status               reachability + LIVE CPU/RAM/GPU load (one probe per host)
 //   specs [name]         ssh-probe cores/mem/GPU + cache into roster (all or one)
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -312,22 +312,27 @@ export async function runPool(args: string[]): Promise<number> {
       // Restricted + blocked hosts are not pinged — they are not shared compute,
       // so we don't reach out to them outside their allowed project context.
       const g = guard(h);
-      if (!g.ok) return { h, blocked: true, up: false, unlocked: false, via: g.via };
-      const res = await execArgs("ssh", [...SSH_ARGS, h.target, "echo ok"], { timeoutMs: 15_000 });
+      if (!g.ok) return { h, blocked: true, up: false, unlocked: false, via: g.via, load: null as Load | null };
+      // ONE live probe doubles as the reachability check AND the load badge, so
+      // `status` surfaces live CPU/RAM/GPU occupancy too (probe success ⇒ reachable).
+      // Keeps `status` a single-command "everything" view — no more typing `status`
+      // and missing GPU usage that only `list` used to show.
+      const load = await probeLoad(h);
       // A restricted host that passes the guard is UNLOCKED, not shared — surface
       // a 🔓 marker so `status` never conflates it with a genuinely shared host
       // (parity with `list`, which already shows `🔓 허용(via)`).
-      return { h, blocked: false, up: res.code === 0 && res.stdout.includes("ok"), unlocked: isRestricted(h), via: g.via };
+      return { h, blocked: false, up: load !== null, unlocked: isRestricted(h), via: g.via, load };
     });
-    for (const { h, blocked, up, unlocked, via } of out) {
+    for (const { h, blocked, up, unlocked, via, load } of out) {
       const dot = blocked ? "🔒" : unlocked ? "🔓" : up ? "🟢" : "🔴";
       const spec = h.specs ? `  〈${fmtSpecs(h.specs)}〉` : "";
+      const badge = up && load ? `   ⚡${fmtLoad(load)}` : "";
       const note = blocked
         ? "  — 차단(공용 아님)"
         : unlocked
           ? `  — 제한 호스트 · 현재 해제(${via})${up ? "" : " · 도달 불가"}`
           : "";
-      info(`  ${dot} ${h.name}  (${h.target})${spec}${note}`);
+      info(`  ${dot} ${h.name}  (${h.target})${spec}${badge}${note}`);
     }
     return 0;
   }

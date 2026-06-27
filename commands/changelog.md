@@ -1,6 +1,6 @@
 ---
-description: /changelog {add "<title>"|list [N]|render [N]|prune --keep N|--older-than D|migrate} — append-only history as CHANGELOG.jsonl (newest-first · ts+title+body). add appends(body via stdin), prune deletes old entries, render = markdown view. Triggers — "체인지로그", "changelog 추가", "이력 정리", "오래된 changelog 삭제", "/changelog".
-argument-hint: "{add \"<title>\"|list|render|prune --keep N|migrate}"
+description: /changelog {add|list|render|prune|autoprune|migrate} — append-only history as CHANGELOG.jsonl. add appends(body via stdin)+auto-trims to keep-N(default 30); prune/autoprune drop old entries (autoprune also runs at SessionStart). Triggers — "이력 정리", "오래된 changelog 삭제", "/changelog".
+argument-hint: "{add \"<title>\"|list|render|prune --keep N|autoprune|migrate}"
 allowed-tools: Bash
 ---
 

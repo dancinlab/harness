@@ -28,6 +28,7 @@
     "freshnessFiles": [],
     "changelog": {
       "file": "CHANGELOG.jsonl",
+      "keep": 30,
       "triggerPattern": "\\.(ts)$",
       "ignore": [
         "(^|/)styles/",

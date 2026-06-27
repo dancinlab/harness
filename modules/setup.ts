@@ -50,6 +50,7 @@ function hookSpec(): Record<string, unknown[]> {
       entry("sidecar toolkit inject"),
       entry("sidecar companions inject"),
       entry("sidecar worktree gc"),
+      entry("sidecar changelog autoprune"),
       entry("sidecar ing inject"),
     ],
     Stop: [entry("sidecar recommend stop-check"), entry("sidecar architecture convergence stop-check"), entry("sidecar ing staleness-check")],

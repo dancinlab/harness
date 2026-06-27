@@ -802,9 +802,9 @@
               },
               {
                 "이름": "changelog",
-                "역할": "이력 SSOT = CHANGELOG.jsonl (append + prune)",
+                "역할": "이력 SSOT = CHANGELOG.jsonl (append + auto-prune)",
                 "slug": "module-changelog",
-                "상세": "이력을 freeform CHANGELOG.md 대신 `CHANGELOG.jsonl`(newest-first JSONL · {ts,title,body})로. `add`=append(body=stdin·ts=today)·`list`·`render`(markdown 뷰)·`prune --keep N|--older-than D`(오래된 엔트리 삭제)·`migrate`(md→jsonl 1회). CHANGELOG-MISSING 게이트(lint·pr-cycle·commit-gate)는 이제 CHANGELOG.jsonl staged 요구"
+                "상세": "이력을 `CHANGELOG.jsonl`(newest-first · {ts,title,body})로. `add`(body=stdin)+keep-N 자동 트림·`list`·`render`·`prune --keep N|--older-than D`·`autoprune`(SessionStart 배선·cap 초과시만)·`migrate`(md→jsonl). keep-N=lint.changelog.keep(기본 30)·옛 엔트리는 git 보존. CHANGELOG-MISSING 게이트는 .jsonl staged 요구"
               },
               {
                 "이름": "architecture",

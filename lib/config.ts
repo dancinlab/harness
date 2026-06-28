@@ -202,6 +202,14 @@ export interface SidecarConfig {
   // opt-in launchd watchdog (`sidecar mem-guard install`) notifies every
   // watchdogIntervalSec. blockPct=0 = warn-only (never block). enabled=false off.
   memGuard: { enabled: boolean; warnPct: number; blockPct: number; watchdogIntervalSec: number };
+  // annotation-guard — the ONLY sidecar guard on MCP tool calls (PreToolUse
+  // matcher `mcp__.*` → `pre tool`). The hook payload does NOT expose an MCP
+  // tool's annotations, so sidecar carries a CONFIG-declared registry (`file`,
+  // bundled `config/tool-annotations.json`, repo override) mapping tool-name
+  // patterns → declared hints (readOnly/destructive/openWorld/sensitive) and
+  // applies that file's Rule-of-Two policy (warn on mutation · block on the
+  // destructive+openWorld combo). enabled=false off. See modules/annotation-guard.ts.
+  annotationGuard: { enabled: boolean; file: string };
   // companions — sibling-CLI command catalogs surfaced at SessionStart (`sidecar
   // companions inject`). DOMAIN-AGNOSTIC engine: this lists adjacent project CLIs
   // (e.g. `hexa`) by DATA, never hardcoded, so an agent knows their command surface
@@ -292,6 +300,7 @@ const DEFAULTS: SidecarConfig = {
   worktree: { maxAgeDays: 3 },
   memGuard: { enabled: true, warnPct: 15, blockPct: 0, watchdogIntervalSec: 45 },
   dangerGuard: { rmRfRoot: false },
+  annotationGuard: { enabled: true, file: ".harness/tool-annotations.json" },
 };
 
 function deepMerge<T>(base: T, over: Partial<T>): T {

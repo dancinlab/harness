@@ -30,6 +30,15 @@
         ]
       },
       {
+        "matcher": "mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/run.sh\" pre tool"
+          }
+        ]
+      },
+      {
         "matcher": "Read",
         "hooks": [
           {

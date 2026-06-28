@@ -1,0 +1,14 @@
+{
+  "_note": "sidecar tool-annotation registry (config-driven · commons 'rules are data'). Maps MCP tool-name regex patterns to DECLARED hints (the readOnly/destructive/openWorld/sensitive hints the PreToolUse hook payload does NOT carry), then the annotation-guard applies the policy below. Repo override: .harness/tool-annotations.json. Explicit exact-name entries compose with the generic patterns (OR-merge). Tune freely.",
+  "policy": {
+    "block": [["destructive", "openWorld"]],
+    "warn": [["destructive"]]
+  },
+  "tools": [
+    { "match": "^mcp__.*__(delete|remove|drop|destroy|rm|purge|forget|wipe|clear|reset|revoke|cancel|kill)", "destructive": true, "note": "deletion / teardown verbs" },
+    { "match": "^mcp__.*__(write|create|update|set|put|insert|append|edit|modify|move|rename|save|patch)", "destructive": true, "idempotent": false, "note": "mutation verbs" },
+    { "match": "^mcp__.*__(get|list|read|search|fetch|query|show|describe|find|view|inspect|count|status)", "readOnly": true, "note": "read verbs" },
+    { "match": "^mcp__.*(fetch|http|web|browser|url|request|send|email|mail|slack|post|publish|deploy|upload|push|tweet|message)", "openWorld": true, "note": "external-world reach" },
+    { "match": "^mcp__.*(secret|credential|token|apikey|api_key|password|passwd|auth)", "sensitive": true, "note": "sensitive-data surface" }
+  ]
+}

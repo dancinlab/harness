@@ -10,6 +10,7 @@
 {"id":"pre","kind":"hook","usage":"pre bash","use":"PreToolUse(Bash)  — enforcement match → block/warn"}
 {"id":"pre-write","kind":"hook","usage":"pre write","use":"PreToolUse(Write/Edit) — path/content rules"}
 {"id":"pre-askq","kind":"hook","usage":"pre askq","use":"PreToolUse(AskUserQuestion) — deny option-box → ask in plain chat (config.askqText)"}
+{"id":"pre-tool","kind":"hook","usage":"pre tool","use":"PreToolUse(mcp__.*) — annotation-guard: classify MCP tool vs config registry → warn/block (Rule-of-Two)"}
 {"id":"post","kind":"hook","usage":"post bash <exit> [cmd]","use":"PostToolUse(Bash) — record + route non-zero exits"}
 {"id":"post-edit","kind":"hook","usage":"post edit <file>","use":"PostToolUse(Write/Edit) — flag L0 edits"}
 {"id":"prompt","kind":"hook","usage":"prompt <text>","use":"UserPromptSubmit  — keyword triggers + prompt hints"}

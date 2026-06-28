@@ -29,6 +29,7 @@ function hookSpec(): Record<string, unknown[]> {
       m("Bash", 'CLAUDE_TOOL_INPUT="$CLAUDE_TOOL_INPUT" sidecar pre bash'),
       m("Write|Edit", 'CLAUDE_TOOL_INPUT="$CLAUDE_TOOL_INPUT" sidecar pre write'),
       m("AskUserQuestion", "sidecar pre askq"),
+      m("mcp__.*", "sidecar pre tool"),
     ],
     PostToolUse: [m("Write|Edit", 'sidecar post edit "$CLAUDE_FILE_PATH"')],
     UserPromptSubmit: [

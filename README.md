@@ -58,6 +58,7 @@ sidecar/
 | `post bash <exit>` / `post edit <file>` | 결과 기록, 0≠exit 라우팅, L0 편집 경고 | PostToolUse |
 | 컴팩션 생존 재주입 | 세션-스코프 inject(architecture·git-context·toolkit·companions·ing)는 SessionStart 에서만 떠 자동 컴팩션 시 증발 → **PreCompact+PostCompact** 에 그 6개를 재주입해 설계트리·명령카탈로그·ING 보드가 세션 중반 살아남게 함(sidecar `project-tape` 동형) | PreCompact · PostCompact |
 | `pre write` skill-desc 가드 | `commands/*.md`·`SKILL.md` 의 `description:` 이 1400자 skill-listing cap 초과면 **쓰기 차단**(`SKILL-DESC-CAP` deny — 초과 시 엔트리가 잘려 명령 인지가 죽음), 그 아래라도 `lint.cmdDescCap`(기본 320) 미니멀 cap 초과면 **차단**(`CMD-DESC-LONG` deny — 하는 일+`Triggers —` 만 두고 플래그표/카탈로그는 `--help`/`argument-hint` 로) · `Triggers —` 절 없으면 warn(`lint` 4f 가 커밋 백스톱). sidecar `skill-desc-guard` s18 이식 | PreToolUse(Write) |
+| `pre tool` annotation 가드 | **MCP 툴 호출 가드**(matcher `mcp__.*`) — MCP 툴은 그간 무가드였다(Bash/Write 만). 훅 페이로드에 MCP annotation(`readOnlyHint`·`destructiveHint`…)이 **안 실려** 라이브로 못 읽으므로, sidecar 가 **config 선언형 레지스트리**(`config/tool-annotations.json` · repo override `.harness/tool-annotations.json`)로 tool명 정규식→hint(`readOnly`·`destructive`·`openWorld`·`sensitive`)를 분류하고 그 파일의 **Rule-of-Two 정책**을 적용 — `destructive` 단독=**warn**, `destructive`+`openWorld`(상태변경 ∧ 외부도달 = 비가역 외부부작용)=**block**. 미지/무신호 툴은 통과(흐름 안 깸) · toggle `annotationGuard`(기본 ON · `modules/annotation-guard.ts`) | PreToolUse(mcp\\_\\_.*) |
 | `prompt <text>` | 키워드 트리거 + 프롬프트 힌트 주입 | UserPromptSubmit |
 | `architecture {inject\|show\|search <q>\|stop-check}` | repo-root `ARCHITECTURE.json`(우선)/`.md` 의 **스켈레톤**(title+summary+2단계 목차 · ~5KB)을 컨텍스트로 주입 — 대용량 정적-doc canonical 패턴: 트리는 commons 처럼 상주하되 **세부(`상세`셀·전체 트리·convergence)는 파일에 두고 `show`/`search`/Read 로 온디맨드 pull**(매-턴 풀-주입 안티패턴 회피 — 10KB additionalContext 한도 초과→하네스 파일-폴백+매턴 토큰 재지불). **정적 doc 이라 per-turn 아님**: SessionStart + PreCompact/PostCompact 만(부재 시 무음). 스켈레톤 **뒤**에 턴-마감 게이트. **`stop-check`(Stop 훅 · `decision:block`)** = 설계판 enforce — working tree 에 미커밋 코드/ARCHITECTURE 변경이 있는데 응답에 `🏛️ ARCHITECTURE` 줄(`갱신:…`/`변동 없음`)이 없으면 차단(코드↔ARCHITECTURE drift 방지 · clean tree=no-op · `ing stop-check` 의 조건부판). **`search <q>`** = id/name/role/detail 대소문자무시 substring → 매칭 노드 id + breadcrumb (각 노드 고유 kebab-case id = 검색키 · 레거시 `slug`/한글키(이름·역할·상세)는 read-fallback, 카테고리는 `guard-`/`module-`… id prefix 로 흡수 · `lint` 가 id 부재/중복/형식 block) | SessionStart + Compact + Stop |
 | `claudemd {inject\|show}` | repo-root `CLAUDE.md`(프로젝트 규칙)를 **매 턴** 재주입 — commons 처럼 salience 유지해 규칙이 묻히지 않게 (선택적 `<!-- enforce:start/end -->` 블록만, 80KB 절단, 부재 시 무음) | UserPromptSubmit |
@@ -222,6 +223,7 @@ bash .harness-engine/bin/sidecar ci list
                   [post bash <exit>] ─ 0≠exit ─▶ errors 큐 라우팅
 에이전트 Edit   ─▶ [pre write] ─ 경로/내용 규칙 ─▶ block/warn
                   [post edit <file>] ─ L0? ─▶ 경고
+에이전트 MCP툴  ─▶ [pre tool]  ─ 레지스트리 분류 → Rule-of-Two ─▶ block/warn/통과
 커밋 전          ─▶ [lint] + [verify]
 세션 종료        ─▶ [ing]
 ```

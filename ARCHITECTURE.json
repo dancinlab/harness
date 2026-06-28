@@ -374,6 +374,12 @@
             "detail": "경로·내용·우회패턴 매칭 + write-time hard-deny(상세는 각 4g/4h 노드): SKILL-DESC-CAP/CMD-DESC-LONG(명령 desc 1400 천장+320 미니멀) · COMMONS-PROSE/NO-DODONT/DODONT-INCOMPLETE · DODONT-LONG · SECRET-LITERAL · HANDOFF-SCATTER. stdout JSON(deny)/stderr(warn)"
           },
           {
+            "name": "PreToolUse(MCP)",
+            "role": "MCP 툴 호출 직전 → pre tool",
+            "id": "pre-mcp",
+            "detail": "modules/annotation-guard.ts — matcher `mcp__.*`. MCP 툴은 그간 무가드(Bash/Write만). 훅에 annotation 부재 → config 레지스트리(`config/tool-annotations.json`·repo override)로 tool명→hint(readOnly/destructive/openWorld/sensitive) 분류 후 Rule-of-Two: mutation=warn · destructive+openWorld=block. toggle `annotationGuard`."
+          },
+          {
             "name": "PostToolUse",
             "role": "도구 호출 직후 → post bash / edit",
             "id": "surface-posttooluse",

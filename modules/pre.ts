@@ -31,6 +31,7 @@ import { existsSync } from "node:fs";
 import { basename, isAbsolute, join } from "node:path";
 import { detectBannedStateDir, detectBannedStateDirBash } from "./state-guard.ts";
 import { memPreflight } from "./mem-guard.ts";
+import { detectAnnotationRisk } from "./annotation-guard.ts";
 
 interface BashRule {
   id: string;
@@ -467,6 +468,34 @@ export function matchPromptHints(text: string): PromptHintRule[] {
   return out;
 }
 
+// PreToolUse(mcp__.*) — annotation-guard on MCP tool calls. The tool's annotations
+// are NOT in the hook payload (only tool_name + tool_input), so the guard classifies
+// the tool against the config-declared registry. tool_name lives at the TOP of the
+// payload (sibling of tool_input), so read the raw stdin object directly here rather
+// than via parseToolInput (which unwraps to `.tool_input`).
+function parseToolName(): string {
+  const raw = process.env.CLAUDE_TOOL_NAME ?? readStdin();
+  if (!raw || !raw.trim()) return "";
+  try {
+    const obj = JSON.parse(raw) as Record<string, unknown>;
+    if (typeof obj.tool_name === "string") return obj.tool_name;
+  } catch {
+    /* a bare tool-name string carrier (env) falls through */
+    if (!raw.includes("{")) return raw.trim();
+  }
+  return "";
+}
+
+export async function preTool(_args: string[]): Promise<number> {
+  if (!config().annotationGuard.enabled) return 0;
+  const toolName = parseToolName();
+  const v = detectAnnotationRisk(toolName);
+  if (!v) return 0;
+  if (v.action === "block") return emitBlock(v.id, v.reason);
+  emitWarn(v.id, v.reason);
+  return 0;
+}
+
 // PreToolUse(AskUserQuestion) — deny the arrow-key option box; ask in plain chat.
 export async function preAskq(_args: string[]): Promise<number> {
   if (!config().askqText) return 0;
@@ -501,6 +530,7 @@ export async function runPre(args: string[]): Promise<number> {
   if (sub === "write") return preWrite(args.slice(1));
   if (sub === "askq") return preAskq(args.slice(1));
   if (sub === "touch") return preTouch(args.slice(1));
-  process.stderr.write("usage: sidecar pre {bash|write|askq|touch}\n");
+  if (sub === "tool") return preTool(args.slice(1));
+  process.stderr.write("usage: sidecar pre {bash|write|askq|touch|tool}\n");
   return 1;
 }

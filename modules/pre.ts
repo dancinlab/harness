@@ -172,7 +172,7 @@ async function commitLintGate(cmd: string): Promise<string | null> {
   const lines = blockers.map((v) => `  • [${v.rule}] ${v.file} — ${v.msg}`).join("\n");
   return (
     `git commit blocked by ${blockers.length} sidecar lint violation(s) (global gate via settings.json · commons cycle-docs-pr) —\n${lines}\n` +
-    `Fix them (add the CHANGELOG entry · refresh ARCHITECTURE/README · split the oversized cell · …), ` +
+    `Fix them (add the CHANGELOG entry · refresh ARCHITECTURE · split the oversized cell · …), ` +
     `or if a doc is genuinely N/A append \`# no-verify-ok <reason>\` and \`git commit --no-verify\`.`
   );
 }

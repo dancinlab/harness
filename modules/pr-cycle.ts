@@ -105,8 +105,8 @@ export async function runPrCycle(args: string[]): Promise<number> {
   info(`pr-cycle: branch '${branch}'`);
 
   // 0. doc-update gate — every cycle MUST update docs (CHANGELOG append; ARCHITECTURE
-  //    SSOT + README current-info when present). Refuse to ship code without a
-  //    CHANGELOG entry. Override: --no-doc.
+  //    SSOT + ING when present). README is NOT force-gated (update-in-place stays
+  //    advisory). Refuse to ship code without a CHANGELOG entry. Override: --no-doc.
   if (!args.includes("--no-doc")) {
     // When the remote HEAD symref is unset (repos created by scaffold rather than
     // `git clone` never get one), `rev-parse --abbrev-ref origin/HEAD` returns the
@@ -128,14 +128,11 @@ export async function runPrCycle(args: string[]): Promise<number> {
         ? "ARCHITECTURE.md"
         : null;
     const hasArch = archDoc !== null && changed.some((f) => f === archDoc || f.endsWith("/" + archDoc));
-    const readmeExists = await tracked("README.md");
-    const hasReadme = changed.some((f) => /(^|\/)README\.md$/.test(f));
     const ingExists = await tracked("ING.jsonl");
     const hasIng = changed.some((f) => /(^|\/)ING\.jsonl$/.test(f));
     const missing: string[] = [];
     if (meaningful.length && !hasChangelog) missing.push("CHANGELOG.jsonl (sidecar changelog add)");
     if (meaningful.length && archDoc && !hasArch) missing.push(`${archDoc} (갱신형 SSOT 현행화)`);
-    if (meaningful.length && readmeExists && !hasReadme) missing.push("README.md (현재상태 SSOT 현행화 · 이력 아님 = 제자리 덮어쓰기)");
     if (meaningful.length && ingExists && !hasIng) missing.push("ING.jsonl (진행상황 현행화 · 완료분 sidecar ing done)");
     if (missing.length) {
       loudFail(`pr-cycle: 문서 업데이트 필수 — 이 사이클 변경(${meaningful.length}개)에 누락: ${missing.join(" · ")}`);

@@ -534,7 +534,7 @@
                 "name": "lint",
                 "role": "staged-L0·신선도·수렴 + doc-gate (commit 전 게이트)",
                 "id": "module-lint",
-                "detail": "staged 변경에 대한 commit-time 게이트 모음. CHANGELOG·ARCHITECTURE(.json|.md)·README 미동반=block (pr-cycle은 ing 보드 현행화도 gate). 개별 체크는 children.",
+                "detail": "staged 변경에 대한 commit-time 게이트 모음. CHANGELOG·ARCHITECTURE(.json|.md) 미동반=block (README 는 비강제·advisory update-in-place · pr-cycle은 ing 보드 현행화도 gate). 개별 체크는 children.",
                 "children": [
                   {
                     "name": "SHADOW-DESC (4f)",

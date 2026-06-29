@@ -348,6 +348,14 @@ export async function preWrite(_args: string[]): Promise<number> {
   const input = parseToolInput();
   const filePath = String(input.file_path ?? "");
   const content = String(input.content ?? input.new_string ?? "");
+  // Edit supplies new_string (a PARTIAL fragment); Write supplies content (the FULL
+  // document). The section-aware write-guards below (commons do/dont · dodont-length)
+  // can only validate a complete document — a fragment truncates its boundary section's
+  // body and false-positives it as "no do/dont" (e.g. an edit anchored on the next
+  // `## ` header). They are Write-only by design (Edit fragments fall through to the
+  // commit-time lint backstop, which has full-file context + claudeMdExempt). Detect
+  // the fragment case so those two guards skip it.
+  const isEditFragment = input.content === undefined && input.new_string !== undefined;
   if (!filePath) return 0;
 
   // convergence-on-touch — surface this file's recorded recurrence-prevention learnings
@@ -423,15 +431,19 @@ export async function preWrite(_args: string[]): Promise<number> {
   // (bundled or .harness/ override) full-document write must be do/dont-only;
   // a prose section is hard-DENIED before it lands, not just at commit (lint 4g
   // is the backstop). Keeps the always-on governance SSOT from re-bloating.
-  const cw = commonsWriteViolation(filePath, content);
-  if (cw) return emitBlock(cw.rule, cw.block);
+  if (!isEditFragment) {
+    const cw = commonsWriteViolation(filePath, content);
+    if (cw) return emitBlock(cw.rule, cw.block);
+  }
 
   // do/dont length cap (archive_sidecar tape-lint #2 port) — a NEW or lengthened
   // `- do:`/`- dont:` line over the cap in commons.md / CLAUDE.md is hard-DENIED
   // at write (full-content Write); diff-aware so legacy long lines are grandfathered.
   // Edit fragments fall through to the commit-time lint backstop (lint 4h).
-  const dl = dodontLengthWriteViolation(filePath, content);
-  if (dl) return emitBlock(dl.rule, dl.block);
+  if (!isEditFragment) {
+    const dl = dodontLengthWriteViolation(filePath, content);
+    if (dl) return emitBlock(dl.rule, dl.block);
+  }
 
   const cfg = loadConfig();
 

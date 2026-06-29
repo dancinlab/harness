@@ -133,20 +133,107 @@ function walkMd(dir: string, out: string[]): void {
   }
 }
 
-// Main CLAUDE.md MUST carry a project blurb. The structure tree is the single
-// SSOT of ARCHITECTURE.json/.md when present — so CLAUDE.md only needs its own
-// tree when NO architecture SSOT exists (else the tree would duplicate it and
-// drift · commons single-doc). When an architecture SSOT is present, CLAUDE.md
-// is an entry pointer (blurb + pointers + work rules) and the tree is exempt.
+// Locate a heading by its TEXT (level-agnostic: # / ## / ### all match) and return
+// the body lines between it and the next heading. null = heading absent. Matching is
+// trimmed + case-insensitive so "## Project" finds "##  Project " or "### project".
+function sectionBody(lines: string[], heading: string): string[] | null {
+  const want = heading.replace(/^#+\s*/, "").trim().toLowerCase();
+  const textOf = (l: string): string | null => {
+    const m = l.match(/^#{1,6}\s+(.*\S)\s*$/);
+    return m ? m[1].trim().toLowerCase() : null;
+  };
+  const idx = lines.findIndex((l) => textOf(l) === want);
+  if (idx < 0) return null;
+  const body: string[] = [];
+  for (let i = idx + 1; i < lines.length; i++) {
+    if (/^#{1,6}\s/.test(lines[i])) break;
+    body.push(lines[i]);
+  }
+  return body;
+}
+
+// a section body counts as filled if it has ≥1 non-blank, non-comment line.
+function bodyNonEmpty(body: string[]): boolean {
+  return body.some((l) => {
+    const t = l.trim();
+    return t.length > 0 && !t.startsWith("<!--");
+  });
+}
+
+const TREE_HEADING = /tree|구조|트리|structure/i;
+const DESC_HEADING = /project|설명|소개|overview|개요/i;
+
+// map a required heading to its dedicated rule code so the existing severity
+// entries (DESC/TREE = block, TREE-NO-DESC = warn) still apply; any other heading
+// → the generic CLAUDE-MD-SECTION-MISSING (block).
+function sectionRule(heading: string): string {
+  if (DESC_HEADING.test(heading)) return "CLAUDE-MD-NO-DESC";
+  if (TREE_HEADING.test(heading)) return "CLAUDE-MD-NO-TREE";
+  return "CLAUDE-MD-SECTION-MISSING";
+}
+
+// Main CLAUDE.md MUST carry the configured named sections (default ## Project +
+// ## Tree · config docs.claudeMdSections). Each must be present AND non-empty. A
+// tree-flavored heading additionally gets a quality check (├─/└─ nodes + per-node
+// descriptions). The DEEP structure SSOT still lives in ARCHITECTURE.json — ## Tree
+// is a brief top-level entry map, not a duplicate of it. When the gate is disabled
+// (claudeMdSections=[]) the legacy heuristic runs instead (H1-prose blurb + tree
+// only when no architecture SSOT exists).
 function claudeMdViolations(): DocViolation[] {
   const v: DocViolation[] = [];
   const abs = repoPath("CLAUDE.md");
+  const required = config().docs.claudeMdSections ?? [];
+
   if (!existsSync(abs)) {
-    v.push({ rule: "CLAUDE-MD-MISSING", file: "CLAUDE.md", msg: "메인 CLAUDE.md 없음 — 프로젝트 설명 + (구조 SSOT 부재 시) 트리 구조 포함해 작성" });
+    v.push({
+      rule: "CLAUDE-MD-MISSING",
+      file: "CLAUDE.md",
+      msg: required.length
+        ? `메인 CLAUDE.md 없음 — 최소 ${required.join(" · ")} 섹션(프로젝트 설명 + 트리)을 포함해 작성`
+        : "메인 CLAUDE.md 없음 — 프로젝트 설명 + (구조 SSOT 부재 시) 트리 구조 포함해 작성",
+    });
     return v;
   }
   const text = readFileSync(abs, "utf8");
   const lines = text.split("\n");
+
+  // named-section gate (config-driven · default ## Project · ## Tree).
+  if (required.length) {
+    for (const heading of required) {
+      const body = sectionBody(lines, heading);
+      const rule = sectionRule(heading);
+      const isTree = TREE_HEADING.test(heading);
+      if (body === null) {
+        v.push({
+          rule,
+          file: "CLAUDE.md",
+          msg: isTree
+            ? `'${heading}' 섹션 누락 — ${heading} 헤딩을 추가하고 코드펜스에 ├─/└─ 디렉토리 트리 + 항목별 한 줄 설명을 채우세요 (깊은 구조 SSOT 는 ARCHITECTURE.json)`
+            : DESC_HEADING.test(heading)
+              ? `'${heading}' 섹션 누락 — ${heading} 헤딩을 추가하고 한두 문장 프로젝트 설명을 채우세요`
+              : `'${heading}' 섹션 누락 — ${heading} 헤딩을 추가하고 내용을 채우세요`,
+        });
+        continue;
+      }
+      if (!bodyNonEmpty(body)) {
+        v.push({ rule, file: "CLAUDE.md", msg: `'${heading}' 섹션이 비어있음 — 내용을 채우세요` });
+        continue;
+      }
+      // tree quality (warn): a filled ## Tree should actually draw a tree.
+      if (isTree) {
+        const hasTree = body.some((l) => /(├─|└─|│ )/.test(l));
+        const hasTreeDesc = body.some((l) => /(├─|└─).*(—| - |#|:)/.test(l));
+        if (!hasTree) {
+          v.push({ rule: "CLAUDE-MD-NO-TREE", file: "CLAUDE.md", msg: `'${heading}' 섹션에 디렉토리 트리 누락 — 코드펜스에 ├─/└─ 트리 + 각 항목 한 줄 설명 추가 (깊은 구조 SSOT 는 ARCHITECTURE.json)` });
+        } else if (!hasTreeDesc) {
+          v.push({ rule: "CLAUDE-MD-TREE-NO-DESC", file: "CLAUDE.md", msg: `'${heading}' 트리 항목별 설명 누락 — 각 트리 라인에 "— 설명" 추가` });
+        }
+      }
+    }
+    return v;
+  }
+
+  // legacy heuristic gate (claudeMdSections=[]).
   // (1) project blurb: an H1 followed by a non-heading/non-blank prose line
   const h1 = lines.findIndex((l) => /^#\s+\S/.test(l));
   let hasDesc = false;

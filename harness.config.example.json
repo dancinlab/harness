@@ -81,6 +81,11 @@
       "CLAUDE.md",
       "AGENTS.md",
       "LICENSE"
+    ],
+    "_claudeMdSections": "required headings in the repo-root CLAUDE.md (block · each must be present + non-empty). A tree-flavored heading also warns when its body lacks ├─/└─ nodes. Set [] to disable (legacy heuristic).",
+    "claudeMdSections": [
+      "## Project",
+      "## Tree"
     ]
   },
   "folderGuides": {

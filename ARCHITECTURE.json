@@ -1075,6 +1075,12 @@
             "role": "산출물 단일 루트",
             "id": "config-docs-scratchdir-state",
             "detail": "실험·벤치·검증(verdict/claim)·스크래치 등 모든 작업 산출물을 repo-root `state/` 하나로 통일(c5). 하위 디렉토리 안 쪼갬 — `state/<id>` 평면(verdict 는 `state/<slug>/<id>.txt`). verdict/verify/atlas 가 이 경로를 공유. 재생성 가능 `build/` 만 .gitignore · 머신 자동로그는 `.harness/`"
+          },
+          {
+            "name": "docs.claudeMdSections[]",
+            "role": "repo-root CLAUDE.md 필수 섹션 게이트",
+            "id": "config-docs-claudemdsections",
+            "detail": "repo-root CLAUDE.md 필수 헤딩 (기본 `[\"## Project\",\"## Tree\"]` · commit block · `docs.ts`). 각 헤딩 존재+비어있지않은 본문 필수 · tree-계열은 ├─/└─+설명 warn. Project→`NO-DESC`/Tree→`NO-TREE`/기타→`SECTION-MISSING`. `[]`=끔. 깊은 구조 SSOT=ARCHITECTURE.json · do/dont 포맷검사는 이 섹션만 prose 면제(`commons.ts`)"
           }
         ]
       },

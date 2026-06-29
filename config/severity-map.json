@@ -14,6 +14,7 @@
       "CLAUDE-MD-MISSING": "block",
       "CLAUDE-MD-NO-DESC": "block",
       "CLAUDE-MD-NO-TREE": "block",
+      "CLAUDE-MD-SECTION-MISSING": "block",
       "CLAUDE-MD-TREE-NO-DESC": "warn",
       "SHADOW-DESC": "warn",
       "COMMONS-PROSE": "block",

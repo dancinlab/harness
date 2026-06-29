@@ -19,6 +19,13 @@ function isRootClaudeMd(filePath: string): boolean {
   return rel === "CLAUDE.md";
 }
 
+// lowercased heading texts of the configured project-map sections (docs.claudeMdSections,
+// default ## Project · ## Tree) — these are prose-exempt in the root CLAUDE.md do/dont check.
+function claudeMdExempt(): Set<string> {
+  const secs = config().docs.claudeMdSections ?? [];
+  return new Set(secs.map((s) => s.replace(/^#+\s*/, "").split("—")[0].trim().toLowerCase()));
+}
+
 function body(): string {
   const f = resolveRuleFile(".harness/commons.md", "commons.md");
   try {
@@ -36,15 +43,20 @@ function body(): string {
 // Core: check raw text (used both by the commit-time lint AND the write-time
 // pre-write guard, so a malformed edit is denied the moment it's written —
 // not just at commit · sidecar-style).
-export function lintCommonsText(text: string, rel: string): Array<{ rule: string; file: string; msg: string }> {
+// `exempt` (lowercased heading texts) skips do/dont validation for named project-map
+// sections — the root CLAUDE.md carries prose `## Project` / `## Tree` sections (config
+// docs.claudeMdSections) that are documentation, not slug-keyed rules; every OTHER `## `
+// section still must be do/dont-only. commons.md passes no exemptions.
+export function lintCommonsText(text: string, rel: string, exempt?: Set<string>): Array<{ rule: string; file: string; msg: string }> {
   const lines = text.split("\n");
   const out: Array<{ rule: string; file: string; msg: string }> = [];
   let cur: string | null = null; // current section slug (null = preamble)
   let curLine = 0;
+  let curExempt = false; // current section is a named project-map section (prose ok)
   let hasDo = false;
   let hasDont = false;
   const flush = () => {
-    if (!cur) return;
+    if (!cur || curExempt) return;
     if (!hasDo && !hasDont) {
       out.push({ rule: "COMMONS-NO-DODONT", file: rel, msg: `section "${cur}" (line ${curLine}) has no do/dont line` });
     } else if (!hasDo || !hasDont) {
@@ -61,12 +73,14 @@ export function lintCommonsText(text: string, rel: string): Array<{ rule: string
     if (ln.startsWith("## ")) {
       flush();
       cur = ln.slice(3).split("—")[0].trim();
+      curExempt = !!exempt && exempt.has(cur.toLowerCase());
       curLine = i + 1;
       hasDo = false;
       hasDont = false;
       continue;
     }
     if (cur === null) continue; // preamble before first section — exempt
+    if (curExempt) continue; // named project-map section (prose documentation) — exempt
     const t = ln.trim();
     if (t === "") continue; // blank line ok
     if (t.startsWith("- do:")) { hasDo = true; continue; }
@@ -94,7 +108,7 @@ export function lintCommonsFormat(): Array<{ rule: string; file: string; msg: st
   const cm = resolve(REPO_ROOT, "CLAUDE.md");
   if (existsSync(cm)) {
     try {
-      out.push(...lintCommonsText(readFileSync(cm, "utf8"), "CLAUDE.md"));
+      out.push(...lintCommonsText(readFileSync(cm, "utf8"), "CLAUDE.md", claudeMdExempt()));
     } catch {
       /* unreadable — skip */
     }
@@ -118,7 +132,7 @@ export function commonsWriteViolation(filePath: string, content: string): { rule
   // `## ` header would be all-preamble (exempt) → only validate real documents.
   if (!content.includes("## ")) return null;
   const rel = isClaude ? "CLAUDE.md" : isOverride ? ".harness/commons.md" : "config/commons.md";
-  const v = lintCommonsText(content, rel);
+  const v = lintCommonsText(content, rel, isClaude ? claudeMdExempt() : undefined);
   if (!v.length) return null;
   const prose = v.filter((x) => x.rule === "COMMONS-PROSE");
   const nodo = v.filter((x) => x.rule === "COMMONS-NO-DODONT");

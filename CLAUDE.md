@@ -10,6 +10,27 @@ Claude Code plugin (`/plugin`).
 > · 거버넌스 → [config/commons.md](config/commons.md) (always-on · slug-keyed do/dont)
 > · 이력 → [CHANGELOG.jsonl](CHANGELOG.jsonl) (append)
 
+## Project
+Project-agnostic AI coding sidecar — a single config-driven engine that wires guards, context injects,
+and runbooks into any agent via hooks. The engine (when/how to check) is shared; the rules (what to
+check) are per-repo data. Ships as a global `sidecar` CLI and a Claude Code plugin.
+
+## Tree
+Top-level orientation map (deep module SSOT = [ARCHITECTURE.json](ARCHITECTURE.json)):
+
+```
+sidecar/
+├─ bin/        — runtime auto-detect launcher (L1 실행 입구)
+├─ cli/        — index.ts 디스패처 (L2 명령 라우팅)
+├─ lib/        — 공용 부품 (paths·config·log·exec·lockdown · L3)
+├─ modules/    — 기능 모듈 + 코드 가드 (one file per command · L4)
+├─ config/     — 번들 규칙 데이터 (commons·enforcement·severity-map · L5)
+├─ hooks/      — Claude Code 플러그인 훅 배선 (hooks.json + run.sh)
+├─ commands/   — 슬래시-명령 위임자 (shadow 가 미러하는 SOURCE)
+├─ templates/  — 런북형 명령 가이드
+└─ state/      — 작업 산출물 단일 루트 (preserve-state)
+```
+
 ## 작업 규칙 (this repo)
 - do: **어떤 구현·수정이든 완료되면 사용자가 따로 시키지 않아도 그 턴에 자동으로 `sidecar ship`** (deterministic 명령 = direct-execute · 4축 박스/확인 없이 즉시) = 전 설치 surface 한 번에 전파(pr-cycle 검증머지 → self-update 전역 CLI → shadow 슬래시 미러) · 직전에 매 사이클 문서(CHANGELOG + 설계변경 시 ARCHITECTURE · README 는 손댄 김에 비강제) → 검증 선행 · config/data-only 는 `sidecar ship --no-doc` (commons `cycle-docs-pr`)
 - do: 새 명령은 `modules/<name>.ts` + `cli/index.ts` 등록 + help 라인 + CHANGELOG (+ 런북형 `templates/<name>.md` · 슬래시 노출 `commands/<name>.md`) → `npx tsx cli/index.ts help` 로드 + `sidecar toolkit write`(카탈로그 100%) + 관련 스모크로 검증

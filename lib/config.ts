@@ -114,6 +114,17 @@ export interface SidecarConfig {
     // ("" = repo-root files). Undefined = whole repo. CLAUDE-MD check is unaffected.
     // Use for research repos with a large legit doc corpus.
     scopeDirs?: string[];
+    // required headings in the repo-root CLAUDE.md (commit-time gate · block). Each
+    // listed heading MUST appear (level-agnostic match on the heading TEXT) AND carry
+    // a non-empty body before the next heading — so a project map can't ship without
+    // them. Default ["## Project","## Tree"]: a project blurb + a brief orientation
+    // tree. A heading whose text contains tree/구조/트리/structure additionally warns
+    // when its body lacks ├─/└─ nodes or per-node descriptions; the DEEP structure
+    // SSOT still lives in ARCHITECTURE.json (## Tree is a top-level entry map, not a
+    // duplicate of it). [] disables the named-section gate → legacy heuristic (H1-prose
+    // blurb + tree-only-when-no-architecture-SSOT). Active only when docs discipline is
+    // (architecture file present).
+    claudeMdSections?: string[];
     // write-time enforcement (PreToolUse Write/Edit on .md). "warn" surfaces the
     // violation the moment a scattered/quickref-less doc is created (default —
     // the lint/commit check alone fires too late to be followed); "block" vetoes
@@ -282,6 +293,7 @@ const DEFAULTS: SidecarConfig = {
       "\\d{6,8}[-_].*\\.md$",
     ],
     allow: ["README.md", "CHANGELOG.md", "ARCHITECTURE.md", "ING.md", "ATLAS.md", "CLAIMS.md", "CLAUDE.md", "AGENTS.md", "LICENSE", "CONTRIBUTING.md", "SECURITY.md"],
+    claudeMdSections: ["## Project", "## Tree"],
     enforce: "warn",
   },
   lsp: {

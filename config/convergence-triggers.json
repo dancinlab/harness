@@ -12,5 +12,5 @@
     "keeps breaking", "keeps failing", "reintroduc", "reopened",
     "previously fixed", "already fixed", "regression", "recurr", "stale"
   ],
-  "hint": "재발 신호 — 같은 원인의 결함/실수가 또 보인다(첫 발생이 아니라 재발). 그 학습을 설계 SSOT 한곳에 박아 같은 결함 재도입을 막아라. ① 기존 기록 확인: `sidecar architecture convergence list` ② 추가/갱신(id-keyed upsert): `sidecar architecture convergence add --id <ID> --state ossified --value \"<핵심 학습>\" --threshold \"<재발조건/해결>\" --source <원인파일>`. 인라인 @convergence 주석·별도 incident 트래커로 흩지 말 것 (commons root-cause)."
+  "hint": "재발 신호 — 같은 원인의 결함/실수가 또 보인다(첫 발생이 아니라 재발). 그 학습을 설계 SSOT 한곳에 박아 같은 결함 재도입을 막아라. ① 그 파일의 기존 학습부터 꺼내 보기: `sidecar architecture convergence for <원인파일>` ② 같은 결함의 재발/연장이면 그 레코드 갱신: `sidecar architecture convergence edit <id> --value \"<핵심 학습>\" --threshold \"<재발조건/해결>\"`; 정말 별개의 새 학습이면 추가: `sidecar architecture convergence add --source <원인파일> --value \"<핵심 학습>\" --threshold \"<재발조건/해결>\"` (id 는 source 파일명에서 자동 부여 · 동일 source 에 기존 레코드가 있으면 검토 게이트가 막으니 위 for→edit 흐름을 따를 것). 인라인 @convergence 주석·별도 incident 트래커로 흩지 말 것 (commons root-cause)."
 }

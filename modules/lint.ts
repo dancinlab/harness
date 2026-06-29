@@ -103,21 +103,20 @@ export async function collectViolations(stagedOverride?: string[]): Promise<Viol
         msg: `${codeChanges.length} code file(s) staged without ${file} (e.g. ${codeChanges[0]})`,
       });
     }
-    // 1c. doc SSOTs: existing ARCHITECTURE (.json tree or .md prose) / README.md
-    //     must be refreshed alongside meaningful code changes too — same gate
-    //     pr-cycle enforces, now at commit time so it fires on EVERY task.
+    // 1c. doc SSOT: existing ARCHITECTURE (.json tree or .md prose) must be
+    //     refreshed alongside meaningful code changes too — same gate pr-cycle
+    //     enforces, now at commit time so it fires on EVERY task.
     //     Only one ARCHITECTURE form needs to exist; whichever is present is gated.
-    //     Escape hatch: `git commit --no-verify` when a doc is genuinely N/A.
+    //     README is NOT force-gated (update-in-place stays advisory, not blocking).
+    //     Escape hatch: `git commit --no-verify` when the doc is genuinely N/A.
     if (codeChanges.length > 0) {
       const archDoc = existsSync(repoPath("ARCHITECTURE.json")) ? "ARCHITECTURE.json" : "ARCHITECTURE.md";
-      for (const doc of [archDoc, "README.md"]) {
-        if (existsSync(repoPath(doc)) && !staged.includes(doc)) {
-          violations.push({
-            rule: doc === "README.md" ? "README-MISSING" : "ARCHITECTURE-MISSING",
-            file: doc,
-            msg: `${codeChanges.length} code file(s) staged without ${doc} 현행화 (현재상태 SSOT — 제자리 덮어쓰기, 이력 아님 · pr-cycle parity · --no-verify if truly N/A)`,
-          });
-        }
+      if (existsSync(repoPath(archDoc)) && !staged.includes(archDoc)) {
+        violations.push({
+          rule: "ARCHITECTURE-MISSING",
+          file: archDoc,
+          msg: `${codeChanges.length} code file(s) staged without ${archDoc} 현행화 (현재상태 SSOT — 제자리 덮어쓰기, 이력 아님 · pr-cycle parity · --no-verify if truly N/A)`,
+        });
       }
     }
   }

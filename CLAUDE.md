@@ -1,9 +1,10 @@
 # sidecar
 
 Project-agnostic AI coding sidecar — guards, injects, and runbooks that wire a single `sidecar`
-CLI into any agent (Claude Code, etc.) via hooks. Config-driven, zero domain hardcoding; ships as a
-global command (`~/.sidecar/cli` + `~/.local/bin/sidecar`, bootstrapped by `sidecar install`) and as a
-Claude Code plugin (`/plugin`).
+CLI into any agent via hooks. Config-driven, zero domain hardcoding; ships as a global command
+(`~/.sidecar/cli` + `~/.local/bin/sidecar`, bootstrapped by `sidecar install`). One engine, two
+agent surfaces: a **Claude Code plugin** (`/plugin` · `hooks/`) and a **Pi extension**
+(`sidecar pi install` · `pi/`) — both call the SAME CLI; only the wiring is per-agent.
 
 > 📍 SSOT 포인터 (이 파일 = 진입점 + 작업규칙만):
 > · **구조·설계 → [ARCHITECTURE.json](ARCHITECTURE.json)** — 디렉토리·모듈 트리는 **여기 단일 SSOT** (`sidecar architecture inject` 가 SessionStart 주입 · 사람은 `python3 serve.py` HTML 뷰어)
@@ -13,7 +14,10 @@ Claude Code plugin (`/plugin`).
 ## Project
 Project-agnostic AI coding sidecar — a single config-driven engine that wires guards, context injects,
 and runbooks into any agent via hooks. The engine (when/how to check) is shared; the rules (what to
-check) are per-repo data. Ships as a global `sidecar` CLI and a Claude Code plugin.
+check) are per-repo data. Ships as a global `sidecar` CLI driving two agent surfaces: a Claude Code
+plugin (`hooks/`) and a Pi extension (`pi/`). The 60 CLI modules are agent-neutral; each surface is a
+thin adapter translating that agent's hook contract to/from the CLI. Stop hard-gates are CC-only
+(Pi has no blocking stop hook); per-turn injects re-assert the rules on both.
 
 ## Tree
 Top-level orientation map (deep module SSOT = [ARCHITECTURE.json](ARCHITECTURE.json)):
@@ -26,6 +30,7 @@ sidecar/
 ├─ modules/    — 기능 모듈 + 코드 가드 (one file per command · L4)
 ├─ config/     — 번들 규칙 데이터 (commons·enforcement·severity-map · L5)
 ├─ hooks/      — Claude Code 플러그인 훅 배선 (hooks.json + run.sh)
+├─ pi/         — Pi 코딩에이전트 브리지 확장 (sidecar.ts · 같은 CLI 를 Pi 이벤트에 배선)
 ├─ commands/   — 슬래시-명령 위임자 (shadow 가 미러하는 SOURCE)
 ├─ templates/  — 런북형 명령 가이드
 └─ state/      — 작업 산출물 단일 루트 (preserve-state)

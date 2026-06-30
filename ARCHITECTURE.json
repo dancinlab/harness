@@ -219,13 +219,6 @@
         "source": "modules/ship.ts"
       },
       {
-        "id": "NO_SCATTER_STATE_DIR",
-        "state": "ossified",
-        "value": "work output (verdicts·bench·experiments·scratch) goes in the single git-tracked `state/` root — creating `.verdicts/`·`bench/`·`experiments/`·`scripts/scratch/` (via Write OR a mkdir/touch/cp/mv bash command) is BLOCKED; `# state-ok`(bash)/`@state-ok`(content) overrides",
-        "threshold": "preserve-state was governance-only with no code teeth — sessions kept standing up scatter dirs that rot untracked; escalated to a hard guard mirroring naming-guard after the user asked to enforce the位置(location) family",
-        "source": "modules/state-guard.ts"
-      },
-      {
         "id": "TOOLKIT_FROM_HELP_SSOT",
         "state": "ossified",
         "value": "the agent-facing command catalog (TOOLKIT.jsonl) is GENERATED from the HELP text in cli/index.ts, never hand-maintained in parallel; `toolkit check` snapshot-diffs committed vs generated so the two can't drift",
@@ -395,12 +388,6 @@
                 "role": "비-canonical 작명 차단(생성) + 터치 시 넛지",
                 "id": "guard-naming",
                 "detail": "버전/복사 접미사 파일·폴더명(`_v2`·`_copy`·`foo 2`…). 새 생성 BLOCK → canonical update-in-place 강제(Write/Edit + Bash mv/cp/touch/mkdir). 기존 비표준 파일 터치는 warn-only 넛지(생성만 막던 갭 — 편집 허용해 고치게). c25 · `@canonical-ok`/`# canonical-ok` 면제 · test/spec 제외"
-              },
-              {
-                "name": "state-guard",
-                "role": "산출물 흩뿌림 차단",
-                "id": "guard-state",
-                "detail": "scatter 디렉토리(`.verdicts`·`bench`·`experiments`·`scripts/scratch`…) 생성 BLOCK → 산출물은 단일 git-tracked `state/` 루트 강제(commons preserve-state)·Write/Edit + Bash mkdir/touch/cp/mv 양쪽·`state/`·`build/`·`.harness/` 하위 통과·`@state-ok`/`# state-ok` 면제"
               },
               {
                 "name": "single-doc(scatter) 가드",

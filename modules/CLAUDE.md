@@ -12,7 +12,6 @@ The implementation of each subcommand dispatched by `cli/index.ts` + PreToolUse/
 | `post.ts` | PostToolUse — exit routing · L0 edit warning · folder nudge |
 | `cloud-guard.ts` | block raw GPU provider CLI/API (vast/vastai/runpod/runpodctl·api.runpod.*) · quote-aware segments |
 | `naming-guard.ts` | block version/copy-suffix file·folder names (`_v2`·`_copy`…) |
-| `state-guard.ts` | block scatter directories (.verdicts/bench/…) → steer to `state/` |
 | `docs.ts` | single-doc discipline (block scatter `.md` + quickref) |
 | `lint.ts` | commit-time gate — collection of staged checks (CHANGELOG·folder-guide·convergence-record…) |
 | `ing.ts` · `folders.ts` · `architecture.ts` · `toolkit.ts` … | in-progress board · folder guide · design-inject+recurrence-learning store · command catalog |

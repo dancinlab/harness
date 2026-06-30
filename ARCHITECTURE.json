@@ -480,9 +480,9 @@
           },
           {
             "name": "체크포인트",
-            "role": "commit/세션 → lint / ci / qa / ing",
+            "role": "commit/세션 → lint / ci / ing",
             "id": "surface-checkpoint",
-            "detail": "검증·신선도·인계. exit code + stderr. `qa`=정식 all-PASS 바(ci+lint+audit 무-0축)=`ship` pre-flight 게이트(우회불가)→red 면 전파 STOP"
+            "detail": "검증·신선도·인계. exit code + stderr. `ship`=sidecar-repo 전용(self-update+shadow 가 sidecar 설치 대상이라 범용 아님 · 타 repo 는 `pr-cycle`) · 0단계 inject-bloat 가드(injectCaps byte천장 = context-rot/AI멍청 재발방지)"
           }
         ]
       },

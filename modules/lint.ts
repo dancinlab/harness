@@ -76,6 +76,39 @@ function fileAgeDays(absPath: string): number | null {
 // globally on agent `git commit` in any sidecar-managed repo, not only where a git
 // pre-commit hook is installed. `stagedOverride` lets the commit interceptor widen the
 // fileset (e.g. `git commit -a` = staged + tracked-modified).
+// inject-bloat (context-rot) guard — each source sidecar RE-INJECTS to the agent every
+// turn must stay under its byte cap (lint.injectCaps). Re-injected bloat silently degrades
+// EVERY future turn (context rot — the "agent gets dumber" failure mode), so this is the
+// recurrence guard for it. Keep the SOURCE lean — never truncate at emit. Shared by the
+// commit-time lint AND ship's pre-flight gate. Sidecar-repo-only: injectCaps lists THIS
+// repo's inject sources (commons.md/recommend.md…); empty elsewhere → no-op.
+export function injectCapViolations(): Violation[] {
+  const cfg = config();
+  const out: Violation[] = [];
+  for (const [key, cap] of Object.entries(cfg.lint?.injectCaps ?? {})) {
+    if (!cap || cap <= 0) continue;
+    const targets: string[] = [];
+    if (key.endsWith("/")) {
+      const dir = repoPath(key.slice(0, -1));
+      if (existsSync(dir)) for (const f of readdirSync(dir)) if (f.endsWith(".md")) targets.push(`${key}${f}`);
+    } else if (existsSync(repoPath(key))) {
+      targets.push(key);
+    }
+    for (const f of targets) {
+      let bytes = 0;
+      try {
+        bytes = Buffer.byteLength(readFileSync(repoPath(f), "utf8"), "utf8");
+      } catch {
+        continue;
+      }
+      if (bytes > cap) {
+        out.push({ rule: "INJECT-OVERSIZED", file: f, msg: `${bytes}B > ${cap}B inject cap — re-injected every turn; trim prose (keep the rule + 1 example, drop redundant examples/reference tables) or raise this inject's lint.injectCaps budget` });
+      }
+    }
+  }
+  return out;
+}
+
 export async function collectViolations(stagedOverride?: string[]): Promise<Violation[]> {
   const cfg = config();
   const violations: Violation[] = [];
@@ -232,35 +265,8 @@ export async function collectViolations(stagedOverride?: string[]): Promise<Viol
     }
   }
 
-  // 4j. inject-oversized — EACH source sidecar injects to the agent (re-injected
-  // every turn/session) gets its OWN size lint, so prose bloat is caught per inject,
-  // not as a lump. The fix is to keep the SOURCE lean (author trims it) — NOT to
-  // truncate at emit, which would silently drop content. `lint.injectCaps` maps each
-  // inject path → its own byte budget; a key ending "/" caps every `*.md` directly
-  // under that dir individually. (commons.md / CLAUDE.md / ARCHITECTURE.json are each
-  // covered by their OWN format lint — do/dont · do/dont · cell-cap — so they're not
-  // re-checked here.) Sidecar-repo-only (these source files exist there).
-  for (const [key, cap] of Object.entries(cfg.lint?.injectCaps ?? {})) {
-    if (!cap || cap <= 0) continue;
-    const targets: string[] = [];
-    if (key.endsWith("/")) {
-      const dir = repoPath(key.slice(0, -1));
-      if (existsSync(dir)) for (const f of readdirSync(dir)) if (f.endsWith(".md")) targets.push(`${key}${f}`);
-    } else if (existsSync(repoPath(key))) {
-      targets.push(key);
-    }
-    for (const f of targets) {
-      let bytes = 0;
-      try {
-        bytes = Buffer.byteLength(readFileSync(repoPath(f), "utf8"), "utf8");
-      } catch {
-        continue;
-      }
-      if (bytes > cap) {
-        violations.push({ rule: "INJECT-OVERSIZED", file: f, msg: `${bytes}B > ${cap}B inject cap — re-injected every turn; trim prose (keep the rule + 1 example, drop redundant examples/reference tables) or raise this inject's lint.injectCaps budget` });
-      }
-    }
-  }
+  // 4j. inject-oversized — the context-rot guard, shared with ship's pre-flight gate.
+  violations.push(...injectCapViolations());
 
   return violations;
 }

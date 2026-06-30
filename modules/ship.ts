@@ -1,28 +1,48 @@
 // sidecar ship [--no-doc]
-// One-shot propagation: after an implementation cycle, push the change to EVERY
-// surface a sidecar install lives on, in the one correct order — so a feature can
-// never land on one surface (merged) while silently missing another (slash command
-// invisible because the shadow mirror was never refreshed).
+// SIDECAR-REPO-ONLY propagation: ship is NOT a generic per-repo command. Steps 2-3
+// (self-update the global sidecar CLI · re-mirror sidecar's own commands/) only make
+// sense in the sidecar SOURCE repo — it propagates SIDECAR's own changes across the
+// surfaces a sidecar install lives on. In any other repo, use `sidecar pr-cycle` for a
+// plain verified merge.
 //
-//   0. qa          — all-PASS pre-flight gate (ci · lint · audit no-zero-axis)
+//   pre. sidecar-repo gate — refuse outside the sidecar source repo
+//   0. inject-bloat guard — context-rot recurrence guard (re-injected sources under cap)
 //   1. pr-cycle    — doc-gate → push → PR → verified merge → local main ff-sync
 //   2. self-update — git-pull the GLOBAL CLI clone (~/.sidecar/cli) to the just-merged main
 //   3. shadow      — re-mirror commands/ → ~/.claude/commands/ as bare /cmd delegators
 //
+import { existsSync } from "node:fs";
 import { info, ok, loudFail } from "../lib/log.ts";
-import { runQa } from "./qa.ts";
+import { repoPath } from "../lib/config.ts";
+import { injectCapViolations } from "./lint.ts";
 import { runPrCycle } from "./pr-cycle.ts";
 import { runSelfUpdate } from "./setup.ts";
 import { runShadow } from "./shadow.ts";
 
+// The sidecar SOURCE repo is the one that carries the CLI itself (cli/index.ts) and the
+// shadow source (commands/) — uniquely identifying it, config-free.
+function isSidecarRepo(): boolean {
+  return existsSync(repoPath("cli/index.ts")) && existsSync(repoPath("modules/shadow.ts")) && existsSync(repoPath("commands"));
+}
+
 export async function runShip(args: string[]): Promise<number> {
-  // 0. QA pre-flight — the formal all-PASS bar. Never propagate a red harness to any
-  // surface. No bypass flag by design (no-escape-hatch): a red check is a STOP — fix it.
-  info("ship: 1/4 — qa (all-PASS pre-flight gate)…");
-  const qa = await runQa([]);
-  if (qa !== 0) {
-    loudFail("ship: qa FAILED — STOP. nothing pushed/merged/propagated. fix the red checks then re-run `sidecar ship`.");
-    return qa;
+  // pre. sidecar-repo gate — ship is sidecar-development-only (self-update + shadow act on
+  // the sidecar install, meaningless elsewhere). Not generic; other repos use pr-cycle.
+  if (!isSidecarRepo()) {
+    loudFail("ship: sidecar-repo ONLY — it self-updates the global sidecar CLI + re-mirrors sidecar's commands (no-op/meaningless in other repos). For a verified merge here, use `sidecar pr-cycle`.");
+    return 1;
+  }
+
+  // 0. inject-bloat guard — the "AI gets dumber" (context-rot) recurrence guard as ship's
+  // FINAL pre-flight: every source re-injected to the agent each turn must stay under its
+  // byte cap, or it silently degrades all future turns. sidecar-specific (injectCaps lists
+  // this repo's inject sources). No bypass (no-escape-hatch): trim the source, then ship.
+  info("ship: 1/4 — inject-bloat guard (context-rot · injectCaps)…");
+  const bloated = injectCapViolations();
+  if (bloated.length) {
+    for (const v of bloated) loudFail(`ship: INJECT-OVERSIZED ${v.file} — ${v.msg}`);
+    loudFail("ship: STOP — inject source over cap = context-rot risk (AI 멍청해짐 재발). trim it under cap, then re-run `sidecar ship`.");
+    return 1;
   }
 
   // forward pr-cycle flags (e.g. --no-doc for config/data-only changes)

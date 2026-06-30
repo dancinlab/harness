@@ -299,7 +299,7 @@
         "id": "commons-md-1",
         "state": "ossified",
         "value": "harness 매턴 inject 누적 = context-rot: 입력 토큰↑ → transformer 어텐션 분산 → 에이전트 열화(Chroma 18-model 실측 200K창이 50K에서 정확도 손실 · 구조적 속성, 학습으로 해결 안 됨). sidecar 는 매턴 ~7.5K tok(commons 14.6K+recommend 5.8K+CLAUDE+ing+easy) 재주입 → INJECT-OVERSIZED 게이트(lint.injectCaps)가 inject 소스별 byte 천장 강제. 잘라내기(emit-truncate) 금지 — 소스를 직접 트림해 통과.",
-        "threshold": "injectCaps 키 부재/빈값이면 lint.ts:243 루프가 무순회 = dead gate(무제한 비대; 이번에 발견·배선). 재발조건: ① 새 inject 소스 추가 시 injectCaps 항목 동반 누락 ② commons/recommend byte 가 천장 근접(여유<500B) → 소스 트림 먼저, 천장 상향은 최후수단",
+        "threshold": "injectCaps 키 부재/빈값=lint.ts dead gate(무제한 비대). per-source cap 은 한 파일만 막음 → 여러 소스 합이 비대해지는 death-by-a-thousand-cuts 는 injectBudgetBytes 총합천장으로 차단(context-rot=총 토큰). dir키(styles/)는 언어변종 1개만 주입되니 총합서 제외. 재발조건: 새 inject 에 cap/budget 누락 · 합이 천장 근접 → 소스 트림 먼저(천장 상향은 최후)",
         "source": "config/commons.md"
       },
       {
@@ -482,7 +482,7 @@
             "name": "체크포인트",
             "role": "commit/세션 → lint / ci / ing",
             "id": "surface-checkpoint",
-            "detail": "검증·신선도·인계. exit code + stderr. `ship`=sidecar-repo 전용(self-update+shadow 가 sidecar 설치 대상이라 범용 아님 · 타 repo 는 `pr-cycle`) · 0단계 inject-bloat 가드(injectCaps byte천장 = context-rot/AI멍청 재발방지)"
+            "detail": "검증·신선도·인계. exit code + stderr. `ship`=sidecar-repo 전용(self-update+shadow=sidecar 설치 대상 · 타 repo 는 `pr-cycle`) · 0단계 inject-bloat 가드(injectCaps 소스별+injectBudgetBytes 총합 byte천장 = context-rot/AI멍청 재발방지 · lint↔ship 공유)"
           }
         ]
       },

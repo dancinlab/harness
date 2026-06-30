@@ -85,6 +85,7 @@ function fileAgeDays(absPath: string): number | null {
 export function injectCapViolations(): Violation[] {
   const cfg = config();
   const out: Violation[] = [];
+  let total = 0; // running sum across ALL inject sources (the aggregate budget)
   for (const [key, cap] of Object.entries(cfg.lint?.injectCaps ?? {})) {
     if (!cap || cap <= 0) continue;
     const targets: string[] = [];
@@ -101,10 +102,20 @@ export function injectCapViolations(): Violation[] {
       } catch {
         continue;
       }
+      // aggregate only single-file sources: a dir key (e.g. styles/) expands to many
+      // language variants but only ONE ships per turn, so summing all would overcount.
+      if (!key.endsWith("/")) total += bytes;
       if (bytes > cap) {
         out.push({ rule: "INJECT-OVERSIZED", file: f, msg: `${bytes}B > ${cap}B inject cap — re-injected every turn; trim prose (keep the rule + 1 example, drop redundant examples/reference tables) or raise this inject's lint.injectCaps budget` });
       }
     }
+  }
+  // aggregate budget — per-source caps stop ONE file ballooning; this stops death-by-a-
+  // thousand-cuts (many sources each under cap but summing huge = context rot is about the
+  // TOTAL tokens, not any single file). Opt-in via lint.injectBudgetBytes.
+  const budget = cfg.lint?.injectBudgetBytes ?? 0;
+  if (budget > 0 && total > budget) {
+    out.push({ rule: "INJECT-BUDGET", file: "lint.injectCaps", msg: `re-injected sources total ${total}B > ${budget}B aggregate budget — the SUM drives context-rot (every turn); trim a source or split the work, do not just raise the budget` });
   }
   return out;
 }

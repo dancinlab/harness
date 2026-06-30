@@ -43,5 +43,5 @@ sidecar/
 - dont: `shadow` 를 빠뜨리고 `pr-cycle`+`self-update` 만 돌리기 — 새 슬래시가 picker 에 안 떠 "반영 안됨" 이 재발한다(그래서 셋을 `ship` 한 명령으로 묶었다) · 한 surface(CC 만/Pi 만)만 배선하고 끝내기
 
 ## inject-lint — 잘라내기 금지, 작성 시 lint (왜: 매턴 inject 비대 = context-rot → 에이전트 열화 · `commons-md-1`)
-- do: 각 inject 소스(commons·recommend·easy·prefs 등)는 **작성·편집 시점에** lean 유지 — 매턴 재주입(현 ~7.5K tok) 누적 = 입력토큰↑ → 어텐션 분산 → **에이전트 멍청해짐**(transformer 구조적 · Chroma 18-model 실측)이라 lean 이 곧 성능 · INJECT-OVERSIZED 개별 cap(`lint.injectCaps`, 소스별 byte 천장 · 항목 없으면 게이트 dead) 또는 do/dont·ARCH-cell 양식 · 새 inject 추가 시 그 cap/lint 도 함께 추가
+- do: 각 inject 소스(commons·recommend·easy·prefs 등)는 **작성·편집 시점에** lean 유지 — 매턴 재주입 누적 = 입력토큰↑ → 어텐션 분산 → **에이전트 멍청해짐**(transformer 구조적 · Chroma 18-model 실측)이라 lean 이 곧 성능 · 개별 cap `lint.injectCaps`(소스별 byte 천장) **+ 총합 천장 `lint.injectBudgetBytes`(단일파일 소스 합 = context-rot 본질)** · lint(커밋)+ship 0단계가 같은 가드로 차단 · 새 inject 추가 시 cap/budget 동반
 - dont: **inject 를 emit/런타임에 잘라내기(truncate·tail-cut) — 절대 금지**(내용 조용히 손실) · 비대하면 소스를 직접 트림해 lint 통과 · lint 없는 inject 방치 · injectCaps 비워 게이트 죽이기

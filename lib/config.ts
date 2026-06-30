@@ -83,6 +83,9 @@ export interface SidecarConfig {
     // lint — do/dont · do/dont · cell-cap — which is their inject lint; cross-repo
     // governance docs vary in size legitimately, so they're not byte-capped here.)
     injectCaps?: Record<string, number>;
+    // aggregate ceiling on the SUM of single-file inject sources (per-turn re-injection
+    // total = context-rot driver). per-source caps stop one file; this stops the sum.
+    injectBudgetBytes?: number;
   };
   // optional shared-file sync: a shell script the repo runs to fan files out
   sync?: { script: string };

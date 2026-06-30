@@ -29,7 +29,6 @@ import { detectHandoffScatter } from "./handoff-guard.ts";
 import { detectVersionedName, detectVersionedNameBash, offendingToken } from "./naming-guard.ts";
 import { existsSync } from "node:fs";
 import { basename, isAbsolute, join } from "node:path";
-import { detectBannedStateDir, detectBannedStateDirBash } from "./state-guard.ts";
 import { memPreflight } from "./mem-guard.ts";
 import { detectAnnotationRisk } from "./annotation-guard.ts";
 
@@ -259,21 +258,6 @@ export async function preBash(_args: string[]): Promise<number> {
     }
   }
 
-  // state-guard (bash) — BLOCK a mkdir/touch/cp/mv that CREATES output inside a
-  // scatter dir (.verdicts/bench/experiments/scripts-scratch); work output lives in
-  // the single `state/` root (commons preserve-state). Honors `# state-ok`.
-  if (config().stateGuard) {
-    const sd = detectBannedStateDirBash(cmd);
-    if (sd) {
-      return emitBlock(
-        "STATE-SCATTER-DIR",
-        `'${sd}/' is a scatter directory (commons preserve-state) — work output belongs in the single git-tracked \`state/\` root ` +
-          `(committed → preserved on GitHub). Regenerable artifacts → \`build/\` (gitignored); machine logs → \`.harness/\`. ` +
-          `If genuinely needed outside \`state/\`, append '# state-ok <reason>' to the command.`
-      );
-    }
-  }
-
   // built-in raw-cloud-CLI guard — code-level block (c11), runs before config
   // rules, default-on, NO override. GPU/cloud must go through hexa builtins.
   const cloudLabel = detectRawCloudCli(cmd);
@@ -391,14 +375,6 @@ export async function preWrite(_args: string[]): Promise<number> {
       if (existsSync(filePath)) emitWarn("NAMING-TOUCH-VERSION-SUFFIX", `${nv} — 기존 파일을 터치 중. 고치는 김에 canonical 이름으로 rename 고려 (\`sidecar naming audit\`).`);
       else return emitBlock("NAMING-VERSION-SUFFIX", nv);
     }
-  }
-
-  // state-guard — BLOCK writing output into a scatter dir (.verdicts/bench/…);
-  // all work output lives in the single `state/` root (commons preserve-state).
-  // Honors the `@state-ok` marker in content.
-  if (config().stateGuard) {
-    const sv = detectBannedStateDir(filePath, content);
-    if (sv) return emitBlock("STATE-SCATTER-DIR", sv);
   }
 
   // built-in single-doc discipline (write-time) — fires when a scattered or

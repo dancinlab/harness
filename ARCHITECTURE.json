@@ -1025,7 +1025,7 @@
             "name": "pi/sidecar.ts (+ modules/pi.ts)",
             "role": "Pi 코딩에이전트 브리지 확장 — 같은 sidecar CLI 를 Pi 라이프사이클에 배선",
             "id": "config-pi-sidecar-ts",
-            "detail": "Pi 이벤트→sidecar verb 번역: before_agent_start=매턴 inject+prompt-scan(UserPromptSubmit 대응) · session_start=worktree gc · tool_call=pre guards(permissionDecision:deny→{block}) · tool_result=post edit(advisory). inject 동사엔 {hook_event_name} stdin 합성, 텍스트는 stdout JSON additionalContext+stderr 평문 양쪽 흡수. Stop 하드게이트는 Pi 에 blocking stop 훅이 없어 CC 전용(매턴 inject 가 규칙 재주입). 설치 `sidecar pi install`=~/.pi/agent/extensions/ 심링크+settings.skills[]+=~/.claude/skills"
+            "detail": "Pi 이벤트→sidecar verb 번역(CC hooks 와 같은 CLI): before_agent_start=매턴 inject+prompt-scan · session_start=gc · tool_call=pre 가드(deny→block) · tool_result=post(advisory). Stop 하드게이트는 Pi 에 blocking stop 훅 없어 CC 전용. 설치 `sidecar pi install`. 상세 pi/CLAUDE.md"
           }
         ]
       },

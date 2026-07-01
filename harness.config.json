@@ -27,7 +27,8 @@
   "lint": {
     "freshnessFiles": [],
     "injectCaps": {
-      "config/recommend.md": 6500
+      "config/recommend.md": 6500,
+      "config/recommend.ko.md": 6500
     },
     "injectBudgetBytes": 22883,
     "injectBudgetExtra": [

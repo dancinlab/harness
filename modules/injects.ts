@@ -59,6 +59,22 @@ export async function runInjects(args: string[]): Promise<number> {
     rows.push({ source: f, bytes: existsSync(repoPath(f)) ? bytesOf(repoPath(f)) : 0, cap: null, counted: true });
   }
 
+  // language-variant sets (foo.md + foo.<lang>.md) ship ONE per turn → count only the
+  // LARGEST of each base group toward the aggregate (mirror lint.ts injectCapViolations
+  // groupMax). Both variants stay VISIBLE as rows; only the non-max sibling is un-counted.
+  const maxByBase = new Map<string, number>();
+  for (const r of rows) {
+    const base = r.source.replace(/\.[a-z]{2,3}\.md$/, ".md");
+    maxByBase.set(base, Math.max(maxByBase.get(base) ?? 0, r.bytes ?? 0));
+  }
+  const usedBase = new Set<string>();
+  for (const r of rows) {
+    if (!r.counted) continue;
+    const base = r.source.replace(/\.[a-z]{2,3}\.md$/, ".md");
+    if (!usedBase.has(base) && (r.bytes ?? 0) === maxByBase.get(base)) usedBase.add(base);
+    else r.counted = false;
+  }
+
   // aggregate = sum of counted rows (identical to lint.ts injectCapViolations `total`).
   const total = rows.filter((r) => r.counted).reduce((s, r) => s + (r.bytes ?? 0), 0);
 

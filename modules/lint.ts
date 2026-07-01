@@ -85,7 +85,10 @@ function fileAgeDays(absPath: string): number | null {
 export function injectCapViolations(): Violation[] {
   const cfg = config();
   const out: Violation[] = [];
-  let total = 0; // running sum across ALL inject sources (the aggregate budget)
+  // variant-group base → MAX bytes. A dir key (styles/) OR a file-key language-variant set
+  // (foo.md + foo.<lang>.md) ships only ONE per turn, so each logical source counts ONCE
+  // toward the aggregate (grouped by base name, MAX taken) — never every variant summed.
+  const groupMax = new Map<string, number>();
   for (const [key, cap] of Object.entries(cfg.lint?.injectCaps ?? {})) {
     if (!cap || cap <= 0) continue;
     const targets: string[] = [];
@@ -102,14 +105,19 @@ export function injectCapViolations(): Violation[] {
       } catch {
         continue;
       }
-      // aggregate only single-file sources: a dir key (e.g. styles/) expands to many
-      // language variants but only ONE ships per turn, so summing all would overcount.
-      if (!key.endsWith("/")) total += bytes;
+      // dir keys expand to language variants (only ONE ships/turn) → NOT summed here; a
+      // single-file key's variant set (base foo.md + foo.<lang>.md) groups by base name.
+      if (!key.endsWith("/")) {
+        const baseKey = f.replace(/\.[a-z]{2,3}\.md$/, ".md");
+        groupMax.set(baseKey, Math.max(groupMax.get(baseKey) ?? 0, bytes));
+      }
       if (bytes > cap) {
         out.push({ rule: "INJECT-OVERSIZED", file: f, msg: `${bytes}B > ${cap}B inject cap — re-injected every turn; trim prose (keep the rule + 1 example, drop redundant examples/reference tables) or raise this inject's lint.injectCaps budget` });
       }
     }
   }
+  let total = 0; // running sum across inject sources (the aggregate budget · variant = 1)
+  for (const b of groupMax.values()) total += b;
   // also count files re-injected every turn that carry their OWN format lint (so they
   // aren't in injectCaps) but still spend the per-turn token budget — e.g. repo-root
   // CLAUDE.md (claudemd inject). Listed in lint.injectBudgetExtra; counted toward the

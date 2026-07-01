@@ -58,6 +58,7 @@ import { runGitContext } from "../modules/git-context.ts";
 import { runClaudemd } from "../modules/claudemd.ts";
 import { runSwitch } from "../modules/switch.ts";
 import { runPi } from "../modules/pi.ts";
+import { runInjects } from "../modules/injects.ts";
 
 export const HELP = `dancinlab/sidecar — project-agnostic AI coding sidecar
 
@@ -153,6 +154,7 @@ gates & ledgers:
 reports:
   audit [full|summary|json]    6-axis self-scorecard
   gc [scan|drift]              broken markdown links in guides
+  injects                  per-turn inject footprint report (per-source bytes/tokens + aggregate vs injectBudgetBytes) — context-rot visibility
   docs [status|check|scratch [name]]   single-doc discipline (architecture SSOT + log + scratch + quickref)
                                write-time enforced in \`pre write\` (docs.enforce: warn[default]|block|off)
   lockdown {status|add <path...>|rm <path...>|check <path>}   manage L0 set (opt-in · none until designated)
@@ -273,6 +275,8 @@ async function main(): Promise<number> {
       return runAudit(rest);
     case "gc":
       return runGc(rest);
+    case "injects":
+      return runInjects(rest);
     case "folders":
       return runFolders(rest);
     case "docs":

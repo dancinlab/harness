@@ -63,6 +63,7 @@
 {"id":"bitter-gate","kind":"gate","usage":"bitter-gate audit [window]","use":"rule-hit frequency → retire dormant rules"}
 {"id":"audit","kind":"report","usage":"audit [full|summary|json]","use":"6-axis self-scorecard"}
 {"id":"gc","kind":"report","usage":"gc [scan|drift]","use":"broken markdown links in guides"}
+{"id":"injects","kind":"report","usage":"injects","use":"per-turn inject footprint report (per-source bytes/tokens + aggregate vs injectBudgetBytes) — context-rot visibility"}
 {"id":"docs","kind":"report","usage":"docs [status|check|scratch [name]]","use":"single-doc discipline (architecture SSOT + log + scratch + quickref) write-time enforced in `pre write` (docs.enforce: warn[default]|block|off)"}
 {"id":"lockdown","kind":"report","usage":"lockdown {status|add <path...>|rm <path...>|check <path>}","use":"manage L0 set (opt-in · none until designated) add/rm mutate harness.config.json lockdown.files"}
 {"id":"folders","kind":"report","usage":"folders [scan|scaffold <dir>]","use":"per-subfolder CLAUDE.md coverage + scaffolding (enforced: lint blocks FOLDER-GUIDE-MISSING for the folder of any staged file lacking a guide · commons folder-docs)","triggers":["폴더 구조","폴더별","서브폴더","디렉토리 설명","folder guide","module doc","코드 탐색","구조 파악"]}

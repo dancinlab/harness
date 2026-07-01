@@ -13,6 +13,7 @@
 //
 
 import { execArgs, readStdin } from "../lib/exec.ts";
+import { emitInject } from "../lib/inject.ts";
 import { REPO_ROOT } from "../lib/paths.ts";
 
 async function git(args: string[]): Promise<string> {
@@ -111,7 +112,7 @@ export async function runGitContext(args: string[]): Promise<number> {
       const j = JSON.parse(readStdin());
       const ev = String(j.hook_event_name ?? j.hookEventName ?? "");
       if (!ev) return 0;
-      process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: ev, additionalContext: ctx } }) + "\n");
+      emitInject("git-context", ev, ctx);
     } catch {
       return 0;
     }

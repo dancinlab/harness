@@ -23,7 +23,11 @@ import { join } from "node:path";
 const TTL_MS = 30_000;
 
 function lockPath(name: string): string {
-  const turn = process.env.CLAUDE_USER_PROMPT ?? "";
+  // Per-turn key: UserPromptSubmit hooks on both surfaces share $CLAUDE_USER_PROMPT.
+  // SessionStart hooks (architecture/git-context/toolkit/companions) have NO prompt, so
+  // they fall back to $CLAUDE_SESSION_ID — every SessionStart hook in one session shares
+  // it, so the two double-wired surfaces still dedup to one emit per session (TTL-bounded).
+  const turn = process.env.CLAUDE_USER_PROMPT || process.env.CLAUDE_SESSION_ID || "";
   const key = createHash("sha1").update(name + "\0" + turn).digest("hex").slice(0, 20);
   return join(tmpdir(), "sidecar-inject-once", `${name}-${key}`);
 }

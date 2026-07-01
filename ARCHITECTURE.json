@@ -478,7 +478,7 @@
             "name": "Stop",
             "role": "에이전트 응답 종료 → 마지막 assistant 텍스트 기반 marker 게이트들 + staleness warn",
             "id": "surface-stop",
-            "detail": "transcript 의 마지막 assistant 텍스트를 읽어 후처리하는 Stop 훅 (아래). decision:block marker 게이트(recommend·convergence·ing·architecture·ship) + warn-only staleness. 공통 리더 lastAssistantText(modules/recommend.ts · export).",
+            "detail": "transcript 의 마지막 assistant 텍스트를 읽어 후처리하는 Stop 훅 (아래). decision:block marker 게이트(recommend·convergence·ing·architecture·ship) + warn-only(staleness·context-rot·prefs-drift). 공통 리더 lastAssistantText(modules/recommend.ts · export).",
             "children": [
               {
                 "name": "recommend stop-check",
@@ -521,6 +521,12 @@
                 "role": "컨텍스트 fill rot 알람 (warn-only · 절대 block 아님)",
                 "id": "guard-injects-context-check",
                 "detail": "긴 세션이 context 창을 채우면 attention 저하(context-rot·lost-in-middle, 연구 ~150-400K대)로 에이전트가 둔해진다 → transcript 의 마지막 compact_boundary 이후 바이트로 현재 window(≈bytes/4 tok) 추정, WARN(200k)/LOUD(350k) 넘으면 /compact·새세션 권고. inject footprint(고정)와 별개=대화 누적분 감시. anti-wedge stop_hook_active. (modules/injects.ts)"
+              },
+              {
+                "name": "prefs stop-check",
+                "role": "prefs 언어축 drift 알람 (warn-only · 절대 block 아님)",
+                "id": "guard-prefs-stop-check",
+                "detail": "턴마감 prefs 언어축 drift WARN(차단 아님) — DOCS: diff 의 doc(.md·README·CHANGELOG) 한글 산문 추가(백틱 면제) · RESPONSE: 응답 산문이 prefs.response 와 거의 다르면(Hangul<10% 휴리스틱). CODE축은 codeLangViolation(post.ts)이 per-edit 담당→제외. anti-wedge stop_hook_active. (modules/prefs.ts)"
               }
             ]
           },

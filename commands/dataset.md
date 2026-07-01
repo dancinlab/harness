@@ -6,7 +6,7 @@ allowed-tools: Bash
 
 # /dataset — per-repo 데이터셋 레지스트리 (단일 SSOT)
 
-프로젝트(repo)마다 **자체** 데이터셋/코퍼스 관리 — `sidecar model` 의 데이터-짝. SSOT = repo-root `ARCHITECTURE.json` 의 top-level `datasets` 배열(설계 SSOT 한곳 · `models`/`meta`/`sections`/`convergence` 와 형제 키 · 별도 jsonl scatter 없음). sidecar는 핵심 필드 + 유연축만 고정하고, register/role 라벨·특징 태그는 각 repo가 자기 도메인대로 채운다(프로젝트 결합 0).
+프로젝트(repo)마다 **자체** 데이터셋/코퍼스 관리 — `sidecar models` 의 데이터-짝. SSOT = repo-root `ARCHITECTURE.json` 의 top-level `datasets` 배열(설계 SSOT 한곳 · `models`/`meta`/`sections`/`convergence` 와 형제 키 · 별도 jsonl scatter 없음). sidecar는 핵심 필드 + 유연축만 고정하고, register/role 라벨·특징 태그는 각 repo가 자기 도메인대로 채운다(프로젝트 결합 0).
 
 ## 데이터셋 레코드
 핵심: `id` · `repo_id`(HF) · `version`(아키텍처-family SemVer, 예 1.0 · 2.1 — 레지스트리 META 필드지 파일명 접미사 아님) · `lang`(ko|en) · `register`(general|sns) · `rows` · `size` · `visibility` · `role`(예 chat-4cell).
@@ -27,4 +27,4 @@ sidecar dataset rm <id> --yes                  registry 항목 제거 (데이터
 ## 관례
 - SSOT = repo-root `ARCHITECTURE.json` 의 top-level `datasets` 배열, git-tracked (single-doc 설계 SSOT · 최소-diff 제자리 갱신 = `datasets` 블록만 splice, 나머지 트리 byte-불변 · `models` 옆에 인접 삽입). 커밋은 `sidecar pr-cycle` 사이클로.
 - **4칸 chat 표준**: anima 류 chat 코퍼스는 언어 2(ko·en) × register 2(general·sns) = 4칸 모두 커버해야 완성(`a_chat_registers`). `list` 그리드가 빈 칸(⚪)을 한눈에 드러낸다.
-- DOMAIN-AGNOSTIC: register/role 라벨·특징 태그는 repo가 자유 정의. sidecar는 스키마만 강제. `sidecar model` 과 동일한 splice writer·flag 파서·idiom 으로 미러.
+- DOMAIN-AGNOSTIC: register/role 라벨·특징 태그는 repo가 자유 정의. sidecar는 스키마만 강제. `sidecar models` 과 동일한 splice writer·flag 파서·idiom 으로 미러.

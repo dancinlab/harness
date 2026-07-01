@@ -1,4 +1,4 @@
-// sidecar model {list|show|add|set|gate|feat|verify|rm|prune}
+// sidecar models {list|show|add|set|gate|feat|verify|rm|prune}
 // Per-repo MODEL REGISTRY — the design SSOT. Models live in the repo-root
 // ARCHITECTURE.json as the top-level `models` array (a sibling key of
 // `meta`/`sections`/`convergence` — same single-doc home as the convergence
@@ -106,7 +106,7 @@ function save(rows: Model[]): void {
     const open = raw.indexOf("[", m.index);
     const end = findArrayEnd(raw, open);
     if (end < 0) {
-      loudFail("model: could not parse existing .models array in ARCHITECTURE.json (malformed JSON?)");
+      loudFail("models: could not parse existing .models array in ARCHITECTURE.json (malformed JSON?)");
       throw new Error("models array parse failure");
     }
     writeFileSync(ARCH, raw.slice(0, m.index + 1) + "  " + block + raw.slice(end + 1), "utf8");
@@ -115,7 +115,7 @@ function save(rows: Model[]): void {
   // No models key yet — insert as the first top-level key, right after `{`.
   const brace = raw.indexOf("{");
   if (brace < 0) {
-    loudFail("model: ARCHITECTURE.json has no root object");
+    loudFail("models: ARCHITECTURE.json has no root object");
     throw new Error("no root object");
   }
   const nl = raw.indexOf("\n", brace);
@@ -173,7 +173,7 @@ function stamp(m: Model): Model {
 function usage(): number {
   info(
     [
-      "sidecar model — per-repo model registry (SSOT = ARCHITECTURE.json .models[])",
+      "sidecar models — per-repo model registry (SSOT = ARCHITECTURE.json .models[])",
       "  list [--tier T] [--json]            모든 모델 (검증 충족도·진행·특징)",
       "  show <id>                           한 모델 전체",
       "  add  <id> [--arch --version --params --base --tier --sha --path --hf --visibility --progress --note --features a,b,c]",
@@ -188,7 +188,7 @@ function usage(): number {
   return 1;
 }
 
-export async function runModel(args: string[]): Promise<number> {
+export async function runModels(args: string[]): Promise<number> {
   const sub = args[0] ?? "list";
   const rest = args.slice(1);
 
@@ -201,7 +201,7 @@ export async function runModel(args: string[]): Promise<number> {
       return 0;
     }
     if (!rows.length) {
-      info(`model: registry empty (${ARCH_REL} .models[]). \`sidecar model add <id> --arch … --params …\``);
+      info(`models: registry empty (${ARCH_REL} .models[]). \`sidecar models add <id> --arch … --params …\``);
       return 0;
     }
     info(`MODELS — ${rows.length} (SSOT ${ARCH_REL} .models[])`);
@@ -236,7 +236,7 @@ export async function runModel(args: string[]): Promise<number> {
     if (!id) return usage();
     const rows = load();
     if (find(rows, id)) {
-      loudFail(`model: ${id} already exists — use \`sidecar model set ${id} …\``);
+      loudFail(`models: ${id} already exists — use \`sidecar models set ${id} …\``);
       return 1;
     }
     const m: Model = { id };
@@ -258,7 +258,7 @@ export async function runModel(args: string[]): Promise<number> {
     if (!m || !field) return usage();
     const key = field === "sha" ? "sha256" : field;
     if (!(CORE as readonly string[]).includes(key) && key !== "sha256") {
-      loudFail(`model: '${field}' is not a core field (use gate/feat for those). core: ${CORE.join(" ")}`);
+      loudFail(`models: '${field}' is not a core field (use gate/feat for those). core: ${CORE.join(" ")}`);
       return 1;
     }
     (m as Record<string, unknown>)[key] = value;
@@ -333,7 +333,7 @@ export async function runModel(args: string[]): Promise<number> {
     const m = id ? find(rows, id) : undefined;
     if (!m) return usage();
     if (!m.hf) {
-      loudFail(`model ${id}: refuse prune — no HF repo recorded (upload + \`model set ${id} hf <repo>\` first)`);
+      loudFail(`models ${id}: refuse prune — no HF repo recorded (upload + \`models set ${id} hf <repo>\` first)`);
       return 1;
     }
     if (!m.path || !existsSync(expand(m.path))) {
@@ -361,7 +361,7 @@ export async function runModel(args: string[]): Promise<number> {
     const rows = load();
     if (!id || !find(rows, id)) return usage();
     if (!f.yes) {
-      loudFail(`model: refuse rm ${id} without --yes (removes registry entry; weight file untouched)`);
+      loudFail(`models: refuse rm ${id} without --yes (removes registry entry; weight file untouched)`);
       return 1;
     }
     save(rows.filter((r) => r.id !== id));

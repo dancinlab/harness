@@ -744,6 +744,13 @@ export function convergenceForFile(file: string): string {
 // the run history so falsified/negative outcomes are kept, not silently dropped (commons honesty).
 // Each record: { id, kind: bench|experiment, state, value: 핵심결과, metric: 측정값/근거, subject: 대상 }.
 export const RESULT_KINDS = new Set(["bench", "experiment"]);
+// results allow ONE extra state beyond the 3 convergence DIRECTIONS: `untested` (⚪) — a
+// bench/experiment that is registered but not yet run. The 3 directions (🟢/🔄/🔴) can't
+// express "no data yet" (you can't classify the convergence of something never measured),
+// and it is NOT a 4th direction — it is an orthogonal PRE-state. Finer "why" nuance for an
+// in-prog record (blocked-by-upstream · inconclusive · superseded) lives in the free-text
+// `metric` field, NOT as more state enums (that would be false precision · dormant states).
+export const RESULT_STATES = new Set(["untested", ...CONV_STATES]);
 
 export interface ResultRecord {
   id?: string;
@@ -754,9 +761,15 @@ export interface ResultRecord {
   subject?: string;
 }
 
-// display: kind icon + shared convergence-state label. bench=📊 experiment=🧪.
+// display: kind icon + result-state label. bench=📊 experiment=🧪.
 function resultKindIcon(kind: string | undefined): string {
   return kind === "bench" ? "📊 BENCH" : kind === "experiment" ? "🧪 EXP" : (kind ?? "?");
+}
+
+// results reuse convStateLabel for the 3 convergence directions, plus ⚪ for the untested
+// pre-state (registered, not yet run). Not a 4th direction — a pre-convergence marker.
+function resultStateLabel(s: string | undefined): string {
+  return normalizeConvState(s) === "untested" ? "⚪ UNTESTED" : convStateLabel(s);
 }
 
 // auto-assign a stable, readable id `<kind>-<subjectslug>-<n>` — mirrors nextConvergenceId so
@@ -814,13 +827,13 @@ export function lintResultRecords(): string[] {
     if (!r.kind) out.push(`result ${at} — missing required key: kind`);
     else if (!RESULT_KINDS.has(r.kind)) out.push(`result ${at} — invalid kind '${r.kind}' (allowed: ${[...RESULT_KINDS].join("·")})`);
     if (!r.state) out.push(`result ${at} — missing required key: state`);
-    else if (!CONV_STATES.has(normalizeConvState(r.state))) out.push(`result ${at} — invalid state '${r.state}' (allowed: ${[...CONV_STATES].join("·")} · legacy ossified/in_flight/failed accepted)`);
+    else if (!RESULT_STATES.has(normalizeConvState(r.state))) out.push(`result ${at} — invalid state '${r.state}' (allowed: ${[...RESULT_STATES].join("·")} · legacy ossified/in_flight/failed accepted)`);
   });
   return out;
 }
 
 function resultLine(r: ResultRecord): string {
-  return `  [${resultKindIcon(r.kind)} · ${convStateLabel(r.state)}] ${r.id} — ${r.value ?? ""}${r.metric ? `  (측정: ${r.metric})` : ""}`;
+  return `  [${resultKindIcon(r.kind)} · ${resultStateLabel(r.state)}] ${r.id} — ${r.value ?? ""}${r.metric ? `  (측정: ${r.metric})` : ""}`;
 }
 
 // sidecar architecture result {list|add|edit|rm} — CRUD over the bench/experiment
@@ -857,13 +870,13 @@ async function resultVerb(args: string[]): Promise<number> {
     const state = flag(args, "state") ?? "in-prog";
     const value = flag(args, "value");
     if (!subject || !value) {
-      info('usage: sidecar architecture result add --kind bench|experiment --subject <대상> --value "<핵심결과>" [--state pos-conv|in-prog|neg-conv] [--metric "<측정값/근거>"]');
+      info('usage: sidecar architecture result add --kind bench|experiment --subject <대상> --value "<핵심결과>" [--state untested|pos-conv|in-prog|neg-conv] [--metric "<측정값/근거>"]');
       info("  · id 는 kind+subject 에서 자동 부여(--id 로 명시 upsert override 가능) · value/metric 셸 특수문자는 --value - 로 stdin");
-      info("  · state 기본값 in-prog(진행) · 결과 나오면 edit <id> --state pos-conv|neg-conv 로 수렴상태 갱신");
+      info("  · state 기본값 in-prog(진행) · 아직 안 잰 등록건은 --state untested(⚪) · 결과 나오면 edit <id> --state pos-conv|neg-conv · 세부 '왜'는 --metric 자유서술");
       return 1;
     }
     if (!RESULT_KINDS.has(kind)) return loudFail(`invalid kind '${kind}' (allowed: ${[...RESULT_KINDS].join("·")})`), 1;
-    if (!CONV_STATES.has(normalizeConvState(state))) return loudFail(`invalid state '${state}' (allowed: ${[...CONV_STATES].join("·")} · legacy ossified/in_flight/failed accepted)`), 1;
+    if (!RESULT_STATES.has(normalizeConvState(state))) return loudFail(`invalid state '${state}' (allowed: ${[...RESULT_STATES].join("·")} · legacy ossified/in_flight/failed accepted)`), 1;
     // review-before-append (single-doc · preserve-state) — refuse a BLIND append when the
     // same (kind, subject) already carries results: surface them so the agent refines an
     // existing record (`edit <id>` / explicit `--id`) or consciously adds a new run (`--new`).
@@ -896,10 +909,10 @@ async function resultVerb(args: string[]): Promise<number> {
       if (!RESULT_KINDS.has(kd)) return loudFail(`invalid kind '${kd}' (allowed: ${[...RESULT_KINDS].join("·")})`), 1;
       rec.kind = kd;
     }
-    const st = flag(args, "state");
-    if (st !== undefined) {
-      if (!CONV_STATES.has(normalizeConvState(st))) return loudFail(`invalid state '${st}' (allowed: ${[...CONV_STATES].join("·")})`), 1;
-      rec.state = normalizeConvState(st);
+    const stR = flag(args, "state");
+    if (stR !== undefined) {
+      if (!RESULT_STATES.has(normalizeConvState(stR))) return loudFail(`invalid state '${stR}' (allowed: ${[...RESULT_STATES].join("·")})`), 1;
+      rec.state = normalizeConvState(stR);
     }
     for (const f of ["value", "metric", "subject"] as const) {
       const v = flag(args, f);

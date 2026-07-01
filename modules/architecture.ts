@@ -11,6 +11,7 @@ import { REPO_ROOT, LOG_DIR } from "../lib/paths.ts";
 import { readStdin, execShell } from "../lib/exec.ts";
 import { resolveRuleFile, config } from "../lib/config.ts";
 import { lastAssistantText } from "./recommend.ts";
+import { emitInject } from "../lib/inject.ts";
 import { info, ok, loudFail, warn } from "../lib/log.ts";
 
 // Per-turn inject carries a SKELETON (title + summary + 2-level TOC), never the
@@ -141,7 +142,7 @@ export async function runArchitecture(args: string[]): Promise<number> {
       const j = JSON.parse(readStdin());
       const ev = String(j.hook_event_name ?? j.hookEventName ?? "");
       if (!ev) return 0;
-      process.stdout.write(JSON.stringify({ hookSpecificOutput: { hookEventName: ev, additionalContext: ctx } }) + "\n");
+      emitInject("architecture", ev, ctx);
     } catch {
       return 0;
     }

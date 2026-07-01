@@ -496,7 +496,7 @@
             "name": "PreCompact·PostCompact",
             "role": "자동 컴팩션 전/후 → 세션-스코프 inject 재주입(컴팩션 생존)",
             "id": "surface-precompact-postcompact",
-            "detail": "매-턴 inject(commons·recommend·prefs·easy·load·ing)=UserPromptSubmit(컴팩션 후 복귀) · 세션-스코프(architecture·git-context·toolkit·companions+easy풀)=SessionStart→컴팩션 증발→PreCompact+PostCompact 재주입. `lib/inject.ts` emitInject=이중배선(settings+plugin) 2× 주입을 프롬프트키 dedup(TTL)로 매턴 1회(context-rot 반감·inject-ts-1)"
+            "detail": "매-턴 inject(commons·recommend·prefs·easy·load·ing)=UserPromptSubmit · 세션-스코프(architecture·git-context·toolkit·companions+easy풀)=SessionStart→컴팩션증발→Pre/PostCompact 재주입. `lib/inject.ts` emitInject=이중배선(settings+plugin) 2×를 프롬프트/세션키 dedup→매턴·SessionStart 1회(inject-ts-1). `injects`=footprint"
           },
           {
             "name": "체크포인트",

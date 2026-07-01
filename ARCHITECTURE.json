@@ -336,6 +336,13 @@
         "value": "parseToolInput/preWrite must gather input.edits[].new_string (MultiEdit shape has NO top-level content/new_string) into the scanned content — else every content-scanning write guard (INJECT-NON-ENGLISH english-only, secret-literal, portable-path, naming) silently passes MultiEdit. MultiEdit is an isEditFragment (partial fragments) so section-aware + byte/size caps still skip it.",
         "threshold": "piped {tool_input:{file_path:'/x/CLAUDE.md',edits:[{new_string:'한글'}]}} to sidecar pre write and confirmed it emitted permissionDecision:deny (was exit-0 silent pass before the fix); english-only + backtick-exempt MultiEdit cases still allow (state/pre-korean-multiedit-smoke/run.sh ALL PASS).",
         "source": "modules/pre.ts"
+      },
+      {
+        "id": "shadow-ts-1",
+        "state": "pos-conv",
+        "value": "sidecar 명령 이름이 Claude Code 기본 슬래시(/model·/config·/review·/compact·/init·/pr 등)와 겹치면, 셰도우로 미러된 bare /cmd 가 기본 명령에 가려져 picker 에서 안 보이거나 모호해진다(=우리 명령이 '반영 안 됨'처럼 보임). 실제 예: 모델 레지스트리 /model → CC 기본 /model 충돌 → /models rename.",
+        "threshold": "재발조건: 새 명령을 CC 기본 슬래시와 동명으로 add. 해결: 네이밍 시 CC 기본 슬래시 목록과 대조 → 충돌 시 복수형/접두어로 회피(model→models). 이미 배포됐으면 modules/<name>·cli 등록·commands/<name>.md·상호참조·ARCHITECTURE 노드·TOOLKIT·CHANGELOG 일괄 rename 후 ship(shadow 가 orphan prune).",
+        "source": "modules/shadow.ts"
       }
     ]
   },

@@ -10,6 +10,7 @@ import { resolve, dirname } from "node:path";
 import { homedir } from "node:os";
 import { SIDECAR_CONFIG_DIR, REPO_ROOT } from "../lib/paths.ts";
 import { resolveRuleFile } from "../lib/config.ts";
+import { loadPrefs } from "./prefs.ts";
 import { readStdin } from "../lib/exec.ts";
 import { info } from "../lib/log.ts";
 
@@ -175,13 +176,36 @@ function runStopCheck(): number {
   return 0;
 }
 
+// prefs response language → recommend variant code (recommend.md is the English base).
+// Mirrors easy's 2-variant localization (styles/easy.<lang>.md): the injected rubric —
+// including the user-facing box labels (① Complete… vs ① 완성도…) — matches the response
+// language, so the rendered box is in the user's language while the English base stays lean.
+function recLangCode(response: string): string {
+  const r = response.toLowerCase();
+  if (r.startsWith("ko")) return "ko";
+  if (r.startsWith("ja")) return "ja";
+  if (r.startsWith("zh") || r.startsWith("chin")) return "zh";
+  if (r.startsWith("ru")) return "ru";
+  return ""; // english base → recommend.md
+}
+
+// Resolve config/recommend.<lang>.md for the prefs response language, else the English base
+// recommend.md. Per-repo `.harness`/repo-root override honored (resolveRuleFile) for each.
+function recommendFile(): string {
+  const code = recLangCode(loadPrefs().response);
+  if (code) {
+    const variant = resolveRuleFile(`recommend.${code}.md`, `recommend.${code}.md`);
+    if (existsSync(variant)) return variant;
+  }
+  return resolveRuleFile("recommend.md", "recommend.md");
+}
+
 function body(): string {
   // recommend.md carries the MUST-FOLLOW header itself (first line), so we just
-  // append the active default-mode directive. (per-repo .harness override honored.)
-  const md = resolveRuleFile("recommend.md", "recommend.md");
+  // append the active default-mode directive. Language variant picked by prefs response.
   let text = "";
   try {
-    text = readFileSync(md, "utf8");
+    text = readFileSync(recommendFile(), "utf8");
   } catch {
     text = "";
   }

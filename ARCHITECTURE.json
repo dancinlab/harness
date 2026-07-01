@@ -319,8 +319,8 @@
       {
         "id": "git-checkout-guard-ts-1",
         "state": "ossified",
-        "value": "브랜치 보호 가드는 HEAD 이동(checkout/switch) 벡터만 막으면 자매 구멍이 남는다 — 체크아웃 없이 SHARED main ref 를 갈아치우는 `git branch -f/-M/-m/-D/-d/-C/-c main` 도 같은 #3559 클래스(병렬 세션 clobber). ref-mutation 은 공유 ref store 라 링크드 워크트리에서도 위험 → isMainWorktree 로 게이팅하면 안 되고(그건 checkout 가드 전용) 무조건 차단. 단 pr-cycle 의 정상 ff(git fetch origin main:main · git merge --ff-only)는 mutating flag 를 안 써 통과 = 자폭 안 함.",
-        "threshold": "재발조건: 새 브랜치 조작 형태(예: git update-ref refs/heads/main, git branch --set-upstream 오용)를 추가 커버 안 하거나, main-ref-move 를 isMainWorktree 게이트로 좁혀 링크드 워크트리 우회 허용. 해결: git-checkout-guard.ts 에 벡터별 detector 를 두고 pre.ts 에서 guardBranchSwitch 하나로 묶어 실제 pre-bash 훅경로 stdin 스모크(block/allow)로 검증.",
+        "value": "브랜치 보호 가드는 (1) HEAD 이동(checkout/switch) 과 (2) 체크아웃 없는 SHARED main ref 조작(git branch -f/-M/-m/-D/-d/-C/-c main) 둘 다 막아야 #3559 클래스(병렬세션 clobber) 완결. ref-mutation 은 공유 ref store 라 링크드 워크트리에서도 위험→무조건 차단(isMainWorktree 게이트 금지, 그건 checkout 전용). BUT args 스캔은 반드시 단일 git-branch 문장으로 스코프 — 안 하면 compound(feature 삭제 && fetch origin main)의 뒤 bare main 을 오인해 feature 삭제를 오차단(false-positive). 정상 ff(fetch origin main:main·merge --ff-only)는 mutating flag 무사용→통과=자폭 안 함.",
+        "threshold": "재발조건: (a) 새 조작형태(update-ref refs/heads/main 등) 미커버 (b) main-ref-move 를 isMainWorktree 로 좁혀 링크드 우회 허용 (c) args 를 커맨드 전체로 스캔(문장경계 미적용)해 compound false-positive. 해결: 벡터별 detector + args 를 다음 git/셸연산자(|;&<>)에서 컷 + pre-bash stdin 스모크(block AND allow 양쪽, compound 포함)로 검증.",
         "source": "modules/git-checkout-guard.ts"
       }
     ]

@@ -67,6 +67,7 @@ function hookSpec(): Record<string, unknown[]> {
       entry("sidecar ship stop-check"), // turn-close pr-cycle/ship ENTRY gate — impl/fix code left uncommitted ⇒ block (clean tree or `🚢 SHIP` marker exits)
       entry("sidecar ing staleness-check"),
       entry("sidecar injects context-check"), // turn-close context-rot alarm — warn (never block) when the live window enters the ~150-400K degradation band
+      entry("sidecar prefs stop-check"), // turn-close prefs language-drift WARN (never blocks) — code/doc authored in wrong lang or response drifted from prefs
     ],
     // Compaction survival — the per-turn injects (commons/recommend/prefs/easy-lean) ride
     // UserPromptSubmit so they always return, but the SESSION-scoped injects

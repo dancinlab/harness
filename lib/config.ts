@@ -170,7 +170,14 @@ export interface SidecarConfig {
   // checkout out from under a parallel session/the user clobbers untracked work
   // (the parallel-worktree incident, #3559). Linked/temp worktrees are exempt
   // (they are MEANT to switch). Working-tree-only restores are left alone.
-  git: { guardForcePush: boolean; guardBranchSwitch: boolean };
+  // guardOffMainEdit DENIES a Write/Edit (pre write) when the MAIN worktree is
+  // parked on a NON-default branch (HEAD ≠ origin/main|master). guardBranchSwitch
+  // stops you LEAVING main; this stops you WORKING while the main checkout is
+  // already off-default — the stale-branch trap where a session starts parked on
+  // an old feature branch and edits outdated code (git-context warns, this blocks).
+  // Return with `git checkout <default>`, or do parallel work in an isolated
+  // worktree (`git worktree add <path> -b <branch>`). Linked worktrees are exempt.
+  git: { guardForcePush: boolean; guardBranchSwitch: boolean; guardOffMainEdit: boolean };
   // tmpGuard warns (pre bash/write) when progress/working data is written to a
   // volatile tmp location (/tmp · /private/tmp · /var/folders · $TMPDIR) — that
   // data is discarded on reboot/reaper. Steer it to docs.scratchDir, which is
@@ -334,7 +341,7 @@ const DEFAULTS: SidecarConfig = {
     ],
     rebuild: true,
   },
-  git: { guardForcePush: true, guardBranchSwitch: true },
+  git: { guardForcePush: true, guardBranchSwitch: true, guardOffMainEdit: true },
   tmpGuard: true,
   handoffGuard: true,
   namingGuard: true,

@@ -16,16 +16,16 @@ import { execArgs, readStdin } from "../lib/exec.ts";
 import { emitInject } from "../lib/inject.ts";
 import { REPO_ROOT } from "../lib/paths.ts";
 
-async function git(args: string[]): Promise<string> {
-  const r = await execArgs("git", args, { cwd: REPO_ROOT, timeoutMs: 8000 });
+async function git(args: string[], cwd: string = REPO_ROOT): Promise<string> {
+  const r = await execArgs("git", args, { cwd, timeoutMs: 8000 });
   return r.code === 0 ? r.stdout.trim() : "";
 }
 
 // Resolve the default branch ref that exists locally: prefer origin/main, then
 // origin/master, then a bare local main/master. Empty when none resolve.
-async function defaultRef(): Promise<string> {
+async function defaultRef(cwd: string = REPO_ROOT): Promise<string> {
   for (const ref of ["origin/main", "origin/master", "main", "master"]) {
-    if (await git(["rev-parse", "--verify", "--quiet", ref])) return ref;
+    if (await git(["rev-parse", "--verify", "--quiet", ref], cwd)) return ref;
   }
   return "";
 }
@@ -38,17 +38,19 @@ export interface GitContext {
   ahead: number; // commits on HEAD not in ref
 }
 
-// Pure-ish probe of the working git position (LOCAL refs only, no fetch).
-export async function probeGitContext(): Promise<GitContext | null> {
-  if (!(await git(["rev-parse", "--is-inside-work-tree"]))) return null;
-  const branch = (await git(["rev-parse", "--abbrev-ref", "HEAD"])) || "HEAD";
+// Pure-ish probe of the working git position (LOCAL refs only, no fetch). cwd
+// defaults to REPO_ROOT (SessionStart use); the off-main edit guard passes the
+// edited file's worktree so the probe is scoped to THAT checkout, not REPO_ROOT.
+export async function probeGitContext(cwd: string = REPO_ROOT): Promise<GitContext | null> {
+  if (!(await git(["rev-parse", "--is-inside-work-tree"], cwd))) return null;
+  const branch = (await git(["rev-parse", "--abbrev-ref", "HEAD"], cwd)) || "HEAD";
   const detached = branch === "HEAD";
-  const ref = await defaultRef();
+  const ref = await defaultRef(cwd);
   let behind = 0;
   let ahead = 0;
   if (ref) {
     // left-right count: "<behind>\t<ahead>" for ref...HEAD (left=ref-only commits).
-    const counts = await git(["rev-list", "--left-right", "--count", `${ref}...HEAD`]);
+    const counts = await git(["rev-list", "--left-right", "--count", `${ref}...HEAD`], cwd);
     const m = counts.split(/\s+/);
     behind = parseInt(m[0] ?? "0", 10) || 0;
     ahead = parseInt(m[1] ?? "0", 10) || 0;

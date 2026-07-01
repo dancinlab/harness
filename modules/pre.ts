@@ -26,6 +26,7 @@ import { descWriteViolation } from "./shadow.ts";
 import { commonsWriteViolation, dodontLengthWriteViolation } from "./commons.ts";
 import { isTmpPath, detectTmpBashWrite } from "./tmp-guard.ts";
 import { detectHandoffScatter } from "./handoff-guard.ts";
+import { probeGitContext } from "./git-context.ts";
 import { detectVersionedName, detectVersionedNameBash, offendingToken } from "./naming-guard.ts";
 import { existsSync } from "node:fs";
 import { basename, isAbsolute, join } from "node:path";
@@ -360,6 +361,37 @@ export async function preWrite(_args: string[]): Promise<number> {
   // a defect already learned-from. Computed up-front; emitted on the non-block path at the
   // end of this function (a block aborts the write, so the learning is moot for that try).
   const convergenceCtx = config().convergenceOnTouch ? convergenceForFile(filePath) : "";
+
+  // git off-main edit guard — the symmetric completion of guardBranchSwitch: that
+  // stops you LEAVING main in the main worktree; this stops you WORKING (Write/Edit)
+  // while the main checkout is ALREADY parked on a non-default branch. That is the
+  // stale-branch trap (#3736): a session starts on an old feature branch and edits
+  // outdated code that git-context only WARNED about (warn-only proved insufficient).
+  // Runs on BOTH Write and Edit (a fragment edit on a stale branch is just as wrong)
+  // — NOT gated on isEditFragment. Cheap path first: 1 git call to confirm the main
+  // worktree, 1 for the branch name; only a non-{main,master} HEAD escalates to the
+  // full probe (accurate default-ref resolution + behind count for the message).
+  if (config().git.guardOffMainEdit) {
+    const gcwd = process.env.PWD ?? "";
+    if (await isMainWorktree(gcwd)) {
+      const brRes = await execShell("git symbolic-ref --short -q HEAD", { cwd: gcwd || "." }).catch(() => null);
+      const branch = brRes && brRes.code === 0 ? brRes.stdout.trim() : ""; // "" = detached HEAD
+      if (branch !== "main" && branch !== "master") {
+        // Off a conventionally-named default (or detached) → confirm against the REAL
+        // default ref before blocking (repos whose default is 'trunk'/'develop' etc.).
+        const c = await probeGitContext(gcwd || undefined);
+        if (c && c.ref) {
+          const onDefault = !c.detached && (c.ref === `origin/${c.branch}` || c.ref === c.branch);
+          if (!onDefault) {
+            return emitBlock(
+              "GIT-EDIT-OFF-MAIN",
+              `the MAIN worktree is parked on non-default branch '${c.branch}'${c.detached ? " (detached)" : ""} — ${c.behind} commit(s) behind ${c.ref}. Editing here is the stale-branch trap (working on outdated code from an old branch, #3736); guardBranchSwitch stops you leaving main, this stops you editing while already off it. Return with \`git checkout <default>\`, or do this work in an ISOLATED worktree — \`git worktree add <path> -b <branch>\` then \`cd\` there. To relax this policy set git.guardOffMainEdit=false in harness.config.json.`
+            );
+          }
+        }
+      }
+    }
+  }
 
   // handoff-guard — block scattered HANDOFF.md / INBOX.md / inbox/*.md; route to handoff.jsonl.
   if (config().handoffGuard) {

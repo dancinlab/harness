@@ -101,9 +101,9 @@
       },
       {
         "id": "STALE_BRANCH_TRAP",
-        "state": "in_flight",
-        "value": "SessionStart surfaces HEAD vs origin/<default> (behind/ahead/detached); BEHIND or detached → loud ⚠️ stale-branch warning so the agent re-checks origin before trusting code (and doesn't duplicate already-merged work)",
-        "threshold": "a session started on a stale feature branch behind origin/main, read pre-merge code as current, and rebuilt an already-merged fix (#3736 dup of #3734); no guard flagged HEAD≠merged-tip",
+        "state": "ossified",
+        "value": "stale-branch 함정 2중 방어. (1) git-context SessionStart 경고: HEAD vs origin/<default> behind/detached → 경고. (2) WARN-ONLY 로는 부족 — 경고를 봤는데도 편집 강행해 재발(anima #3736). 그래서 이빨 추가: GIT-EDIT-OFF-MAIN 코드가드(modules/pre.ts preWrite)가 main 워크트리가 non-default 브랜치에 주차된 채 Write/Edit 하면 deny. 경고=인지, 블록=예방. probeGitContext 는 cwd 파라미터화(가드는 편집 워크트리 gcwd 전달).",
+        "threshold": "재발조건: main 워크트리가 stale/non-default 브랜치에 주차된 채 편집 진행(경고만으론 무시 가능). 해결: git-context 경고 + GIT-EDIT-OFF-MAIN block(config git.guardOffMainEdit 기본 ON) 둘 다 유지 — 복귀는 기본 브랜치로 전환하거나 격리 워크트리(worktree add -b). 격리 워크트리는 면제(탈출구). 블록을 warn-only 로 되돌리거나 옵트인 마커로 키잉 금지(config-ts-1).",
         "source": "modules/git-context.ts"
       },
       {
@@ -385,6 +385,12 @@
                 "role": "체크아웃 없이 main ref 갈아치우기 차단",
                 "id": "guard-main-ref-move",
                 "detail": "git-checkout-guard.ts detectMainRefMove — 체크아웃 없이 SHARED main/master ref 를 `git branch -f`(재지정)·`-M/-m`(개명)·`-D/-d`(삭제)·`-C/-c`(복사)로 갈아치우는 형태 차단(branch-switch 자매·#3559 동종 · 공유 ref 라 모든 워크트리에서 위험→isMainWorktree 비게이트). feature 브랜치 삭제/개명·`fetch main:main` ff 는 통과 · config `git.guardBranchSwitch` 공유."
+              },
+              {
+                "name": "off-main-edit 가드",
+                "role": "메인 워크트리가 non-default 브랜치일 때 Write/Edit 차단 (main 고정)",
+                "id": "guard-off-main-edit",
+                "detail": "modules/pre.ts preWrite (GIT-EDIT-OFF-MAIN) — main 워크트리가 non-default 브랜치에 주차된 채 Write/Edit 하는 걸 차단(stale-branch 함정 #3736 · branch-switch 가드의 편집측 대칭). Write·Edit 양쪽 발화 · non-default HEAD 만 probeGitContext(gcwd) 확인 후 차단 · 격리 워크트리 면제 · config `git.guardOffMainEdit`(기본 ON)."
               },
               {
                 "name": "cloud-raw 가드",

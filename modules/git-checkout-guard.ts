@@ -141,7 +141,16 @@ export function detectMainRefMove(rawCmd: string): { label: string } | null {
     if (j < n && toks[j] === "branch") { sc = j; break; }
   }
   if (sc < 0) return null;
-  const args = toks.slice(sc + 1);
+  // Scope to THIS `git branch …` statement only — stop at the next command / shell
+  // operator token. Otherwise a bare "main" in a LATER piped/chained command (e.g.
+  // `git branch -D feat && git fetch origin main`) is mis-attributed to this op and a
+  // plain feature-branch delete inside a compound is falsely blocked (git-checkout-guard-ts-1).
+  const rest = toks.slice(sc + 1);
+  let end = rest.length;
+  for (let k = 0; k < rest.length; k++) {
+    if (rest[k] === "git" || /[|;&<>]/.test(rest[k])) { end = k; break; }
+  }
+  const args = rest.slice(0, end);
   if (args.includes("--help") || args.includes("-h")) return null;
   // A mutating op on the protected branch: -f/--force (repoint), -m/-M/--move (rename),
   // -d/-D/--delete, -c/-C/--copy. Bare `git branch main` (create when absent) is left alone.

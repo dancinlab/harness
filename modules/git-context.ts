@@ -15,6 +15,8 @@
 import { execArgs, readStdin } from "../lib/exec.ts";
 import { emitInject } from "../lib/inject.ts";
 import { REPO_ROOT } from "../lib/paths.ts";
+import { statSync, writeFileSync } from "node:fs";
+import { isAbsolute, join } from "node:path";
 
 async function git(args: string[], cwd: string = REPO_ROOT): Promise<string> {
   const r = await execArgs("git", args, { cwd, timeoutMs: 8000 });
@@ -86,6 +88,40 @@ export function renderGitContext(c: GitContext): string {
     `     2) 새 작업이면 \`git checkout <default>\` 또는 \`git rebase ${c.ref}\` 로 최신 위에서 시작\n` +
     `  (지난 사고: stale feature 브랜치에서 옛 코드를 보고 이미 머지된 fix 를 #3736 으로 중복 구현 — #3734.)`
   );
+}
+
+// ttlFetchOrigin — refresh origin's remote-tracking refs at most once per ttlSec
+// per repo, so the stale-main edit guard (pre write) judges against the REAL
+// remote tip instead of a remote-tracking ref last updated whenever a fetch
+// happened to run (the gap that let a stale-base edit look "up to date": local
+// refs cannot see a remote that moved if nothing ever fetched). The stamp file
+// (<git-common-dir>/sidecar-fetch-stamp) records the ATTEMPT, not the success —
+// an offline fetch failure degrades to local refs without re-stalling every
+// subsequent Write for the fetch timeout.
+export async function ttlFetchOrigin(cwd: string, ttlSec: number): Promise<void> {
+  if (ttlSec <= 0) return; // 0 disables background fetching (local refs only)
+  const gitDir = await git(["rev-parse", "--git-common-dir"], cwd);
+  if (!gitDir) return;
+  const stamp = join(isAbsolute(gitDir) ? gitDir : join(cwd, gitDir), "sidecar-fetch-stamp");
+  try {
+    if (Date.now() - statSync(stamp).mtimeMs < ttlSec * 1000) return; // fresh enough
+  } catch {
+    /* no stamp yet → fetch */
+  }
+  try {
+    writeFileSync(stamp, new Date().toISOString() + "\n");
+  } catch {
+    /* unwritable git dir → still try the fetch, just without TTL memory */
+  }
+  await execArgs("git", ["fetch", "--quiet", "origin"], { cwd, timeoutMs: 8000 });
+}
+
+// upstreamTouchesFile — true when a commit in HEAD..ref changes filePath (the
+// precise duplicate-work/conflict signal for the stale-main edit guard: being
+// behind is routine mid-session, being behind ON THE FILE BEING EDITED is not).
+export async function upstreamTouchesFile(cwd: string, ref: string, filePath: string): Promise<boolean> {
+  const n = await git(["rev-list", "--count", `HEAD..${ref}`, "--", filePath], cwd);
+  return (parseInt(n, 10) || 0) > 0;
 }
 
 export async function runGitContext(args: string[]): Promise<number> {

@@ -18,6 +18,29 @@ Flags: `-m <model>` (override) · `--json` (machine output) · `--dry` (argv pre
 · `--cwd <dir>` (child working dir) · `--sources <l>` (setting sources, default `project,local`)
 · `--timeout <s>` (stall backstop) · after `--` verbatim to claude.
 
+## Opus fallback is FORBIDDEN (always — not a flag)
+
+Fable 5 runs safety classifiers (cybersecurity + biology). When one flags a request,
+Claude Code's default is to **re-run that request on Opus 4.8** — silently switching the
+model, and it can trip on the FIRST request from workspace context alone (CLAUDE.md +
+git status), which is why a delegated run "turns into Opus" unbidden.
+
+`sidecar fable` blocks this unconditionally: every child is launched with
+`--settings '{"availableModels":[<model>,"sonnet","haiku"]}'` — Opus is outside the
+allowlist, so per the model-config docs *"no fallback occurs; the refusal is shown as a
+normal error and the session's model is unchanged."* The run stays on the delegated model;
+a flagged request **refuses** rather than becoming Opus.
+
+- This is the DEFAULT and cannot be toggled off with a flag (by design — a "fable" call
+  that yields Opus output is not a fable call).
+- The allowlist always includes the chosen `-m <model>`, so explicit model overrides work.
+- Trade-off: genuine offensive-security / biology requests (which are "expected routing"
+  to Opus) will now **fail with a refusal** instead of completing on Opus. That is the
+  point of forbidding the fallback.
+- To DIAGNOSE whether your CLAUDE.md/hooks are tripping the classifier (vs. the prompt),
+  run once with `-- --safe-mode` (disables CLAUDE.md/skills/MCP/hooks for that child).
+- Overload fallback is separately off: fable never passes `--fallback-model`.
+
 ## Hook isolation — the big one (why fable no longer stalls)
 
 `sidecar fable` runs the child with `--setting-sources project,local` BY DEFAULT,

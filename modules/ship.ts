@@ -12,6 +12,7 @@
 //   3. shadow      — re-mirror commands/ → ~/.claude/commands/ as bare /cmd delegators
 //
 import { existsSync } from "node:fs";
+import { homedir } from "node:os";
 import { info, ok, loudFail } from "../lib/log.ts";
 import { repoPath, inGitRepo } from "../lib/config.ts";
 import { REPO_ROOT } from "../lib/paths.ts";
@@ -82,7 +83,9 @@ export async function runShip(args: string[]): Promise<number> {
   // one, so the in-process SIDECAR_ROOT/commands source can be gone. `sidecar shadow`
   // mirrors from the just-updated global clone, surviving the self-sweep. Fall back to
   // in-process only if the global binary isn't on PATH.
-  const gsh = await execShell("command -v sidecar >/dev/null 2>&1 && sidecar shadow 2>&1 || echo __NO_GLOBAL_SIDECAR__");
+  // cwd=homedir: the ship process's own cwd is the worktree pr-cycle just swept, so a
+  // subshell inheriting that dead cwd fails getcwd (command -v mis-fires → false NO_GLOBAL).
+  const gsh = await execShell("command -v sidecar >/dev/null 2>&1 && sidecar shadow 2>&1 || echo __NO_GLOBAL_SIDECAR__", { cwd: homedir() });
   let mirrored: number;
   if (gsh.stdout.includes("__NO_GLOBAL_SIDECAR__")) {
     mirrored = runShadow([]);

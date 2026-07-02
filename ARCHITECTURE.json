@@ -371,6 +371,13 @@
         "value": "inject 의 additionalContext 는 반드시 emitInject() 경유 stdout 의 {hookSpecificOutput:{hookEventName,additionalContext}} JSON 으로 내야 함 — Claude Code 가 읽는 유일 채널. process.stderr.write raw 텍스트는 additionalContext 로 안 읽혀 payload 통째로 조용히 버려짐(에이전트 도달 X). toolkit(명령카탈로그)·companions(이웃CLI)가 stderr 로 내고 있어 두 카탈로그가 여태 에이전트에 도달 못 함 → 'sidecar 명령 아예 인지 못함'(fable). 훅 이벤트명은 STDIN 페이로드에서, STDIN 없으면 조용.",
         "threshold": "재발조건: 새 inject 를 emitInject 대신 stdout/stderr.write 직접 방출(특히 stderr). 해결: emitInject(name,ev,text)+ev는 readStdin JSON. 검증=printf '{\"hook_event_name\":\"SessionStart\"}'|sidecar <x> inject → stdout JSON 확인.",
         "source": "lib/inject.ts"
+      },
+      {
+        "id": "pr-cycle-hook-ts-1",
+        "state": "pos-conv",
+        "value": "punt 방지의 정답은 감지·경고·Stop게이트가 아니라 명령 자체의 코드수준 자동완결 — pre bash 가 `gh pr create` 를 재작성(updatedInput + permissionDecision:allow 필수, allow 없으면 CC 가 rewrite 무시)해 squash-merge·워크트리 정리까지 원자 실행(archive_sidecar pr-cycle-hook 정답지 1:1 포팅). goal-guard 식 '되묻기 감지' 접근은 오답으로 폐기(사용자 지시).",
+        "threshold": "재발조건: 에이전트가 머지 여부를 되묻거나 PR 만 만들고 멈춤 · rewrite 가 allow 없이 emit 되어 무시됨. 해결: pre bash rewriter 유지(대량삭제 deny 게이트 포함) — 감지형 게이트로 되돌리지 말 것.",
+        "source": "modules/pr-cycle-hook.ts"
       }
     ]
   },
@@ -446,6 +453,12 @@
                 "role": "main 이 origin 보다 뒤처진 채 upstream 변경 파일 Write/Edit 차단",
                 "id": "guard-stale-main-edit",
                 "detail": "modules/pre.ts preWrite (GIT-EDIT-STALE-MAIN) — off-main-edit 의 on-main 대칭: main 이 origin/<default> 보다 뒤처졌고 upstream 커밋이 대상 파일을 건드리면 deny(낡은 base 편집=중복작업+충돌). TTL fetch 후 판정(git.guardStaleMainEdit, staleFetchTtlSec) · 무관 behind=warn · 격리 워크트리 면제 · 스모크 state/stale-main-edit-smoke."
+              },
+              {
+                "name": "pr-cycle 자동사이클 rewriter",
+                "role": "gh pr create → 머지+정리까지 코드수준 자동 완결 (재작성)",
+                "id": "guard-pr-cycle-rewrite",
+                "detail": "modules/pr-cycle-hook.ts (pre bash · archive 포팅) — `gh pr create` 를 updatedInput+allow 로 재작성: `&& gh pr merge --squash --admin --delete-branch` + 링크드 워크트리 정리 + stacked --base→default 강제 · 대량삭제(D>50, D≥10×A)=deny · --draft/명시 merge/MARK 면제 · 옵트아웃 없음 · 스모크 state/pr-cycle-hook-smoke."
               },
               {
                 "name": "cloud-raw 가드",

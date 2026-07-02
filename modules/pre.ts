@@ -28,6 +28,7 @@ import { isTmpPath, detectTmpBashWrite } from "./tmp-guard.ts";
 import { detectHandoffScatter } from "./handoff-guard.ts";
 import { detectHardcodedHomePath } from "./portable-path-guard.ts";
 import { probeGitContext, ttlFetchOrigin, upstreamTouchesFile } from "./git-context.ts";
+import { prCreateRewrite } from "./pr-cycle-hook.ts";
 import { detectVersionedName, detectVersionedNameBash, offendingToken } from "./naming-guard.ts";
 import { detectStrayHypothesisWrite, detectStrayHypothesisBash } from "./hypothesis-guard.ts";
 import { existsSync } from "node:fs";
@@ -143,6 +144,26 @@ function emitContext(ctx: string): void {
   process.stdout.write(
     JSON.stringify({ hookSpecificOutput: { hookEventName: "PreToolUse", additionalContext: ctx } }) + "\n"
   );
+}
+
+// emitRewrite swaps the Bash command in-flight via PreToolUse `updatedInput`.
+// The `permissionDecision:"allow"` MUST accompany updatedInput — without the
+// sibling decision Claude Code IGNORES the rewrite and runs the original
+// command (the archive pr-cycle-hook 0.3.5 lesson: PR created, never merged).
+// Used only by deliberate rewriters (pr-cycle full-cycle), never by guards.
+function emitRewrite(toolInput: Record<string, unknown>, command: string, note: string): number {
+  process.stdout.write(
+    JSON.stringify({
+      hookSpecificOutput: {
+        hookEventName: "PreToolUse",
+        permissionDecision: "allow",
+        updatedInput: { ...toolInput, command },
+        additionalContext: note,
+      },
+    }) + "\n"
+  );
+  appendJsonl(LOGS.observations, { kind: "pre_rewrite", rule_id: "PR-CYCLE", note });
+  return 0;
 }
 
 // commit-lint gate — the GLOBAL enforcer. The lint commit-gate used to live ONLY in a
@@ -330,6 +351,17 @@ export async function preBash(_args: string[]): Promise<number> {
   if (config().tmpGuard) {
     const where = detectTmpBashWrite(cmd);
     if (where) emitWarn("TMP-VOLATILE", `output → ${where} is volatile (lost on reboot/reaper). For progress/working data use ${config().docs.scratchDir}/ (git-tracked) and commit it so it persists on GitHub.`);
+  }
+
+  // pr-cycle full-cycle REWRITER (archive_sidecar pr-cycle-hook port): a `gh pr
+  // create` is rewritten in-flight to append the squash-merge + linked-worktree
+  // cleanup + stacked --base override, so create→merge→clean is ONE atomic Bash
+  // run — code-level auto-proceed, the agent never decides (or asks) to merge.
+  // Mass-deletion outliers (stale-base squash fingerprint, anima #1105) deny.
+  const pc = await prCreateRewrite(cmd, cwd || ".").catch(() => null);
+  if (pc) {
+    if (pc.kind === "deny") return emitBlock("PR-CYCLE-MASS-DELETION", pc.reason);
+    return emitRewrite(input, pc.command, pc.note);
   }
 
   const cfg = loadConfig();

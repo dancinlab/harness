@@ -77,7 +77,19 @@ export async function runShip(args: string[]): Promise<number> {
   // re-mirror commands/ so any NEW slash delegator appears in the picker (shadow is the
   // command source — plugin.json ships commands:[], so this step is what makes /cmd visible).
   info("ship: 4/4 — shadow (mirror slash commands → ~/.claude/commands)…");
-  const mirrored = runShadow([]);
+  // Run shadow via the GLOBAL binary (self-update above refreshed ~/.sidecar/cli),
+  // NOT in-process: pr-cycle (step 2) may have swept THIS worktree when ship ran from
+  // one, so the in-process SIDECAR_ROOT/commands source can be gone. `sidecar shadow`
+  // mirrors from the just-updated global clone, surviving the self-sweep. Fall back to
+  // in-process only if the global binary isn't on PATH.
+  const gsh = await execShell("command -v sidecar >/dev/null 2>&1 && sidecar shadow 2>&1 || echo __NO_GLOBAL_SIDECAR__");
+  let mirrored: number;
+  if (gsh.stdout.includes("__NO_GLOBAL_SIDECAR__")) {
+    mirrored = runShadow([]);
+  } else {
+    process.stdout.write(gsh.stdout);
+    mirrored = gsh.code;
+  }
   if (mirrored !== 0) {
     loudFail("ship: shadow failed — merge + global CLI current, but new slash commands may be missing. re-run `sidecar shadow`.");
     return mirrored;

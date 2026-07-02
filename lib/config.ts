@@ -190,7 +190,23 @@ export interface SidecarConfig {
   // an old feature branch and edits outdated code (git-context warns, this blocks).
   // Return with `git checkout <default>`, or do parallel work in an isolated
   // worktree (`git worktree add <path> -b <branch>`). Linked worktrees are exempt.
-  git: { guardForcePush: boolean; guardBranchSwitch: boolean; guardOffMainEdit: boolean };
+  // guardStaleMainEdit is the ON-main sibling of guardOffMainEdit: it DENIES a
+  // Write/Edit when the main checkout IS on the default branch but that branch is
+  // BEHIND origin/<default> AND the upstream-only commits change the target file —
+  // editing the stale copy re-does or conflicts with work already merged upstream
+  // (the stale-base duplicate-work trap: an SSOT file was re-authored on a
+  // 2-commit-stale main because no fetch ever ran before the edit). Local refs
+  // alone cannot see a moved remote, so the guard fetches origin at most once per
+  // staleFetchTtlSec (attempt-stamped in <git-common-dir>/sidecar-fetch-stamp;
+  // offline fetch failures degrade to local refs, never block on network absence).
+  // Behind but file untouched upstream → warn-only. Linked worktrees are exempt.
+  git: {
+    guardForcePush: boolean;
+    guardBranchSwitch: boolean;
+    guardOffMainEdit: boolean;
+    guardStaleMainEdit: boolean;
+    staleFetchTtlSec: number;
+  };
   // tmpGuard warns (pre bash/write) when progress/working data is written to a
   // volatile tmp location (/tmp · /private/tmp · /var/folders · $TMPDIR) — that
   // data is discarded on reboot/reaper. Steer it to docs.scratchDir, which is
@@ -373,7 +389,7 @@ const DEFAULTS: SidecarConfig = {
     ],
     rebuild: true,
   },
-  git: { guardForcePush: true, guardBranchSwitch: true, guardOffMainEdit: true },
+  git: { guardForcePush: true, guardBranchSwitch: true, guardOffMainEdit: true, guardStaleMainEdit: true, staleFetchTtlSec: 300 },
   tmpGuard: true,
   handoffGuard: true,
   namingGuard: true,

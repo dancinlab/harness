@@ -27,7 +27,7 @@ import { commonsWriteViolation, dodontLengthWriteViolation } from "./commons.ts"
 import { isTmpPath, detectTmpBashWrite } from "./tmp-guard.ts";
 import { detectHandoffScatter } from "./handoff-guard.ts";
 import { detectHardcodedHomePath } from "./portable-path-guard.ts";
-import { probeGitContext } from "./git-context.ts";
+import { probeGitContext, ttlFetchOrigin, upstreamTouchesFile } from "./git-context.ts";
 import { detectVersionedName, detectVersionedNameBash, offendingToken } from "./naming-guard.ts";
 import { detectStrayHypothesisWrite, detectStrayHypothesisBash } from "./hypothesis-guard.ts";
 import { existsSync } from "node:fs";
@@ -399,9 +399,17 @@ export async function preWrite(_args: string[]): Promise<number> {
   // outdated code that git-context only WARNED about (warn-only proved insufficient).
   // Runs on BOTH Write and Edit (a fragment edit on a stale branch is just as wrong)
   // — NOT gated on isEditFragment. Cheap path first: 1 git call to confirm the main
-  // worktree, 1 for the branch name; only a non-{main,master} HEAD escalates to the
-  // full probe (accurate default-ref resolution + behind count for the message).
-  if (config().git.guardOffMainEdit) {
+  // worktree, 1 for the branch name; a non-{main,master} HEAD escalates to the
+  // off-main probe, a {main,master} HEAD to the stale-main probe (guardStaleMainEdit):
+  // the ON-default sibling trap — the remote default moved ahead and no fetch ever
+  // ran, so local refs said "up to date" while the edit re-did or conflicted with
+  // work already merged upstream (an SSOT file re-authored on a 2-commit-stale main;
+  // the duplicate surfaced only at pr-cycle conflict time). TTL-fetch origin
+  // (git.staleFetchTtlSec) so the behind-count is judged against the REAL remote
+  // tip, then BLOCK only when the upstream-only commits change THIS file (being
+  // behind is routine; behind on the file being edited is the duplicate-work
+  // signal) — merely behind warns. Linked worktrees are exempt via isMainWorktree.
+  if (config().git.guardOffMainEdit || config().git.guardStaleMainEdit) {
     // evaluate the TARGET FILE's worktree, not the shell PWD — editing a file in a
     // linked (isolated) worktree was false-blocked because PWD pointed at the primary
     // checkout parked on a stale branch (#3736 guard misfire on the very isolated-
@@ -411,17 +419,34 @@ export async function preWrite(_args: string[]): Promise<number> {
       const brRes = await execShell("git symbolic-ref --short -q HEAD", { cwd: gdir || "." }).catch(() => null);
       const branch = brRes && brRes.code === 0 ? brRes.stdout.trim() : ""; // "" = detached HEAD
       if (branch !== "main" && branch !== "master") {
-        // Off a conventionally-named default (or detached) → confirm against the REAL
-        // default ref before blocking (repos whose default is 'trunk'/'develop' etc.).
+        if (config().git.guardOffMainEdit) {
+          // Off a conventionally-named default (or detached) → confirm against the REAL
+          // default ref before blocking (repos whose default is 'trunk'/'develop' etc.).
+          const c = await probeGitContext(gdir || undefined);
+          if (c && c.ref) {
+            const onDefault = !c.detached && (c.ref === `origin/${c.branch}` || c.ref === c.branch);
+            if (!onDefault) {
+              return emitBlock(
+                "GIT-EDIT-OFF-MAIN",
+                `the MAIN worktree is parked on non-default branch '${c.branch}'${c.detached ? " (detached)" : ""} — ${c.behind} commit(s) behind ${c.ref}. Editing here is the stale-branch trap (working on outdated code from an old branch, #3736); guardBranchSwitch stops you leaving main, this stops you editing while already off it. Return with \`git checkout <default>\`, or do this work in an ISOLATED worktree — \`git worktree add <path> -b <branch>\` then \`cd\` there. To relax this policy set git.guardOffMainEdit=false in harness.config.json.`
+              );
+            }
+          }
+        }
+      } else if (config().git.guardStaleMainEdit) {
+        await ttlFetchOrigin(gdir, config().git.staleFetchTtlSec);
         const c = await probeGitContext(gdir || undefined);
-        if (c && c.ref) {
-          const onDefault = !c.detached && (c.ref === `origin/${c.branch}` || c.ref === c.branch);
-          if (!onDefault) {
+        if (c && c.ref && c.behind > 0) {
+          if (await upstreamTouchesFile(gdir, c.ref, filePath)) {
             return emitBlock(
-              "GIT-EDIT-OFF-MAIN",
-              `the MAIN worktree is parked on non-default branch '${c.branch}'${c.detached ? " (detached)" : ""} — ${c.behind} commit(s) behind ${c.ref}. Editing here is the stale-branch trap (working on outdated code from an old branch, #3736); guardBranchSwitch stops you leaving main, this stops you editing while already off it. Return with \`git checkout <default>\`, or do this work in an ISOLATED worktree — \`git worktree add <path> -b <branch>\` then \`cd\` there. To relax this policy set git.guardOffMainEdit=false in harness.config.json.`
+              "GIT-EDIT-STALE-MAIN",
+              `'${branch}' is ${c.behind} commit(s) behind ${c.ref}, and ${c.ref} already CHANGES this file — editing the stale copy re-does or conflicts with work merged upstream (the stale-base duplicate-work trap). Sync first: \`git merge --ff-only ${c.ref}\` in the main checkout (or cut a fresh worktree off the tip: \`git worktree add <path> -b <branch> ${c.ref}\`), re-read the file on the fresh base, then redo the edit. To relax this policy set git.guardStaleMainEdit=false in harness.config.json.`
             );
           }
+          emitWarn(
+            "GIT-STALE-MAIN",
+            `'${branch}' is ${c.behind} commit(s) behind ${c.ref} (this file itself is untouched upstream) — sync soon: \`git merge --ff-only ${c.ref}\`, or later edits will hit the stale-base guard.`
+          );
         }
       }
     }

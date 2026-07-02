@@ -58,6 +58,11 @@ const USAGE = `usage: sidecar fable [flags] <prompt...> | --file <f> | -
   -c, --continue       continue the most recent conversation in --cwd (stateful)
   -r, --resume <id>    resume a specific session by id (the session_id from a
                        prior --json run) — SAME --cwd as that run
+      --write          grant WRITE/EXECUTE — --permission-mode bypassPermissions
+                       (Write·Edit·Bash·git, no approval prompts) so the child can
+                       actually implement (worktree·edits·build·commit). DEFAULT is
+                       read-only: headless can't approve, so writes are auto-denied.
+                       aliases: --bypass · --agent
       --bg             fire-and-forget: launch DETACHED, print a job id + poll
                        command, return immediately (no blocking wait) — collect
                        with \`sidecar fable result <id>\` / \`wait <id>\`
@@ -87,6 +92,7 @@ interface FableOpts {
   cont: boolean;
   resume: string | null;
   timeoutSec: number | null;
+  write: boolean;
   words: string[];
   extra: string[];
 }
@@ -108,7 +114,7 @@ function noFallbackSettings(model: string): string {
 }
 
 function parseArgs(args: string[]): FableOpts | null {
-  const o: FableOpts = { model: DEFAULT_MODEL, file: null, stdin: false, json: false, dry: false, bg: false, cwd: null, sources: DEFAULT_SOURCES, cont: false, resume: null, timeoutSec: null, words: [], extra: [] };
+  const o: FableOpts = { model: DEFAULT_MODEL, file: null, stdin: false, json: false, dry: false, bg: false, cwd: null, sources: DEFAULT_SOURCES, cont: false, resume: null, timeoutSec: null, write: false, words: [], extra: [] };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === "--") {
@@ -144,6 +150,8 @@ function parseArgs(args: string[]): FableOpts | null {
       o.timeoutSec = v;
     } else if (a === "--bg") {
       o.bg = true;
+    } else if (a === "--write" || a === "--bypass" || a === "--agent") {
+      o.write = true;
     } else if (a === "-") {
       o.stdin = true;
     } else if (a === "--json") {
@@ -156,7 +164,7 @@ function parseArgs(args: string[]): FableOpts | null {
       // exclusive-sources check). A frequent trip-up: claude's own flag name
       // `--setting-sources` vs fable's `--sources`; flags meant for claude go
       // AFTER `--`.
-      warn(`fable: unknown flag '${a}'. Known: -m/--model · -f/--file · - (stdin) · --json · --dry · --cwd · --sources · --timeout · -c/--continue · -r/--resume. Pass claude's own flags AFTER '--'.`);
+      warn(`fable: unknown flag '${a}'. Known: -m/--model · -f/--file · - (stdin) · --json · --dry · --cwd · --sources · --timeout · --write · --bg · -c/--continue · -r/--resume. Pass claude's own flags AFTER '--'.`);
       return null;
     } else {
       o.words.push(a);
@@ -423,10 +431,17 @@ export async function runFable(args: string[]): Promise<number> {
   // safety-classifier-flagged request refuses on the delegated model instead of
   // silently falling back to Opus (unconditional — see noFallbackSettings). It
   // sits BEFORE o.extra so a user's own `-- --settings <…>` still wins.
-  const claudeArgs = ["-p", "--model", o.model, "--setting-sources", o.sources, "--settings", noFallbackSettings(o.model), ...contArgs, ...(o.json ? ["--output-format", "json"] : []), ...o.extra];
+  // Headless `claude -p` runs in the `default` permission mode: with no one to
+  // approve prompts, Write/Edit/Bash calls are auto-DENIED, so a delegated child
+  // is effectively READ-ONLY (Read/Grep/Glob) out of the box. `--write` opts into
+  // `--permission-mode bypassPermissions` — a full unattended agent that can edit,
+  // run bash, and drive git (create a worktree, build, commit). It sits BEFORE
+  // o.extra so a user's own `-- --permission-mode <x>` still wins.
+  const writeArgs = o.write ? ["--permission-mode", "bypassPermissions"] : [];
+  const claudeArgs = ["-p", "--model", o.model, "--setting-sources", o.sources, "--settings", noFallbackSettings(o.model), ...writeArgs, ...contArgs, ...(o.json ? ["--output-format", "json"] : []), ...o.extra];
   if (o.dry) {
     info(`fable --dry: claude ${claudeArgs.join(" ")}`);
-    info(`  prompt: ${prompt.length} chars via child stdin${o.cwd ? ` · cwd=${o.cwd}` : ""} · timeout=${effTimeoutSec(o) === null ? "off" : effTimeoutSec(o) + "s"}${o.cont ? " · continue" : o.resume !== null ? ` · resume=${o.resume}` : ""}${o.bg ? " · bg" : ""} · opus-fallback=off`);
+    info(`  prompt: ${prompt.length} chars via child stdin${o.cwd ? ` · cwd=${o.cwd}` : ""} · timeout=${effTimeoutSec(o) === null ? "off" : effTimeoutSec(o) + "s"}${o.cont ? " · continue" : o.resume !== null ? ` · resume=${o.resume}` : ""}${o.bg ? " · bg" : ""} · opus-fallback=off · ${o.write ? "write=on(bypassPermissions)" : "write=off(read-only)"}`);
     return 0;
   }
 

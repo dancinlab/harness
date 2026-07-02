@@ -145,6 +145,9 @@ hook delegates (wire these into your agent's settings.json):
                              OPT-IN cap, default UNLIMITED, exit 124) · flags after -- go to claude verbatim)
                            · --bg = fire-and-forget (launch detached → prints a job id, returns now); collect with
                              'sidecar fable result <id>' (RUNNING=exit3) / 'tail <id>' (follow output live) / 'wait <id> [--timeout s]' / 'list' — no hand-rolled poll loop
+                           · --write (aliases --bypass/--agent) = grant WRITE/EXECUTE via --permission-mode bypassPermissions
+                             (Write/Edit/Bash/git · no prompts) so the child can implement; DEFAULT is READ-ONLY (headless can't
+                             approve, so writes auto-deny — Read/Grep/Glob only)
                            · opus fallback FORBIDDEN (always, not a flag): pins an availableModels allowlist without Opus, so a
                              safety-classifier-flagged request refuses on the delegated model instead of silently re-running on Opus)
   imagine <prompt-file> <out.png> [-s size] [-b fal|openai] [-m model] | list | help | history

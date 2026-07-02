@@ -63,6 +63,9 @@ const USAGE = `usage: sidecar fable [flags] <prompt...> | --file <f> | -
                        with \`sidecar fable result <id>\` / \`wait <id>\`
       -- <flags...>    everything after -- is passed to claude verbatim
 prompt sources are exclusive: argv words | --file | - (stdin).
+opus fallback is FORBIDDEN (always): fable pins an availableModels allowlist
+without Opus, so a safety-classifier-flagged request refuses on the delegated
+model instead of silently re-running on Opus. Not a flag — it is the default.
 continuity: fable is stateless per-call UNLESS -c/--continue or -r/--resume is
 given; capture session_id from a --json run to resume it later (same --cwd).
 async jobs (no polling by hand):
@@ -85,6 +88,22 @@ interface FableOpts {
   timeoutSec: number | null;
   words: string[];
   extra: string[];
+}
+
+// Opus fallback is FORBIDDEN unconditionally (not an opt-in flag). fable ALWAYS
+// launches the child with an availableModels allowlist that permits the chosen
+// model + the small background/aux tiers but NOT Opus. With Opus outside the
+// allowlist, Fable 5's content-based safety-classifier fallback ("re-run the
+// flagged request on the default Opus model") has no permitted target, so — per
+// the model-config docs — "no fallback occurs; the refusal is shown as a normal
+// error and the session's model is unchanged." The run stays on the delegated
+// model; a flagged request refuses instead of silently becoming Opus. (Overload
+// fallback is separately off — fable never passes --fallback-model.)
+// The allowlist includes o.model so an explicit `-m <other>` still resolves;
+// opus is only ever present if the user themselves selected it as the model.
+function noFallbackSettings(model: string): string {
+  const allow = [...new Set([model, "sonnet", "haiku"])];
+  return JSON.stringify({ availableModels: allow });
 }
 
 function parseArgs(args: string[]): FableOpts | null {
@@ -357,10 +376,14 @@ export async function runFable(args: string[]): Promise<number> {
   // session (keyed to --cwd) and appends this prompt. session_id comes back in
   // the --json result of an earlier run. These sit before the `--` passthrough.
   const contArgs = o.cont ? ["--continue"] : o.resume !== null ? ["--resume", o.resume] : [];
-  const claudeArgs = ["-p", "--model", o.model, "--setting-sources", o.sources, ...contArgs, ...(o.json ? ["--output-format", "json"] : []), ...o.extra];
+  // `--settings` pins an availableModels allowlist that excludes Opus, so a
+  // safety-classifier-flagged request refuses on the delegated model instead of
+  // silently falling back to Opus (unconditional — see noFallbackSettings). It
+  // sits BEFORE o.extra so a user's own `-- --settings <…>` still wins.
+  const claudeArgs = ["-p", "--model", o.model, "--setting-sources", o.sources, "--settings", noFallbackSettings(o.model), ...contArgs, ...(o.json ? ["--output-format", "json"] : []), ...o.extra];
   if (o.dry) {
     info(`fable --dry: claude ${claudeArgs.join(" ")}`);
-    info(`  prompt: ${prompt.length} chars via child stdin${o.cwd ? ` · cwd=${o.cwd}` : ""} · timeout=${effTimeoutSec(o) === null ? "off" : effTimeoutSec(o) + "s"}${o.cont ? " · continue" : o.resume !== null ? ` · resume=${o.resume}` : ""}${o.bg ? " · bg" : ""}`);
+    info(`  prompt: ${prompt.length} chars via child stdin${o.cwd ? ` · cwd=${o.cwd}` : ""} · timeout=${effTimeoutSec(o) === null ? "off" : effTimeoutSec(o) + "s"}${o.cont ? " · continue" : o.resume !== null ? ` · resume=${o.resume}` : ""}${o.bg ? " · bg" : ""} · opus-fallback=off`);
     return 0;
   }
 

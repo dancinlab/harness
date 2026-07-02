@@ -103,6 +103,27 @@ to `--cwd` (claude stores sessions per working directory):
 - Continuity works UNDER the default hook-free `--sources project,local` — session
   persistence is not a setting source, so dropping global hooks doesn't disable it.
 
+## Async — fire-and-forget (don't babysit a poll loop)
+
+fable blocks until claude answers (seconds → minutes). To not wait:
+
+```
+sidecar fable --bg --file <p> --json --cwd <dir>   → prints a job id, returns NOW
+sidecar fable result <id>    → prints the answer if DONE, else "RUNNING" (exit 3)
+sidecar fable wait <id> [--timeout <s>]   → block until DONE, then print
+sidecar fable list           → all jobs + status
+```
+
+- Jobs live under `~/.sidecar/fable-jobs/<id>/` (prompt · out · err · exitcode).
+- Do NOT hand-roll `sidecar fable … & ` + a `pgrep`/`ps|grep` poll loop — that
+  self-matches its OWN command line ("RUNNING" false positive; the remote-poll-pgrep
+  trap) AND you have to babysit it. Use `--bg` + `result`/`wait`.
+- In Claude Code specifically, running a plain (blocking) `sidecar fable …` as a
+  **background Bash tool call** also works — the harness re-invokes you on exit, no
+  polling. `--bg` is the shell-native equivalent for terminals / cross-tool use.
+- The default `--timeout 1800` (30 min) applies to `--bg` too (a watchdog SIGKILLs a
+  stalled job → exitcode 124), so a hung background job self-reaps.
+
 ## Recipe — brainstorm / design divergence into a repo (the proven one)
 
 ```

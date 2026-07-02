@@ -18,8 +18,10 @@
 //     sidecar fable --dry "…"                     # print resolved argv, no run
 //     sidecar fable "…" -- --allowedTools Bash    # after --, verbatim to claude
 import { spawn } from "node:child_process";
-import { readFileSync } from "node:fs";
-import { info, warn } from "../lib/log.ts";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { homedir } from "node:os";
+import { info, warn, ok } from "../lib/log.ts";
 
 const DEFAULT_MODEL = "claude-fable-5";
 // Setting sources the child `claude -p` loads (user = global ~/.claude, project
@@ -33,6 +35,10 @@ const DEFAULT_MODEL = "claude-fable-5";
 // `--sources user,project,local` opts back into full inheritance.
 const DEFAULT_SOURCES = "project,local";
 const VALID_SOURCES = new Set(["user", "project", "local"]);
+// Default wall-clock cap for a run (foreground AND --bg watchdog). Fable 5 answers
+// in seconds-to-minutes; 30 min is a generous ceiling that still reliably reaps a
+// truly stalled headless child. `--timeout 0` disables it (unlimited).
+const DEFAULT_TIMEOUT_SEC = 1800;
 
 const USAGE = `usage: sidecar fable [flags] <prompt...> | --file <f> | -
   -m, --model <id>     model to run (default ${DEFAULT_MODEL})
@@ -45,15 +51,24 @@ const USAGE = `usage: sidecar fable [flags] <prompt...> | --file <f> | -
                        user,project,local (default ${DEFAULT_SOURCES} — DROPS the
                        global governance hooks that stall a headless child; pass
                        user,project,local to inherit the full session environment)
-      --timeout <s>    kill the run after <s> seconds (exit 124) — backstop for a
-                       stalled headless run (auth wait / blocking inherited hook)
+      --timeout <s>    kill the run after <s> seconds (exit 124) — default 1800
+                       (30 min); --timeout 0 = unlimited. Backstop for a stalled
+                       headless run (auth wait / blocking inherited hook)
   -c, --continue       continue the most recent conversation in --cwd (stateful)
   -r, --resume <id>    resume a specific session by id (the session_id from a
                        prior --json run) — SAME --cwd as that run
+      --bg             fire-and-forget: launch DETACHED, print a job id + poll
+                       command, return immediately (no blocking wait) — collect
+                       with \`sidecar fable result <id>\` / \`wait <id>\`
       -- <flags...>    everything after -- is passed to claude verbatim
 prompt sources are exclusive: argv words | --file | - (stdin).
 continuity: fable is stateless per-call UNLESS -c/--continue or -r/--resume is
-given; capture session_id from a --json run to resume it later (same --cwd).`;
+given; capture session_id from a --json run to resume it later (same --cwd).
+async jobs (no polling by hand):
+  sidecar fable --bg …              launch a background job → prints <id>
+  sidecar fable result <id>         print output if DONE, else RUNNING (exit 3)
+  sidecar fable wait <id> [--timeout s]   block until DONE, then print output
+  sidecar fable list                list background jobs + status`;
 
 interface FableOpts {
   model: string;
@@ -61,6 +76,7 @@ interface FableOpts {
   stdin: boolean;
   json: boolean;
   dry: boolean;
+  bg: boolean;
   cwd: string | null;
   sources: string;
   cont: boolean;
@@ -71,7 +87,7 @@ interface FableOpts {
 }
 
 function parseArgs(args: string[]): FableOpts | null {
-  const o: FableOpts = { model: DEFAULT_MODEL, file: null, stdin: false, json: false, dry: false, cwd: null, sources: DEFAULT_SOURCES, cont: false, resume: null, timeoutSec: null, words: [], extra: [] };
+  const o: FableOpts = { model: DEFAULT_MODEL, file: null, stdin: false, json: false, dry: false, bg: false, cwd: null, sources: DEFAULT_SOURCES, cont: false, resume: null, timeoutSec: null, words: [], extra: [] };
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
     if (a === "--") {
@@ -103,8 +119,10 @@ function parseArgs(args: string[]): FableOpts | null {
       o.resume = v;
     } else if (a === "--timeout") {
       const v = Number(args[++i]);
-      if (!Number.isFinite(v) || v <= 0) return null;
+      if (!Number.isFinite(v) || v < 0) return null; // 0 = unlimited (allowed)
       o.timeoutSec = v;
+    } else if (a === "--bg") {
+      o.bg = true;
     } else if (a === "-") {
       o.stdin = true;
     } else if (a === "--json") {
@@ -153,7 +171,163 @@ async function resolvePrompt(o: FableOpts): Promise<string | null> {
   return o.words.join(" ");
 }
 
+// ── async background jobs ────────────────────────────────────────────────────
+// --bg launches a DETACHED claude and returns immediately with a job id; the
+// caller collects via `fable result <id>` / `wait <id>` instead of hand-rolling
+// `sidecar fable … & ` + a `pgrep` poll loop (which also self-matches its own
+// command line → false "RUNNING", the remote-poll-pgrep trap). Jobs live under
+// ~/.sidecar/fable-jobs/<id>/ : prompt.txt · out · err · exitcode (present ⇒ done).
+function jobsRoot(): string {
+  return join(homedir(), ".sidecar", "fable-jobs");
+}
+function shq(s: string): string {
+  return `'${s.replace(/'/g, `'\\''`)}'`;
+}
+// Effective cap: null flag → default 30 min; 0 → unlimited (null); else the value.
+function effTimeoutSec(o: FableOpts): number | null {
+  return o.timeoutSec === null ? DEFAULT_TIMEOUT_SEC : o.timeoutSec === 0 ? null : o.timeoutSec;
+}
+function isAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Launch a detached claude, prompt fed from a file (stdin redirect), out/err/exit
+// captured to the job dir. Returns 0 after printing the handle — never waits.
+function launchBg(claudeArgs: string[], prompt: string, o: FableOpts): number {
+  const id = `fable-${Date.now().toString(36)}`;
+  const dir = join(jobsRoot(), id);
+  mkdirSync(dir, { recursive: true });
+  const pf = join(dir, "prompt.txt");
+  const outF = join(dir, "out");
+  const errF = join(dir, "err");
+  const exitF = join(dir, "exitcode");
+  writeFileSync(pf, prompt);
+  const cwd = o.cwd ?? process.cwd();
+  const cap = effTimeoutSec(o);
+  // Detached run: claude in the background inside the shell, plus a watchdog that
+  // SIGKILLs it after `cap` seconds (exit 124), so a stalled bg job self-reaps
+  // instead of lingering forever. exitcode file is written LAST → its existence is
+  // the unambiguous done-signal.
+  const core = `claude ${claudeArgs.map(shq).join(" ")} < ${shq(pf)} > ${shq(outF)} 2> ${shq(errF)}`;
+  const sh = cap
+    ? `cd ${shq(cwd)} && { ${core} & cpid=$!; ( sleep ${cap}; kill -9 $cpid 2>/dev/null; echo 124 > ${shq(exitF)} ) & wpid=$!; wait $cpid; ec=$?; kill $wpid 2>/dev/null; [ -f ${shq(exitF)} ] || echo $ec > ${shq(exitF)}; }`
+    : `cd ${shq(cwd)} && ${core}; echo $? > ${shq(exitF)}`;
+  const child = spawn("bash", ["-lc", sh], { detached: true, stdio: "ignore" });
+  child.unref();
+  writeFileSync(
+    join(dir, "status.json"),
+    JSON.stringify({ id, pid: child.pid, started: new Date().toISOString(), cwd, promptChars: prompt.length, json: o.json, timeoutSec: cap }),
+  );
+  ok(`fable: launched bg job ${id} (pid ${child.pid ?? "?"})`);
+  info(`  collect → sidecar fable result ${id}   ·   block → sidecar fable wait ${id}`);
+  return 0;
+}
+
+interface JobStatus {
+  done: boolean;
+  code: number | null;
+  alive: boolean;
+  started?: string;
+  pid?: number;
+}
+function readJob(id: string): { dir: string; st: JobStatus } | null {
+  const dir = join(jobsRoot(), id);
+  if (!existsSync(dir)) return null;
+  const exitF = join(dir, "exitcode");
+  let meta: any = {};
+  try {
+    meta = JSON.parse(readFileSync(join(dir, "status.json"), "utf8"));
+  } catch {
+    /* status optional */
+  }
+  if (existsSync(exitF)) {
+    const code = Number(readFileSync(exitF, "utf8").trim());
+    return { dir, st: { done: true, code: Number.isFinite(code) ? code : 0, alive: false, started: meta.started, pid: meta.pid } };
+  }
+  const alive = typeof meta.pid === "number" && isAlive(meta.pid);
+  return { dir, st: { done: false, code: null, alive, started: meta.started, pid: meta.pid } };
+}
+
+// Print a finished job's output (stdout), or its RUNNING/crashed status. Returns
+// the child exit code when done, 3 when still RUNNING (pollable), 1 on no-such-job.
+function jobResult(id: string): number {
+  const j = readJob(id);
+  if (!j) {
+    warn(`fable: no job '${id}' (list: sidecar fable list)`);
+    return 1;
+  }
+  if (!j.st.done) {
+    if (j.st.alive) {
+      info(`⏳ fable ${id}: RUNNING (pid ${j.st.pid}, since ${j.st.started ?? "?"}) — sidecar fable wait ${id}`);
+      return 3;
+    }
+    warn(`⚠ fable ${id}: process gone but no exitcode — likely crashed. stderr:`);
+    process.stderr.write(existsSync(join(j.dir, "err")) ? readFileSync(join(j.dir, "err"), "utf8") : "(none)\n");
+    return 1;
+  }
+  process.stdout.write(existsSync(join(j.dir, "out")) ? readFileSync(join(j.dir, "out"), "utf8") : "");
+  if (j.st.code !== 0) {
+    warn(`fable ${id}: exit ${j.st.code}${j.st.code === 124 ? " (stalled)" : ""} — stderr:`);
+    process.stderr.write(existsSync(join(j.dir, "err")) ? readFileSync(join(j.dir, "err"), "utf8") : "");
+  }
+  return j.st.code ?? 0;
+}
+
+async function jobWait(id: string, timeoutSec: number | null): Promise<number> {
+  if (!readJob(id)) {
+    warn(`fable: no job '${id}' (list: sidecar fable list)`);
+    return 1;
+  }
+  const deadline = timeoutSec ? Date.now() + timeoutSec * 1000 : Infinity;
+  for (;;) {
+    const j = readJob(id);
+    if (j?.st.done || (j && !j.st.alive)) return jobResult(id);
+    if (Date.now() >= deadline) {
+      warn(`fable wait ${id}: still RUNNING after ${timeoutSec}s — sidecar fable result ${id} later.`);
+      return 3;
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+}
+
+function jobList(): number {
+  const root = jobsRoot();
+  if (!existsSync(root)) {
+    info("fable: no background jobs.");
+    return 0;
+  }
+  const ids = readdirSync(root).filter((d) => existsSync(join(root, d, "status.json")));
+  if (!ids.length) {
+    info("fable: no background jobs.");
+    return 0;
+  }
+  info(`fable jobs (${ids.length}):`);
+  for (const id of ids.sort()) {
+    const j = readJob(id);
+    if (!j) continue;
+    const status = j.st.done ? (j.st.code === 0 ? "✅ done" : `🔴 exit ${j.st.code}`) : j.st.alive ? "⏳ running" : "⚠ crashed";
+    info(`  ${id}  ${status}  (${j.st.started ?? "?"})`);
+  }
+  info("  collect: sidecar fable result <id>");
+  return 0;
+}
+
 export async function runFable(args: string[]): Promise<number> {
+  // job-management verbs (async collection) — checked before flag parsing.
+  const verb = args[0];
+  if (verb === "result") return jobResult(args[1] ?? "");
+  if (verb === "list") return jobList();
+  if (verb === "wait") {
+    const id = args[1] ?? "";
+    const ti = args.indexOf("--timeout");
+    const t = ti >= 0 ? Number(args[ti + 1]) : null;
+    return jobWait(id, Number.isFinite(t as number) && (t as number) > 0 ? (t as number) : null);
+  }
   if (args.length === 0 || ["help", "-h", "--help"].includes(args[0])) {
     info(USAGE);
     return args.length === 0 ? 1 : 0;
@@ -184,9 +358,12 @@ export async function runFable(args: string[]): Promise<number> {
   const claudeArgs = ["-p", "--model", o.model, "--setting-sources", o.sources, ...contArgs, ...(o.json ? ["--output-format", "json"] : []), ...o.extra];
   if (o.dry) {
     info(`fable --dry: claude ${claudeArgs.join(" ")}`);
-    info(`  prompt: ${prompt.length} chars via child stdin${o.cwd ? ` · cwd=${o.cwd}` : ""}${o.timeoutSec ? ` · timeout=${o.timeoutSec}s` : ""}${o.cont ? " · continue" : o.resume !== null ? ` · resume=${o.resume}` : ""}`);
+    info(`  prompt: ${prompt.length} chars via child stdin${o.cwd ? ` · cwd=${o.cwd}` : ""} · timeout=${effTimeoutSec(o) === null ? "off" : effTimeoutSec(o) + "s"}${o.cont ? " · continue" : o.resume !== null ? ` · resume=${o.resume}` : ""}${o.bg ? " · bg" : ""}`);
     return 0;
   }
+
+  // --bg: fire-and-forget. Detach + capture to a job dir, return a handle now.
+  if (o.bg) return launchBg(claudeArgs, prompt, o);
 
   // Prompt goes through the child's stdin; the answer streams straight to ours.
   return new Promise<number>((resolve) => {
@@ -195,13 +372,15 @@ export async function runFable(args: string[]): Promise<number> {
       stdio: ["pipe", "inherit", "inherit"],
     });
     // Headless claude waiting on login credentials sleeps forever at 0% CPU —
-    // --timeout is the observed-stall cap: kill and report 124 (GNU timeout).
+    // the timeout is the observed-stall cap: kill and report 124. Default 30 min
+    // (DEFAULT_TIMEOUT_SEC); --timeout 0 disables it.
+    const cap = effTimeoutSec(o);
     let timedOut = false;
-    const timer = o.timeoutSec
+    const timer = cap
       ? setTimeout(() => {
           timedOut = true;
           child.kill("SIGKILL");
-        }, o.timeoutSec * 1000)
+        }, cap * 1000)
       : null;
     const settle = (code: number) => {
       if (timer) clearTimeout(timer);
@@ -213,7 +392,7 @@ export async function runFable(args: string[]): Promise<number> {
     });
     child.on("close", (code) => {
       if (timedOut) {
-        warn(`fable: killed after --timeout ${o.timeoutSec}s (headless stall). Causes: auth wait (\`claude /login\`), or a BLOCKING inherited Stop-hook looping the child — default --sources ${DEFAULT_SOURCES} already drops the global governance hooks, so this repeats only if you passed --sources user,… into a repo with uncommitted changes.`);
+        warn(`fable: killed after ${cap}s timeout (headless stall). Causes: auth wait (\`claude /login\`), or a BLOCKING inherited Stop-hook looping the child — default --sources ${DEFAULT_SOURCES} already drops the global governance hooks, so this repeats only if you passed --sources user,… into a repo with uncommitted changes. Raise with --timeout <s> or disable with --timeout 0.`);
         settle(124);
         return;
       }
